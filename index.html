@@ -140,7 +140,7 @@
     }
     .progress-step.done { color: var(--accent-glow); }
 
-    /* MODAL */
+    /* MODAL EXCLUSIVO ATUALIZADO */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -156,7 +156,7 @@
       border: 1px solid var(--accent-storm);
       border-radius: 12px;
       padding: 0;
-      max-width: 860px;
+      max-width: 1100px; /* Aumentado para caber o painel lateral */
       width: 95vw;
       max-height: 92vh;
       overflow: hidden;
@@ -182,17 +182,55 @@
       border-radius: 4px;
     }
     .modal-close:hover { color: white; background: rgba(255,255,255,0.08); }
+    
+    /* Layout split: jogo + barra lateral */
+    .modal-body-split {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow-y: auto;
+    }
+    @media (min-width: 768px) {
+      .modal-body-split {
+        flex-direction: row;
+        overflow: hidden;
+      }
+    }
     .modal-iframe-wrap {
       flex: 1;
       position: relative;
       aspect-ratio: 16/9;
-      width: 100%;
+      background: #09090b;
+    }
+    @media (min-width: 768px) {
+      .modal-iframe-wrap {
+        height: 100%;
+        aspect-ratio: auto;
+      }
     }
     .modal-iframe-wrap iframe {
       width: 100%;
       height: 100%;
       border: none;
       display: block;
+    }
+    .modal-sidebar {
+      width: 100%;
+      background: #141417;
+      border-top: 1px solid var(--border-subtle);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow-y: auto;
+    }
+    @media (min-width: 768px) {
+      .modal-sidebar {
+        width: 320px;
+        border-top: none;
+        border-left: 1px solid var(--border-subtle);
+        height: 100%;
+      }
     }
 
     /* FILTER BUTTONS */
@@ -304,27 +342,36 @@
 </head>
 <body>
 
-<!-- GAME MODAL -->
 <div id="game-modal" class="modal-overlay" style="display:none;" onclick="closeModal(event)">
   <div class="modal-box">
     <div class="modal-header">
       <span id="modal-game-title" class="font-pixel text-white text-lg"></span>
       <button class="modal-close" onclick="closeGameModal()">✕</button>
     </div>
-    <div class="modal-iframe-wrap">
-      <iframe id="modal-iframe" src="" allowfullscreen allow="fullscreen"></iframe>
+    <div class="modal-body-split">
+      <div class="modal-iframe-wrap">
+        <iframe id="modal-iframe" src="" allowfullscreen allow="fullscreen"></iframe>
+      </div>
+      <div class="modal-sidebar">
+        <div>
+          <h4 class="font-pixel text-xs uppercase tracking-wider mb-2" style="color:var(--accent-purple);">// SOBRE O JOGO</h4>
+          <p id="modal-game-description" class="text-sm leading-relaxed" style="color:var(--text-primary);"></p>
+        </div>
+        <div class="border-t pt-4" style="border-color:var(--border-subtle);">
+          <h4 class="font-pixel text-xs uppercase tracking-wider mb-2" style="color:var(--accent-blue);">// CONTROLES</h4>
+          <p id="modal-game-controls" class="text-xs leading-relaxed bg-[#1b1b22] p-3 rounded border border-[#2a2a35] font-mono" style="color:var(--text-muted);"></p>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- HEADER -->
 <header style="background:var(--bg-card); border-bottom:1px solid var(--border-subtle);" class="sticky top-0 z-50">
   <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
     <div class="flex items-center gap-2 shrink-0">
       <span class="font-pixel text-xl glow-text" style="color:var(--accent-glow);">⚡ OVERCAST</span>
       <span class="font-pixel text-xl" style="color:var(--accent-purple);">REALM</span>
     </div>
-    <!-- NAV TABS -->
     <nav class="flex items-center gap-1 overflow-x-auto" id="main-nav">
       <button class="nav-tab active" onclick="switchTab('home', this)">🏠 Home</button>
       <button class="nav-tab" onclick="switchTab('jogos', this)">🎮 Jogos</button>
@@ -335,12 +382,9 @@
   </div>
 </header>
 
-<!-- MAIN CONTENT -->
 <main class="max-w-6xl mx-auto px-4 py-8">
 
-  <!-- ===== HOME ===== -->
   <section id="section-home" class="section active">
-    <!-- HERO -->
     <div class="hero-gradient relative rounded-2xl overflow-hidden mb-10 p-10" style="border:1px solid var(--border-subtle); min-height:320px; display:flex; align-items:center;">
       <div class="relative z-10 max-w-2xl">
         <p class="font-pixel text-sm mb-2" style="color:var(--accent-purple);">// OVERCAST GAME STUDIO</p>
@@ -355,11 +399,9 @@
           <button class="btn-secondary" onclick="switchTab('tutoriais')">Ver Tutoriais</button>
         </div>
       </div>
-      <!-- Decorative pixel art elements -->
       <div class="absolute right-8 top-1/2 -translate-y-1/2 hidden md:block opacity-20 font-pixel text-7xl select-none" aria-hidden="true">👾</div>
     </div>
 
-    <!-- FEATURES GRID -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
       <div class="card p-6">
         <div class="text-3xl mb-3">🎯</div>
@@ -378,7 +420,6 @@
       </div>
     </div>
 
-    <!-- PARA OS PAIS -->
     <div class="card p-8 mb-10" style="border-color: rgba(99,102,241,0.3); background: linear-gradient(135deg, var(--bg-card), rgba(99,102,241,0.05));">
       <div class="flex items-center gap-3 mb-5">
         <span class="text-3xl">🏫</span>
@@ -397,7 +438,7 @@
         </div>
         <div class="rounded-lg p-5" style="background:var(--bg-base); border:1px solid var(--border-subtle);">
           <h4 class="font-pixel text-sm mb-3" style="color:var(--accent-blue);">💪 Resiliência Real</h4>
-          <p class="text-sm" style="color:var(--text-muted); line-height:1.7;">Bugs acontecem. Corrigir um problema que você mesmo criou ensina tolerância à frustração de um jeito que nenhuma matéria teórica consegue.</p>
+          <p class="text-sm" style="color:var(--text-muted); line-height:1.7;">Bugs acontecem. Corrigir um problem que você mesmo criou ensina tolerância à frustração de um jeito que nenhuma matéria teórica consegue.</p>
         </div>
         <div class="rounded-lg p-5" style="background:var(--bg-base); border:1px solid var(--border-subtle);">
           <h4 class="font-pixel text-sm mb-3" style="color:var(--accent-blue);">➕ Matemática Aplicada</h4>
@@ -416,7 +457,6 @@
       </div>
     </div>
 
-    <!-- JOGOS DESTAQUE -->
     <div class="mb-6 flex items-center justify-between">
       <h2 class="font-pixel text-xl" style="color:var(--text-primary);">Jogos em Destaque</h2>
       <button class="btn-secondary text-sm" onclick="switchTabByName('jogos')">Ver todos →</button>
@@ -424,7 +464,6 @@
     <div id="home-jogos-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
   </section>
 
-  <!-- ===== JOGOS ===== -->
   <section id="section-jogos" class="section">
     <div class="mb-8">
       <p class="font-pixel text-xs mb-1" style="color:var(--accent-purple);">// VITRINE</p>
@@ -439,7 +478,6 @@
     </div>
   </section>
 
-  <!-- ===== TUTORIAIS ===== -->
   <section id="section-tutoriais" class="section">
     <div class="mb-8">
       <p class="font-pixel text-xs mb-1" style="color:var(--accent-purple);">// BIBLIOTECA</p>
@@ -459,7 +497,6 @@
     </div>
   </section>
 
-  <!-- ===== LINKS ===== -->
   <section id="section-links" class="section">
     <div class="mb-8">
       <p class="font-pixel text-xs mb-1" style="color:var(--accent-purple);">// RECURSOS</p>
@@ -479,9 +516,7 @@
     </div>
   </section>
 
-  <!-- ===== ÁREA DO ALUNO ===== -->
   <section id="section-aluno" class="section">
-    <!-- LOGIN STATE -->
     <div id="student-login" class="max-w-md mx-auto mt-12">
       <div class="card p-8 text-center">
         <div class="text-5xl mb-4">👾</div>
@@ -501,7 +536,6 @@
       </div>
     </div>
 
-    <!-- DASHBOARD STATE -->
     <div id="student-dashboard" class="hidden">
       <div class="mb-8 flex items-start justify-between flex-wrap gap-4">
         <div>
@@ -511,7 +545,6 @@
         <button class="btn-secondary text-sm" onclick="logoutAluno()">← Sair</button>
       </div>
 
-      <!-- PROGRESS -->
       <div class="card p-6 mb-5">
         <h3 class="font-pixel text-base mb-4" style="color:var(--accent-glow);">📍 Sua Jornada de Desenvolvimento</h3>
         <div class="pixel-progress-track mb-1">
@@ -529,7 +562,6 @@
         </p>
       </div>
 
-      <!-- ACTIONS -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="card p-6">
           <div class="text-3xl mb-3">📁</div>
@@ -549,7 +581,6 @@
 
 </main>
 
-<!-- FOOTER -->
 <footer class="mt-16 py-8 text-center" style="border-top:1px solid var(--border-subtle);">
   <p class="font-pixel text-sm" style="color:var(--text-muted);">
     ⚡ OVERCAST REALM · Feito com <span style="color:var(--accent-purple);">♥</span> para futuros devs
@@ -609,7 +640,9 @@ const overcastData = {
       "titulo": "Sqare Bear",
       "autor": "Emanoel",
       "capa": "https://placehold.co/300x200/1A1A1E/818CF8?text=Sqare+Bear",
-      "url": "https://itch.io/embed-upload/14462910?color=ab5237"
+      "url": "https://itch.io/embed-upload/14462910?color=ab5237",
+      "descricao": "Ajude o urso quadrado a superar os desafios de plataforma neste eletrizante protótipo feito no Construct 3!",
+      "controles": "🕹️ Setas / WASD: Mover<br/>⬆️ / Space: Pular"
     }
   ]
 };
@@ -662,7 +695,7 @@ function switchTabByName(tabName) {
 }
 
 // ============================================================
-// RENDER JOGOS
+// RENDER JOGOS (ATUALIZADO PARA PASSAR DESCRIÇÃO E CONTROLES)
 // ============================================================
 function renderJogos() {
   const grid = document.getElementById('jogos-grid');
@@ -678,43 +711,54 @@ function renderJogos() {
   }
   if (empty) empty.classList.add('hidden');
 
-  const makeCard = (jogo) => `
-    <div class="card overflow-hidden cursor-pointer group" onclick="openGame('${encodeURIComponent(jogo.url)}', '${encodeURIComponent(jogo.titulo)}', '${encodeURIComponent(jogo.autor)}')">
-      <div class="relative overflow-hidden" style="aspect-ratio:3/2;">
-        <img
-          src="${jogo.capa}"
-          alt="${jogo.titulo}"
-          class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-          onerror="this.src='https://placehold.co/300x200/1A1A1E/818CF8?text=Sem+Capa'"
-        />
-        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-4">
-          <span class="font-pixel text-sm text-white bg-indigo-600 px-4 py-2 rounded">▶ Jogar</span>
+  const makeCard = (jogo) => {
+    const desc = jogo.descricao || "Sem descrição disponível.";
+    const ctrl = jogo.controles || "Não especificados.";
+    
+    return `
+      <div class="card overflow-hidden cursor-pointer group" onclick="openGame('${encodeURIComponent(jogo.url)}', '${encodeURIComponent(jogo.titulo)}', '${encodeURIComponent(jogo.autor)}', '${encodeURIComponent(desc)}', '${encodeURIComponent(ctrl)}')">
+        <div class="relative overflow-hidden" style="aspect-ratio:3/2;">
+          <img
+            src="${jogo.capa}"
+            alt="${jogo.titulo}"
+            class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            onerror="this.src='https://placehold.co/300x200/1A1A1E/818CF8?text=Sem+Capa'"
+          />
+          <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-4">
+            <span class="font-pixel text-sm text-white bg-indigo-600 px-4 py-2 rounded">▶ Jogar</span>
+          </div>
+        </div>
+        <div class="p-3">
+          <p class="font-pixel text-sm truncate" style="color:var(--text-primary);">${jogo.titulo}</p>
+          <p class="text-xs mt-1" style="color:var(--text-muted);">por ${jogo.autor}</p>
         </div>
       </div>
-      <div class="p-3">
-        <p class="font-pixel text-sm truncate" style="color:var(--text-primary);">${jogo.titulo}</p>
-        <p class="text-xs mt-1" style="color:var(--text-muted);">por ${jogo.autor}</p>
-      </div>
-    </div>
-  `;
+    `;
+  };
 
   grid.innerHTML = jogos.map(makeCard).join('');
   if (homeGrid) homeGrid.innerHTML = jogos.slice(0, 4).map(makeCard).join('');
 }
 
 // ============================================================
-// GAME MODAL
+// GAME MODAL (ATUALIZADO COM CARREGAMENTO DO SIDEBAR)
 // ============================================================
-function openGame(encodedUrl, encodedTitle, encodedAuthor) {
+function openGame(encodedUrl, encodedTitle, encodedAuthor, encodedDesc, encodedCtrl) {
   const url = decodeURIComponent(encodedUrl);
   const title = decodeURIComponent(encodedTitle);
   const author = decodeURIComponent(encodedAuthor);
+  const desc = decodeURIComponent(encodedDesc);
+  const ctrl = decodeURIComponent(encodedCtrl);
   
-  // Define o texto no formato: "Título do Jogo — por Autor"
+  // Título e Autor
   document.getElementById('modal-game-title').innerHTML = `
     <span style="color:var(--text-primary);">${title}</span> 
     <span style="color:var(--text-muted); font-size: 14px; font-family: 'Inter', sans-serif; margin-left: 8px;">por ${author}</span>
   `;
+  
+  // Inserção da Descrição e dos Controles na barra lateral
+  document.getElementById('modal-game-description').shadowRoot ? document.getElementById('modal-game-description').innerHTML = desc : document.getElementById('modal-game-description').innerHTML = desc;
+  document.getElementById('modal-game-controls').innerHTML = ctrl;
   
   document.getElementById('modal-iframe').src = url;
   document.getElementById('game-modal').style.display = 'flex';
