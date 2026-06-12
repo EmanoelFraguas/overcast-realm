@@ -6,7 +6,8 @@
   <title>Overcast Realm — Hub de Gamedev</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- Troca da Pixelify Sans pela Press Start 2P -->
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root {
@@ -41,7 +42,11 @@
       background-size: 24px 24px, 24px 24px, 100% 4px;
     }
 
-    .font-pixel { font-family: 'Pixelify Sans', monospace; }
+    /* Ajuste fino na aplicação da fonte Press Start 2P */
+    .font-pixel { 
+      font-family: 'Press Start 2P', monospace; 
+      line-height: 1.5;
+    }
 
     /* CARDS BRUTALISTAS DE JOGO */
     .card {
@@ -62,9 +67,9 @@
       color: var(--accent-glow);
       border: 2px solid var(--accent-storm);
       box-shadow: 3px 3px 0px #000000;
-      font-family: 'Pixelify Sans', monospace;
-      font-weight: 600;
-      padding: 10px 20px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      padding: 12px 20px;
       cursor: pointer;
     }
     .btn-primary:hover {
@@ -79,8 +84,9 @@
       color: var(--text-muted);
       border: 2px solid var(--border-brutal);
       box-shadow: 3px 3px 0px #000000;
-      font-family: 'Pixelify Sans', monospace;
-      padding: 8px 16px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 9px;
+      padding: 10px 16px;
       cursor: pointer;
     }
     .btn-secondary:hover {
@@ -90,9 +96,9 @@
 
     /* NAV TABS */
     .nav-tab {
-      font-family: 'Pixelify Sans', monospace;
-      font-size: 14px;
-      padding: 8px 14px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      padding: 10px 14px;
       cursor: pointer;
       border: 2px solid transparent;
       color: var(--text-muted);
@@ -132,8 +138,8 @@
       );
     }
     .progress-step {
-      font-family: 'Pixelify Sans', monospace;
-      font-size: 11px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
       color: var(--text-muted);
     }
     .progress-step.done { color: var(--accent-glow); text-shadow: 0 0 4px var(--accent-storm); }
@@ -172,18 +178,18 @@
       background: transparent;
       border: 2px solid var(--border-brutal);
       color: var(--text-muted);
-      font-family: 'Pixelify Sans', monospace;
-      font-size: 16px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
       cursor: pointer;
-      padding: 2px 8px;
+      padding: 4px 8px;
     }
     .modal-close:hover { color: #ffffff; background: #ef4444; border-color: #ef4444; }
 
     /* FILTROS */
     .filter-btn {
-      font-family: 'Pixelify Sans', monospace;
-      font-size: 13px;
-      padding: 6px 14px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 9px;
+      padding: 8px 14px;
       border: 2px solid var(--border-brutal);
       background: var(--bg-card);
       color: var(--text-muted);
@@ -212,7 +218,7 @@
       border: 2px solid var(--border-brutal);
       color: var(--text-primary);
       padding: 10px 14px;
-      font-size: 14px;
+      font-size: 12px;
       outline: none;
     }
     .search-input:focus { border-color: var(--accent-glow); }
@@ -222,8 +228,8 @@
       border: 3px solid var(--border-brutal);
       color: var(--text-primary);
       padding: 12px;
-      font-family: 'Pixelify Sans', monospace;
-      font-size: 20px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 16px;
       letter-spacing: 6px;
       text-align: center;
       outline: none;
@@ -232,9 +238,9 @@
     .auth-input:focus { border-color: var(--accent-storm); }
 
     .badge {
-      font-family: 'Pixelify Sans', monospace;
-      font-size: 11px;
-      padding: 2px 6px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      padding: 4px 6px;
       background: #000000;
       color: var(--accent-glow);
       border: 1px solid var(--border-brutal);
@@ -249,10 +255,11 @@
 </head>
 <body>
 
+<!-- GAME MODAL -->
 <div id="game-modal" class="modal-overlay" style="display:none;" onclick="closeModal(event)">
   <div class="modal-box">
     <div class="modal-header">
-      <span id="modal-game-title" class="font-pixel text-sm uppercase tracking-wider"></span>
+      <span id="modal-game-title" class="font-pixel text-[10px] tracking-wider"></span>
       <button class="modal-close" onclick="closeGameModal()">ESC_✕</button>
     </div>
     
@@ -263,11 +270,11 @@
       
       <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6 bg-[#111116]">
         <div class="md:col-span-2">
-          <h4 class="font-pixel text-xs tracking-wider mb-2 text-violet-400">// CONTEXTO_DO_PROJETO</h4>
+          <h4 class="font-pixel text-[9px] tracking-wider mb-3 text-violet-400">// CONTEXTO_DO_PROJETO</h4>
           <p id="modal-game-description" class="text-xs leading-relaxed text-gray-400"></p>
         </div>
         <div>
-          <h4 class="font-pixel text-xs tracking-wider mb-2 text-blue-400">// ESQUEMA_CONTROLES</h4>
+          <h4 class="font-pixel text-[9px] tracking-wider mb-3 text-blue-400">// ESQUEMA_CONTROLES</h4>
           <p id="modal-game-controls" class="text-xs leading-relaxed bg-[#09090d] p-4 border border-[#23232f] font-mono text-gray-400"></p>
         </div>
       </div>
@@ -275,10 +282,11 @@
   </div>
 </div>
 
+<!-- NAVBAR -->
 <header class="border-b-2 border-[#22222c] bg-[#111116] sticky top-0 z-50">
   <div class="max-w-6xl mx-auto px-4 flex items-center justify-between gap-4 h-14">
     <div class="flex items-center gap-2">
-      <span class="font-pixel text-lg tracking-tight text-white">[⚡ OVERCAST_REALM]</span>
+      <span class="font-pixel text-[11px] tracking-tight text-white">[⚡ OVERCAST_REALM]</span>
     </div>
     <nav class="flex items-end gap-1 h-full overflow-x-auto" id="main-nav">
       <button class="nav-tab active" onclick="switchTab('home', this)">_Home</button>
@@ -292,48 +300,52 @@
 
 <main class="max-w-6xl mx-auto px-4 py-8">
 
+  <!-- ===== HOME ===== -->
   <section id="section-home" class="section active">
+    <!-- HERO COMPACTO BRUTALISTA -->
     <div class="card p-8 md:p-10 mb-10 relative bg-gradient-to-br from-[#131317] to-[#1a1a24] border-2 border-[#2a2a3a]">
-      <div class="max-w-2xl">
-        <p class="font-pixel text-xs text-violet-400 mb-2">// ENGINE_ROOT: CONSTRUCT_3</p>
-        <h1 class="font-pixel text-3xl md:text-5xl font-bold mb-4 tracking-tight text-white">
+      <div class="max-w-3xl">
+        <p class="font-pixel text-[9px] text-violet-400 mb-3">// ENGINE_ROOT: CONSTRUCT_3</p>
+        <h1 class="font-pixel text-xl md:text-2xl font-bold mb-5 tracking-tight text-white leading-relaxed">
           CRIE JOGOS REAIS.<br/>APRENDA LOGICA_APLICADA.
         </h1>
-        <p class="text-xs md:text-sm mb-6 text-gray-400 leading-relaxed max-width-[520px]">
+        <p class="text-xs md:text-sm mb-6 text-gray-400 leading-relaxed max-w-xl">
           Desenvolvimento solo sem travar na sintaxe. Estruture mecânicas, gerencie escopo de projetos e construa portfólio diretamente no ambiente do itch.io.
         </p>
         <div class="flex flex-wrap gap-3">
-          <button class="btn-primary" onclick="switchTab('aluno')">ÁREA_DEV</button>
+          <button class="btn-primary" onclick="switchTab('aluno')">INICIAR_PAINEL</button>
           <button class="btn-secondary" onclick="switchTab('tutoriais')">VER_AULAS</button>
         </div>
       </div>
-      <div class="absolute right-6 bottom-6 hidden md:block font-pixel text-8xl text-[#22222d] select-none" aria-hidden="true">&lt;/&gt;</div>
+      <div class="absolute right-8 bottom-6 hidden lg:block font-pixel text-7xl text-[#22222d] select-none" aria-hidden="true">&lt;/&gt;</div>
     </div>
 
+    <!-- METRICS CONSOLE -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
       <div class="card p-5">
-        <div class="font-pixel text-xs text-blue-400 mb-2">:: METODOLOGIA</div>
-        <h3 class="font-pixel text-base mb-2 text-white">[01] Portfólio Ativo</h3>
+        <div class="font-pixel text-[9px] text-blue-400 mb-3">:: METODOLOGIA</div>
+        <h3 class="font-pixel text-[11px] mb-3 text-white">[01] Portfólio Ativo</h3>
         <p class="text-xs text-gray-400 leading-relaxed">Não geramos exercícios teóricos. Toda mecânica desenvolvida é compilada e testada diretamente para o ecossistema Web.</p>
       </div>
       <div class="card p-5">
-        <div class="font-pixel text-xs text-blue-400 mb-2">:: ARQUITETURA</div>
-        <h3 class="font-pixel text-base mb-2 text-white">[02] Lógica Visual</h3>
-        <p class="text-xs text-gray-400 leading-relaxed">Abstração via blocos de eventos no Construct 3. Foco completo em matrizes, variáveis, loops e lógica estrutural pura.</p>
+        <div class="font-pixel text-[9px] text-blue-400 mb-3">:: ARQUITETURA</div>
+        <h3 class="font-pixel text-[11px] mb-3 text-white">[02] Lógica Visual</h3>
+        <p class="text-xs text-gray-400 leading-relaxed">Abstração via blocks de eventos no Construct 3. Foco completo em matrizes, variáveis, loops e lógica estrutural pura.</p>
       </div>
       <div class="card p-5">
-        <div class="font-pixel text-xs text-blue-400 mb-2">:: FLUXO</div>
-        <h3 class="font-pixel text-base mb-2 text-white">[03] Ciclo Completo</h3>
+        <div class="font-pixel text-[9px] text-blue-400 mb-3">:: FLUXO</div>
+        <h3 class="font-pixel text-[11px] mb-3 text-white">[03] Ciclo Completo</h3>
         <p class="text-xs text-gray-400 leading-relaxed">O projeto caminha de forma profissional pelas etapas reais de gamedev: Concepção, MVP, Arte, Polimento e Deploy.</p>
       </div>
     </div>
 
+    <!-- DOCUMENTAÇÃO INTERNA (PARA OS PAIS) -->
     <div class="card p-6 md:p-8 mb-10 bg-[#0f0f13] border-dashed border-2 border-indigo-900/60">
       <div class="flex items-start gap-4 mb-4">
-        <span class="font-pixel text-2xl text-violet-400">[i]</span>
+        <span class="font-pixel text-base text-violet-400">[i]</span>
         <div>
-          <p class="font-pixel text-xs text-violet-400 mb-1">// DOCUMENTACAO_METODOLOGICA</p>
-          <h2 class="font-pixel text-xl text-white">Desenvolvimento Cognitivo Aplicado</h2>
+          <p class="font-pixel text-[9px] text-violet-400 mb-2">// DOCUMENTACAO_METODOLOGICA</p>
+          <h2 class="font-pixel text-sm text-white">Desenvolvimento Cognitivo Aplicado</h2>
         </div>
       </div>
       <p class="text-xs text-gray-400 mb-6 leading-relaxed max-w-4xl">
@@ -341,46 +353,49 @@
       </p>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="bg-[#09090d] border border-[#1e1e28] p-4">
-          <h4 class="font-pixel text-xs text-indigo-400 mb-2">&gt; ESTRUTURACAO_LOGICA</h4>
+          <h4 class="font-pixel text-[9px] text-indigo-400 mb-2">&gt; ESTRUTURACAO_LOGICA</h4>
           <p class="text-xs text-gray-400 leading-relaxed">Divisão de problemas de escopo macro em pequenos blocos de eventos sequenciais condicionais.</p>
         </div>
         <div class="bg-[#09090d] border border-[#1e1e28] p-4">
-          <h4 class="font-pixel text-xs text-indigo-400 mb-2">&gt; TOLERANCIA_FRUSTRACAO</h4>
+          <h4 class="font-pixel text-[9px] text-indigo-400 mb-2">&gt; TOLERANCIA_FRUSTRACAO</h4>
           <p class="text-xs text-gray-400 leading-relaxed">Sistemas de depuração (debugging). O erro é tratado como um dado técnico a ser analisado e corrigido.</p>
         </div>
         <div class="bg-[#09090d] border border-[#1e1e28] p-4">
-          <h4 class="font-pixel text-xs text-indigo-400 mb-2">&gt; MATEMATICA_PRATICA</h4>
+          <h4 class="font-pixel text-[9px] text-indigo-400 mb-2">&gt; MATEMATICA_PRATICA</h4>
           <p class="text-xs text-gray-400 leading-relaxed">Aplicação imediata de eixos cartesianos (X, Y), vetores de velocidade, gravidade e lógica booleana.</p>
         </div>
         <div class="bg-[#09090d] border border-[#1e1e28] p-4">
-          <h4 class="font-pixel text-xs text-indigo-400 mb-2">&gt; DESIGN_SISTEMICO</h4>
+          <h4 class="font-pixel text-[9px] text-indigo-400 mb-2">&gt; DESIGN_SISTEMICO</h4>
           <p class="text-xs text-gray-400 leading-relaxed">Gerenciamento de regras de interação e balanceamento de dificuldade focados no usuário.</p>
         </div>
       </div>
     </div>
 
+    <!-- JOGOS DESTAQUE -->
     <div class="mb-4 flex items-center justify-between">
-      <h2 class="font-pixel text-sm uppercase tracking-wider text-white">// COMPILADOS_RECENTES</h2>
-      <button class="btn-secondary text-xs" onclick="switchTabByName('jogos')">VER_TODOS_&gt;</button>
+      <h2 class="font-pixel text-[10px] uppercase tracking-wider text-white">// COMPILADOS_RECENTES</h2>
+      <button class="btn-secondary text-[8px]" onclick="switchTabByName('jogos')">VER_TODOS_&gt;</button>
     </div>
     <div id="home-jogos-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
   </section>
 
+  <!-- ===== JOGOS ===== -->
   <section id="section-jogos" class="section">
     <div class="mb-6">
-      <p class="font-pixel text-xs text-violet-400">// REPOSITORIO_WEB</p>
-      <h2 class="font-pixel text-2xl text-white">Produções Independentes</h2>
+      <p class="font-pixel text-[9px] text-violet-400">// REPOSITORIO_WEB</p>
+      <h2 class="font-pixel text-sm text-white">Produções Independentes</h2>
     </div>
     <div id="jogos-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
     <div id="jogos-empty" class="hidden text-center py-16 text-gray-500">
-      <p class="font-pixel text-sm">[NENHUM_PROJETO_ENCONTRADO]</p>
+      <p class="font-pixel text-[10px]">[NENHUM_PROJETO_ENCONTRADO]</p>
     </div>
   </section>
 
+  <!-- ===== TUTORIAIS ===== -->
   <section id="section-tutoriais" class="section">
     <div class="mb-6">
-      <p class="font-pixel text-xs text-violet-400">// ARQUIVOS_DE_AULA</p>
-      <h2 class="font-pixel text-2xl text-white">Instruções Técnicas</h2>
+      <p class="font-pixel text-[9px] text-violet-400">// ARQUIVOS_DE_AULA</p>
+      <h2 class="font-pixel text-sm text-white">Instruções Técnicas</h2>
       <div class="flex flex-wrap gap-2 mt-4" id="tutorial-filters">
         <button class="filter-btn active" onclick="filterTutoriais('Todos', this)">[TODOS]</button>
         <button class="filter-btn" onclick="filterTutoriais('Básico', this)">[BASICO]</button>
@@ -390,14 +405,15 @@
     </div>
     <div id="tutoriais-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
     <div id="tutoriais-empty" class="hidden text-center py-16 text-gray-500">
-      <p class="font-pixel text-sm">[NENHUMA_AULA_REGISTRADA]</p>
+      <p class="font-pixel text-[10px]">[NENHUMA_AULA_REGISTRADA]</p>
     </div>
   </section>
 
+  <!-- ===== LINKS ===== -->
   <section id="section-links" class="section">
     <div class="mb-6">
-      <p class="font-pixel text-xs text-violet-400">// INDEXADOR_RECURSOS</p>
-      <h2 class="font-pixel text-2xl text-white mb-4">Assets & Documentações</h2>
+      <p class="font-pixel text-[9px] text-violet-400">// INDEXADOR_RECURSOS</p>
+      <h2 class="font-pixel text-sm text-white mb-4">Assets & Documentações</h2>
       <input
         type="text"
         id="links-search"
@@ -408,15 +424,17 @@
     </div>
     <div id="links-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
     <div id="links-empty" class="hidden text-center py-16 text-gray-500">
-      <p class="font-pixel text-sm">[NENHUM_LINK_CORRESPONDENTE]</p>
+      <p class="font-pixel text-[10px]">[NENHUM_LINK_CORRESPONDENTE]</p>
     </div>
   </section>
 
+  <!-- ===== ÁREA DO ALUNO ===== -->
   <section id="section-aluno" class="section">
+    <!-- LOGIN STATE -->
     <div id="student-login" class="max-w-sm mx-auto mt-8">
       <div class="card p-6 bg-[#111116] text-center">
-        <p class="font-pixel text-xs text-violet-400 mb-2">// TERMINAL_RESTRITO</p>
-        <h2 class="font-pixel text-lg text-white mb-4">Autenticação do Desenvolvedor</h2>
+        <p class="font-pixel text-[9px] text-violet-400 mb-3">// TERMINAL_RESTRITO</p>
+        <h2 class="font-pixel text-[11px] text-white mb-4">Autenticação do Desenvolvedor</h2>
         <input
           type="text"
           id="student-code-input"
@@ -425,47 +443,50 @@
           maxlength="20"
           onkeydown="if(event.key==='Enter') loginAluno()"
         />
-        <div id="login-error" class="hidden font-pixel text-xs mb-3 text-red-400">[FALHA: CODIGO_INVALIDO]</div>
-        <button class="btn-primary w-full text-xs tracking-wider" onclick="loginAluno()">CONECTAR_ESTACAO</button>
+        <div id="login-error" class="hidden font-pixel text-[9px] mb-3 text-red-400">[FALHA: CODIGO_INVALIDO]</div>
+        <button class="btn-primary w-full tracking-wider" onclick="loginAluno()">CONECTAR_ESTACAO</button>
       </div>
     </div>
 
+    <!-- DASHBOARD STATE -->
     <div id="student-dashboard" class="hidden">
       <div class="mb-6 flex items-center justify-between flex-wrap gap-4">
         <div>
-          <p class="font-pixel text-xs text-violet-400">// STATUS_CONEXAO: ATIVA</p>
-          <h2 class="font-pixel text-2xl text-white" id="dashboard-nome">Terminal: Aluno</h2>
+          <p class="font-pixel text-[9px] text-violet-400">// STATUS_CONEXAO: ATIVA</p>
+          <h2 class="font-pixel text-base text-white" id="dashboard-nome">Terminal: Aluno</h2>
         </div>
-        <button class="btn-secondary text-xs" onclick="logoutAluno()">DESCONECTAR_</button>
+        <button class="btn-secondary" onclick="logoutAluno()">DESCONECTAR_</button>
       </div>
 
+      <!-- PROGRESS -->
       <div class="card p-6 mb-5 bg-[#111115]">
-        <h3 class="font-pixel text-xs text-blue-400 mb-4">// RASTREIO_DE_ESTÁGIO_DO_PROJETO</h3>
+        <h3 class="font-pixel text-[9px] text-blue-400 mb-4">// RASTREIO_DE_ESTÁGIO_DO_PROJETO</h3>
         <div class="pixel-progress-track mb-2">
           <div class="pixel-progress-fill" id="progress-bar" style="width:0%"></div>
         </div>
-        <div class="progress-steps px-1">
+        <div class="progress-steps flex justify-between px-1 mt-2">
           <span class="progress-step" id="step-ideia">Ideia</span>
           <span class="progress-step" id="step-mecanica">Mecânica</span>
           <span class="progress-step" id="step-arte">Arte</span>
           <span class="progress-step" id="step-polimento">Polimento</span>
           <span class="progress-step" id="step-publicado">Publicado</span>
         </div>
-        <p class="font-pixel text-xs mt-5 text-gray-400">
+        <p class="font-pixel text-[10px] mt-6 text-gray-400">
           MÓDULO ATUAL: <span id="dashboard-etapa" class="text-indigo-400 font-bold uppercase"></span>
         </p>
       </div>
 
+      <!-- ACTIONS -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="card p-5">
-          <h3 class="font-pixel text-sm text-white mb-1">[+] Submissão de Arquivos</h3>
+          <h3 class="font-pixel text-[11px] text-white mb-2">[+] Submissão de Arquivos</h3>
           <p class="text-xs text-gray-400 mb-4 leading-relaxed">Diretório dedicado para versionamento e upload de arquivos .c3p e builds parciais.</p>
-          <a id="link-envios" href="#" target="_blank" class="btn-primary inline-block text-xs">ABRIR_DIRETORIO</a>
+          <a id="link-envios" href="#" target="_blank" class="btn-primary inline-block">ABRIR_DIRETORIO</a>
         </div>
         <div class="card p-5">
-          <h3 class="font-pixel text-sm text-white mb-1">[+] Assets da Sessão</h3>
+          <h3 class="font-pixel text-[11px] text-white mb-2">[+] Assets da Sessão</h3>
           <p class="text-xs text-gray-400 mb-4 leading-relaxed">Spritesheets, pacotes de áudio licenciados e guias estruturais das aulas vigentes.</p>
-          <a id="link-materiais" href="#" target="_blank" class="btn-primary inline-block text-xs">ACESSAR_RECURSOS</a>
+          <a id="link-materiais" href="#" target="_blank" class="btn-primary inline-block">ACESSAR_RECURSOS</a>
         </div>
       </div>
     </div>
@@ -474,7 +495,7 @@
 </main>
 
 <footer class="mt-16 py-8 border-t-2 border-[#22222c] bg-[#111116] text-center">
-  <p class="font-pixel text-xs text-gray-500">
+  <p class="font-pixel text-[9px] text-gray-500">
     ⚡ OVERCAST REALM :: CORE_STATION_ACTIVE
   </p>
 </footer>
@@ -529,9 +550,9 @@ const overcastData = {
   ],
   "jogos": [
     {
-      "titulo": "Sqare Bear",
+      "titulo": "Among Us Adventures",
       "autor": "Emanoel",
-      "capa": "https://placehold.co/300x200/131317/4f46e5?text=Sware+Bear",
+      "capa": "https://placehold.co/300x200/131317/4f46e5?text=Among+Us+Adventures",
       "url": "https://itch.io/embed-upload/14462910?color=ab5237",
       "descricao": "Mecânicas de colisão estruturadas em malha 2D. O projeto explora ciclos de pulo, gravidade simulada via blocos de eventos e polimento básico de interface no Construct 3.",
       "controles": "Mover: SETAS / WASD<br/>Pular: ESPAÇO"
@@ -597,12 +618,12 @@ function renderJogos() {
             onerror="this.src='https://placehold.co/300x200/131317/4f46e5?text=NO_CAPA'"
           />
           <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center">
-            <span class="font-pixel text-xs text-white bg-indigo-700 px-3 py-1.5 border border-white">EXEC_JOGO</span>
+            <span class="font-pixel text-[8px] text-white bg-indigo-700 px-2 py-1.5 border border-white">EXEC_JOGO</span>
           </div>
         </div>
         <div class="p-3 bg-[#131317]">
-          <p class="font-pixel text-xs tracking-wide text-white truncate">${jogo.titulo.toUpperCase()}</p>
-          <p class="text-[10px] uppercase font-mono mt-0.5 text-gray-500">// DEV: ${jogo.autor}</p>
+          <p class="font-pixel text-[9px] tracking-wide text-white truncate">${jogo.titulo.toUpperCase()}</p>
+          <p class="text-[9px] uppercase font-mono mt-1 text-gray-500">// DEV: ${jogo.autor}</p>
         </div>
       </div>
     `;
@@ -624,7 +645,7 @@ function openGame(encodedUrl, encodedTitle, encodedAuthor, encodedDesc, encodedC
   
   document.getElementById('modal-game-title').innerHTML = `
     <span class="text-white">${title}</span> 
-    <span class="text-gray-500 text-xs ml-3">// DEV: ${author}</span>
+    <span class="text-gray-500 text-[9px] ml-2">// DEV: ${author}</span>
   `;
   
   document.getElementById('modal-game-description').innerHTML = desc;
@@ -674,7 +695,7 @@ function renderTutoriais(filter) {
       </div>
       <div class="p-3 bg-[#131317]">
         <div class="flex items-start justify-between gap-2">
-          <p class="font-pixel text-xs text-white leading-tight">${v.titulo.toUpperCase()}</p>
+          <p class="font-pixel text-[9px] text-white leading-tight">${v.titulo.toUpperCase()}</p>
           <span class="badge shrink-0">${v.categoria.toUpperCase()}</span>
         </div>
       </div>
@@ -709,8 +730,8 @@ function renderLinks(query) {
 
   grid.innerHTML = filtered.map(l => `
     <a href="${l.url}" target="_blank" rel="noopener noreferrer" class="card p-4 block bg-[#131317] hover:no-underline">
-      <div class="flex items-start justify-between gap-3 mb-1">
-        <p class="font-pixel text-xs text-white tracking-wide">${l.titulo.toUpperCase()}</p>
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <p class="font-pixel text-[9px] text-white tracking-wide">${l.titulo.toUpperCase()}</p>
         <span class="text-xs text-gray-600 font-mono">-&gt;</span>
       </div>
       <p class="text-[11px] text-gray-500 mb-3 leading-relaxed">${l.descricao || ''}</p>
