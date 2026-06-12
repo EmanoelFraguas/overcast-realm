@@ -679,7 +679,8 @@ function renderJogos() {
   if (empty) empty.classList.add('hidden');
 
   const makeCard = (jogo) => `
-    <div class="card overflow-hidden cursor-pointer group" onclick="openGame('${encodeURIComponent(jogo.url)}', '${encodeURIComponent(jogo.titulo)}')">
+    // Como deve ficar:
+    <div class="card overflow-hidden cursor-pointer group" onclick="openGame('${encodeURIComponent(jogo.url)}', '${encodeURIComponent(jogo.titulo)}', '${encodeURIComponent(jogo.autor)}')">
       <div class="relative overflow-hidden" style="aspect-ratio:3/2;">
         <img
           src="${jogo.capa}"
@@ -705,11 +706,18 @@ function renderJogos() {
 // ============================================================
 // GAME MODAL
 // ============================================================
-function openGame(encodedUrl, encodedTitle) {
+function openGame(encodedUrl, encodedTitle, encodedAuthor) {
   const url = decodeURIComponent(encodedUrl);
   const title = decodeURIComponent(encodedTitle);
+  const author = decodeURIComponent(encodedAuthor);
+  
+  // Define o texto no formato: "Título do Jogo — por Autor"
+  document.getElementById('modal-game-title').innerHTML = `
+    <span style="color:var(--text-primary);">${title}</span> 
+    <span style="color:var(--text-muted); font-size: 14px; font-family: 'Inter', sans-serif; margin-left: 8px;">por ${author}</span>
+  `;
+  
   document.getElementById('modal-iframe').src = url;
-  document.getElementById('modal-game-title').textContent = title;
   document.getElementById('game-modal').style.display = 'flex';
   document.body.style.overflow = 'hidden';
 }
