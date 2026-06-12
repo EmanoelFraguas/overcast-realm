@@ -678,8 +678,7 @@ function renderJogos() {
   }
   if (empty) empty.classList.add('hidden');
 
-  const makeCard = (jogo) =>
-    // Como deve ficar:
+  const makeCard = (jogo) => `
     <div class="card overflow-hidden cursor-pointer group" onclick="openGame('${encodeURIComponent(jogo.url)}', '${encodeURIComponent(jogo.titulo)}', '${encodeURIComponent(jogo.autor)}')">
       <div class="relative overflow-hidden" style="aspect-ratio:3/2;">
         <img
