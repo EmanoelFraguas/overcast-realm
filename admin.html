@@ -462,7 +462,27 @@
             </div>
             <div>
               <label class="form-label">URL da Capa (imagem)</label>
-              <input type="url" id="j-capa" class="form-input" placeholder="https://... (link direto para imagem)" />
+            
+              <input
+                type="url"
+                id="j-capa"
+                class="form-input"
+                placeholder="https://seusite.com/imagem.jpg"
+              />
+            
+              <div class="mt-2 card p-3" style="border-color:rgba(99,102,241,0.2);">
+                <p class="text-xs" style="color:var(--text-muted); line-height:1.6;">
+                  🖼️ <strong style="color:var(--text-primary);">Dica:</strong><br>
+            
+                  • Use imagens na proporção <strong>16:9</strong> (ex.: 1280×720).<br>
+                  • A URL deve apontar diretamente para a imagem (.png, .jpg ou .webp).<br>
+                  • Você pode hospedar a imagem no próprio GitHub do projeto.<br>
+                  • Exemplo de URL válida:<br>
+                  <code style="color:var(--accent-glow);">
+                  https://raw.githubusercontent.com/SEU_USUARIO/SEU_REPOSITORIO/main/capas/meujogo.png
+                  </code>
+                </p>
+              </div>
             </div>
             <div>
               <label class="form-label">URL do Jogo (para jogar) *</label>
