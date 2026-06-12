@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Overcast Realm — Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --bg-base: #0F0F12;
+      --bg-card: #17171C;
+      --bg-input: #1E1E26;
+      --accent-blue: #4F8EF7;
+      --accent-purple: #A855F7;
+      --accent-storm: #6366F1;
+      --accent-glow: #818CF8;
+      --accent-red: #EF4444;
+      --accent-green: #22C55E;
+      --text-primary: #F1F1F3;
+      --text-muted: #8888AA;
+      --border: #25252F;
+    }
+    * { box-sizing: border-box; }
+    body {
+      background: var(--bg-base);
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      min-height: 100vh;
+    }
+    .font-pixel { font-family: 'Pixelify Sans', monospace; }
+
+    /* CARD */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    /* INPUTS */
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-primary);
+      padding: 9px 12px;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color: var(--accent-storm);
+    }
+    .form-input::placeholder, .form-textarea::placeholder { color: var(--text-muted); }
+    .form-select option { background: #1E1E26; }
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: 5px;
+      color: var(--text-muted);
+    }
+
+    /* BUTTONS */
+    .btn-add {
+      background: linear-gradient(135deg, var(--accent-storm), var(--accent-purple));
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 9px 18px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn-add:hover { opacity: 0.85; }
+    .btn-del {
+      background: transparent;
+      color: var(--accent-red);
+      border: 1px solid var(--accent-red);
+      border-radius: 5px;
+      padding: 4px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-del:hover { background: rgba(239,68,68,0.12); }
+    .btn-export {
+      background: linear-gradient(135deg, #22C55E, #16A34A);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 28px;
+      font-family: 'Pixelify Sans', monospace;
+      font-size: 15px;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    .btn-export:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-copy {
+      background: var(--bg-input);
+      color: var(--accent-glow);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 16px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-copy:hover { background: rgba(99,102,241,0.15); }
+
+    /* TABS */
+    .admin-tab {
+      font-family: 'Pixelify Sans', monospace;
+      font-size: 13px;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-muted);
+      transition: all 0.18s;
+    }
+    .admin-tab:hover { color: var(--text-primary); background: var(--bg-input); }
+    .admin-tab.active {
+      color: white;
+      background: linear-gradient(135deg, var(--accent-storm), var(--accent-purple));
+      border-color: var(--accent-storm);
+    }
+
+    /* SECTION */
+    .admin-section { display: none; }
+    .admin-section.active { display: block; }
+
+    /* LIST ITEM */
+    .list-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 6px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      margin-bottom: 6px;
+    }
+    .list-item-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .list-item-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .list-item-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* BADGE */
+    .badge {
+      font-family: 'Pixelify Sans', monospace;
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: rgba(99,102,241,0.15);
+      color: var(--accent-glow);
+      border: 1px solid rgba(99,102,241,0.3);
+      shrink: 0;
+    }
+
+    /* JSON OUTPUT */
+    #json-output {
+      background: #0A0A0E;
+      border: 1px solid var(--accent-storm);
+      border-radius: 8px;
+      color: #A5F3FC;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      padding: 16px;
+      width: 100%;
+      resize: vertical;
+      min-height: 260px;
+      outline: none;
+    }
+
+    /* LOGIN OVERLAY */
+    #login-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-base);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .login-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 40px;
+      width: 100%;
+      max-width: 380px;
+      text-align: center;
+      box-shadow: 0 0 60px rgba(99,102,241,0.2);
+    }
+    .login-input {
+      width: 100%;
+      background: var(--bg-input);
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      padding: 12px 16px;
+      font-size: 15px;
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      text-align: center;
+      letter-spacing: 3px;
+      transition: border-color 0.2s;
+      margin-bottom: 12px;
+    }
+    .login-input:focus { border-color: var(--accent-storm); }
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg-base); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--accent-storm); }
+
+    /* TOAST */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--accent-green);
+      color: white;
+      font-family: 'Pixelify Sans', monospace;
+      font-size: 13px;
+      padding: 10px 20px;
+      border-radius: 8px;
+      z-index: 9998;
+      display: none;
+      box-shadow: 0 4px 20px rgba(34,197,94,0.4);
+    }
+
+    .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 640px) { .form-grid-2 { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div id="toast">✓ Copiado!</div>
+
+<!-- LOGIN OVERLAY -->
+<div id="login-overlay">
+  <div class="login-box">
+    <div class="text-5xl mb-4">🔐</div>
+    <p class="font-pixel text-xs mb-2" style="color:var(--accent-purple);">// ACESSO RESTRITO</p>
+    <h1 class="font-pixel text-2xl mb-1" style="color:var(--text-primary);">Overcast Admin</h1>
+    <p class="text-sm mb-6" style="color:var(--text-muted);">Painel exclusivo do professor.</p>
+    <input
+      type="password"
+      id="login-password"
+      class="login-input"
+      placeholder="••••••••••"
+      onkeydown="if(event.key==='Enter') doLogin()"
+    />
+    <div id="login-error" class="hidden text-sm mb-3" style="color:#F87171;">Senha incorreta.</div>
+    <button class="btn-add w-full text-base py-3" onclick="doLogin()">Entrar no Painel</button>
+  </div>
+</div>
+
+<!-- PANEL (hidden until login) -->
+<div id="admin-panel" style="display:none;">
+
+  <!-- HEADER -->
+  <header style="background:var(--bg-card); border-bottom:1px solid var(--border);" class="sticky top-0 z-40">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <span class="font-pixel text-lg" style="color:var(--accent-glow);">⚙ OVERCAST</span>
+        <span class="font-pixel text-sm" style="color:var(--accent-purple);">ADMIN</span>
+      </div>
+      <div class="flex items-center gap-1 overflow-x-auto" id="admin-nav">
+        <button class="admin-tab active" onclick="switchAdminTab('alunos', this)">👾 Alunos</button>
+        <button class="admin-tab" onclick="switchAdminTab('videos', this)">🎬 Vídeos</button>
+        <button class="admin-tab" onclick="switchAdminTab('links', this)">🔗 Links</button>
+        <button class="admin-tab" onclick="switchAdminTab('jogos', this)">🎮 Jogos</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="max-w-5xl mx-auto px-4 py-8">
+
+    <!-- ===== ABA ALUNOS ===== -->
+    <div id="admin-alunos" class="admin-section active">
+      <div class="mb-6">
+        <p class="font-pixel text-xs mb-1" style="color:var(--accent-purple);">// GERENCIAR</p>
+        <h2 class="font-pixel text-2xl" style="color:var(--text-primary);">Alunos</h2>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- LIST -->
+        <div class="card p-5">
+          <h3 class="font-pixel text-sm mb-4" style="color:var(--accent-glow);">Alunos Cadastrados</h3>
+          <div id="list-alunos"><p class="text-sm" style="color:var(--text-muted);">Nenhum aluno.</p></div>
+        </div>
+        <!-- FORM -->
+        <div class="card p-5">
+          <h3 class="font-pixel text-sm mb-4" style="color:var(--accent-glow);">Adicionar Novo Aluno</h3>
+          <div class="space-y-3">
+            <div>
+              <label class="form-label">Nome *</label>
+              <input type="text" id="a-nome" class="form-input" placeholder="Ex: Pablo" />
+            </div>
+            <div>
+              <label class="form-label">Código Único *</label>
+              <input type="text" id="a-codigo" class="form-input" placeholder="Ex: pablo01 (sem espaços)" />
+            </div>
+            <div>
+              <label class="form-label">Link Pasta de Envios (Drive)</label>
+              <input type="url" id="a-envios" class="form-input" placeholder="https://drive.google.com/..." />
+            </div>
+            <div>
+              <label class="form-label">Link Pasta de Materiais (Drive)</label>
+              <input type="url" id="a-materiais" class="form-input" placeholder="https://drive.google.com/..." />
+            </div>
+            <div>
+              <label class="form-label">Etapa do Projeto *</label>
+              <select id="a-etapa" class="form-select">
+                <option value="Ideia">Ideia</option>
+                <option value="Mecânica">Mecânica</option>
+                <option value="Arte">Arte</option>
+                <option value="Polimento">Polimento</option>
+                <option value="Publicado">Publicado</option>
+              </select>
+            </div>
+            <button class="btn-add w-full mt-2" onclick="addAluno()">+ Adicionar Aluno</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ABA VIDEOS ===== -->
+    <div id="admin-videos" class="admin-section">
+      <div class="mb-6">
+        <p class="font-pixel text-xs mb-1" style="color:var(--accent-purple);">// GERENCIAR</p>
+        <h2 class="font-pixel text-2xl" style="color:var(--text-primary);">Vídeos</h2>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- LIST -->
+        <div class="card p-5">
+          <h3 class="font-pixel text-sm mb-4" style="color:var(--accent-glow);">Vídeos Cadastrados</h3>
+          <div id="list-videos"><p class="text-sm" style="color:var(--text-muted);">Nenhum vídeo.</p></div>
+        </div>
+        <!-- FORM -->
+        <div class="card p-5">
+          <h3 class="font-pixel text-sm mb-4" style="color:var(--accent-glow);">Adicionar Novo Vídeo</h3>
+          <div class="space-y-3">
+            <div>
+              <label class="form-label">Título *</label>
+              <input type="text" id="v-titulo" class="form-input" placeholder="Ex: Introdução ao Construct 3" />
+            </div>
+            <div>
+              <label class="form-label">URL Embed YouTube (youtube-nocookie) *</label>
+              <input type="url" id="v-url" class="form-input" placeholder="https://www.youtube-nocookie.com/embed/ID" />
+            </div>
+            <div class="card p-3" style="border-color:rgba(99,102,241,0.2);">
+              <p class="text-xs" style="color:var(--text-muted); line-height:1.6;">
+                💡 <strong style="color:var(--text-primary);">Como pegar o link:</strong> No YouTube, clique em Compartilhar → Incorporar, copie o link do campo <code style="color:var(--accent-glow);">src=""</code> e troque <code>youtube.com</code> por <code>youtube-nocookie.com</code>.
+              </p>
+            </div>
+            <div>
+              <label class="form-label">Categoria *</label>
+              <select id="v-categoria" class="form-select">
+                <option value="Básico">Básico</option>
+                <option value="Lógica">Lógica</option>
+                <option value="Arte">Arte</option>
+              </select>
+            </div>
+            <button class="btn-add w-full mt-2" onclick="addVideo()">+ Adicionar Vídeo</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ABA LINKS ===== -->
+    <div id="admin-links" class="admin-section">
+      <div class="mb-6">
+        <p class="font-pixel text-xs mb-1" style="color:var(--accent-purple);">// GERENCIAR</p>
+        <h2 class="font-pixel text-2xl" style="color:var(--text-primary);">Links Úteis</h2>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- LIST -->
+        <div class="card p-5">
+          <h3 class="font-pixel text-sm mb-4" style="color:var(--accent-glow);">Links Cadastrados</h3>
+          <div id="list-links"><p class="text-sm" style="color:var(--text-muted);">Nenhum link.</p></div>
+        </div>
+        <!-- FORM -->
+        <div class="card p-5">
+          <h3 class="font-pixel text-sm mb-4" style="color:var(--accent-glow);">Adicionar Novo Link</h3>
+          <div class="space-y-3">
+            <div>
+              <label class="form-label">Título *</label>
+              <input type="text" id="l-titulo" class="form-input" placeholder="Ex: Gerador de Paletas" />
+            </div>
+            <div>
+              <label class="form-label">URL *</label>
+              <input type="url" id="l-url" class="form-input" placeholder="https://..." />
+            </div>
+            <div>
+              <label class="form-label">Descrição</label>
+              <input type="text" id="l-descricao" class="form-input" placeholder="Uma linha explicando o recurso" />
+            </div>
+            <div>
+              <label class="form-label">Tag</label>
+              <input type="text" id="l-tag" class="form-input" placeholder="Ex: Arte, Assets, Publicação..." />
+            </div>
+            <button class="btn-add w-full mt-2" onclick="addLink()">+ Adicionar Link</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ABA JOGOS ===== -->
+    <div id="admin-jogos" class="admin-section">
+      <div class="mb-6">
+        <p class="font-pixel text-xs mb-1" style="color:var(--accent-purple);">// GERENCIAR</p>
+        <h2 class="font-pixel text-2xl" style="color:var(--text-primary);">Jogos</h2>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- LIST -->
+        <div class="card p-5">
+          <h3 class="font-pixel text-sm mb-4" style="color:var(--accent-glow);">Jogos Cadastrados</h3>
+          <div id="list-jogos"><p class="text-sm" style="color:var(--text-muted);">Nenhum jogo.</p></div>
+        </div>
+        <!-- FORM -->
+        <div class="card p-5">
+          <h3 class="font-pixel text-sm mb-4" style="color:var(--accent-glow);">Adicionar Novo Jogo</h3>
+          <div class="space-y-3">
+            <div>
+              <label class="form-label">Título do Jogo *</label>
+              <input type="text" id="j-titulo" class="form-input" placeholder="Ex: Sqare Bear" />
+            </div>
+            <div>
+              <label class="form-label">Nome do Autor *</label>
+              <input type="text" id="j-autor" class="form-input" placeholder="Ex: Emanoel" />
+            </div>
+            <div>
+              <label class="form-label">URL da Capa (imagem)</label>
+              <input type="url" id="j-capa" class="form-input" placeholder="https://... (link direto para imagem)" />
+            </div>
+            <div>
+              <label class="form-label">URL do Jogo (para jogar) *</label>
+              <input type="url" id="j-url" class="form-input" placeholder="https://... (itch.io, Poki, Construct...)" />
+            </div>
+            <button class="btn-add w-full mt-2" onclick="addJogo()">+ Adicionar Jogo</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== EXPORTAR JSON ===== -->
+    <div class="card p-6 mt-8" style="border-color:rgba(34,197,94,0.3);">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="text-2xl">📋</span>
+        <div>
+          <p class="font-pixel text-xs mb-0.5" style="color:var(--accent-green);">// EXPORTAR</p>
+          <h3 class="font-pixel text-lg" style="color:var(--text-primary);">Gerar Novo JSON</h3>
+        </div>
+      </div>
+      <p class="text-sm mb-5" style="color:var(--text-muted); line-height:1.7;">
+        Clique em <strong style="color:var(--text-primary);">Gerar Novo JSON</strong> para ver o código atualizado. Depois copie e cole no bloco <code style="color:var(--accent-glow); background:var(--bg-input); padding:2px 6px; border-radius:4px;">const overcastData = { ... }</code> dentro do arquivo <code style="color:var(--accent-glow); background:var(--bg-input); padding:2px 6px; border-radius:4px;">index.html</code>.
+      </p>
+      <div class="flex flex-wrap gap-3 mb-4">
+        <button class="btn-export" onclick="generateJSON()">⚡ Gerar Novo JSON</button>
+        <button class="btn-copy" onclick="copyJSON()">📋 Copiar Tudo</button>
+      </div>
+      <textarea id="json-output" readonly placeholder="Clique em 'Gerar Novo JSON' para ver o resultado aqui..."></textarea>
+    </div>
+
+  </div><!-- end max-w -->
+</div><!-- end admin-panel -->
+
+<script>
+// ============================================================
+// ADMIN PASSWORD
+// ============================================================
+const ADMIN_PASSWORD = "overcast2026";
+
+function doLogin() {
+  const val = document.getElementById('login-password').value;
+  if (val === ADMIN_PASSWORD) {
+    document.getElementById('login-overlay').style.display = 'none';
+    document.getElementById('admin-panel').style.display = 'block';
+    initAdmin();
+  } else {
+    document.getElementById('login-error').classList.remove('hidden');
+    document.getElementById('login-password').value = '';
+    document.getElementById('login-password').focus();
+  }
+}
+
+// ============================================================
+// WORKING DATA (in-memory — starts from mock)
+// ============================================================
+let data = {
+  alunos: [
+    {
+      codigo: "pablo01",
+      nome: "Pablo",
+      pastaEnvios: "https://drive.google.com/",
+      pastaMateriais: "https://drive.google.com/",
+      etapa: "Arte"
+    }
+  ],
+  videos: [
+    {
+      titulo: "Introdução ao Construct 3",
+      url: "https://www.youtube-nocookie.com/embed/EXEMPLO",
+      categoria: "Básico"
+    }
+  ],
+  links: [
+    {
+      titulo: "Gerador de Paletas de Cores",
+      url: "https://lospec.com",
+      descricao: "Ferramenta para achar paletas pixel art.",
+      tag: "Arte"
+    },
+    {
+      titulo: "OpenGameArt",
+      url: "https://opengameart.org",
+      descricao: "Assets gratuitos para jogos.",
+      tag: "Assets"
+    },
+    {
+      titulo: "itch.io",
+      url: "https://itch.io",
+      descricao: "Plataforma indie para publicar jogos.",
+      tag: "Publicação"
+    }
+  ],
+  jogos: [
+    {
+      titulo: "Sqare Bear",
+      autor: "Emanoel",
+      capa: "https://placehold.co/300x200/1A1A1E/818CF8?text=Sqare+Bear",
+      url: "https://construct.net/"
+    }
+  ]
+};
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function switchAdminTab(name, btn) {
+  document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.admin-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('admin-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+// ============================================================
+// RENDER LISTS
+// ============================================================
+function renderAll() {
+  renderListAlunos();
+  renderListVideos();
+  renderListLinks();
+  renderListJogos();
+}
+
+function renderListAlunos() {
+  const el = document.getElementById('list-alunos');
+  if (data.alunos.length === 0) {
+    el.innerHTML = '<p class="text-sm" style="color:var(--text-muted);">Nenhum aluno cadastrado.</p>';
+    return;
+  }
+  el.innerHTML = data.alunos.map((a, i) => `
+    <div class="list-item">
+      <div class="list-item-info">
+        <div class="list-item-title">${a.nome}</div>
+        <div class="list-item-sub">Código: <code style="color:var(--accent-glow);">${a.codigo}</code> · ${a.etapa}</div>
+      </div>
+      <button class="btn-del" onclick="deleteItem('alunos', ${i})">Excluir</button>
+    </div>
+  `).join('');
+}
+
+function renderListVideos() {
+  const el = document.getElementById('list-videos');
+  if (data.videos.length === 0) {
+    el.innerHTML = '<p class="text-sm" style="color:var(--text-muted);">Nenhum vídeo cadastrado.</p>';
+    return;
+  }
+  el.innerHTML = data.videos.map((v, i) => `
+    <div class="list-item">
+      <div class="list-item-info">
+        <div class="list-item-title">${v.titulo}</div>
+        <div class="list-item-sub">${v.categoria}</div>
+      </div>
+      <button class="btn-del" onclick="deleteItem('videos', ${i})">Excluir</button>
+    </div>
+  `).join('');
+}
+
+function renderListLinks() {
+  const el = document.getElementById('list-links');
+  if (data.links.length === 0) {
+    el.innerHTML = '<p class="text-sm" style="color:var(--text-muted);">Nenhum link cadastrado.</p>';
+    return;
+  }
+  el.innerHTML = data.links.map((l, i) => `
+    <div class="list-item">
+      <div class="list-item-info">
+        <div class="list-item-title">${l.titulo}</div>
+        <div class="list-item-sub">${l.tag || '—'} · <a href="${l.url}" target="_blank" style="color:var(--accent-blue);">Abrir ↗</a></div>
+      </div>
+      <button class="btn-del" onclick="deleteItem('links', ${i})">Excluir</button>
+    </div>
+  `).join('');
+}
+
+function renderListJogos() {
+  const el = document.getElementById('list-jogos');
+  if (data.jogos.length === 0) {
+    el.innerHTML = '<p class="text-sm" style="color:var(--text-muted);">Nenhum jogo cadastrado.</p>';
+    return;
+  }
+  el.innerHTML = data.jogos.map((j, i) => `
+    <div class="list-item">
+      <div class="list-item-info">
+        <div class="list-item-title">${j.titulo}</div>
+        <div class="list-item-sub">por ${j.autor}</div>
+      </div>
+      <button class="btn-del" onclick="deleteItem('jogos', ${i})">Excluir</button>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// DELETE
+// ============================================================
+function deleteItem(collection, index) {
+  if (!confirm('Remover este item?')) return;
+  data[collection].splice(index, 1);
+  renderAll();
+}
+
+// ============================================================
+// ADD ALUNO
+// ============================================================
+function addAluno() {
+  const nome   = document.getElementById('a-nome').value.trim();
+  const codigo = document.getElementById('a-codigo').value.trim().replace(/\s+/g, '').toLowerCase();
+  const envios = document.getElementById('a-envios').value.trim();
+  const mats   = document.getElementById('a-materiais').value.trim();
+  const etapa  = document.getElementById('a-etapa').value;
+
+  if (!nome || !codigo) return alert('Nome e código são obrigatórios.');
+  if (data.alunos.find(a => a.codigo === codigo)) return alert('Esse código já existe. Use um código único.');
+
+  data.alunos.push({ codigo, nome, pastaEnvios: envios || '#', pastaMateriais: mats || '#', etapa });
+  document.getElementById('a-nome').value = '';
+  document.getElementById('a-codigo').value = '';
+  document.getElementById('a-envios').value = '';
+  document.getElementById('a-materiais').value = '';
+  renderListAlunos();
+  showToast('Aluno adicionado!');
+}
+
+// ============================================================
+// ADD VIDEO
+// ============================================================
+function addVideo() {
+  const titulo    = document.getElementById('v-titulo').value.trim();
+  const url       = document.getElementById('v-url').value.trim();
+  const categoria = document.getElementById('v-categoria').value;
+
+  if (!titulo || !url) return alert('Título e URL são obrigatórios.');
+
+  data.videos.push({ titulo, url, categoria });
+  document.getElementById('v-titulo').value = '';
+  document.getElementById('v-url').value = '';
+  renderListVideos();
+  showToast('Vídeo adicionado!');
+}
+
+// ============================================================
+// ADD LINK
+// ============================================================
+function addLink() {
+  const titulo   = document.getElementById('l-titulo').value.trim();
+  const url      = document.getElementById('l-url').value.trim();
+  const descricao = document.getElementById('l-descricao').value.trim();
+  const tag      = document.getElementById('l-tag').value.trim();
+
+  if (!titulo || !url) return alert('Título e URL são obrigatórios.');
+
+  data.links.push({ titulo, url, descricao, tag });
+  document.getElementById('l-titulo').value = '';
+  document.getElementById('l-url').value = '';
+  document.getElementById('l-descricao').value = '';
+  document.getElementById('l-tag').value = '';
+  renderListLinks();
+  showToast('Link adicionado!');
+}
+
+// ============================================================
+// ADD JOGO
+// ============================================================
+function addJogo() {
+  const titulo = document.getElementById('j-titulo').value.trim();
+  const autor  = document.getElementById('j-autor').value.trim();
+  const capa   = document.getElementById('j-capa').value.trim();
+  const url    = document.getElementById('j-url').value.trim();
+
+  if (!titulo || !autor || !url) return alert('Título, autor e URL do jogo são obrigatórios.');
+
+  data.jogos.push({
+    titulo,
+    autor,
+    capa: capa || 'https://placehold.co/300x200/1A1A1E/818CF8?text=' + encodeURIComponent(titulo),
+    url
+  });
+  document.getElementById('j-titulo').value = '';
+  document.getElementById('j-autor').value = '';
+  document.getElementById('j-capa').value = '';
+  document.getElementById('j-url').value = '';
+  renderListJogos();
+  showToast('Jogo adicionado!');
+}
+
+// ============================================================
+// GENERATE JSON
+// ============================================================
+function generateJSON() {
+  const output = `const overcastData = ${JSON.stringify(data, null, 2)};`;
+  document.getElementById('json-output').value = output;
+  document.getElementById('json-output').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function copyJSON() {
+  const textarea = document.getElementById('json-output');
+  if (!textarea.value) {
+    generateJSON();
+    setTimeout(() => {
+      textarea.select();
+      document.execCommand('copy');
+      showToast('JSON copiado!');
+    }, 100);
+    return;
+  }
+  textarea.select();
+  document.execCommand('copy');
+  navigator.clipboard.writeText(textarea.value).catch(() => {});
+  showToast('JSON copiado!');
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = '✓ ' + msg;
+  t.style.display = 'block';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.style.display = 'none'; }, 2400);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+function initAdmin() {
+  renderAll();
+}
+</script>
+</body>
+</html>
