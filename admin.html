@@ -3,915 +3,507 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Overcast Realm — Admin</title>
+  <title>Overcast Realm — Terminal Master</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root {
-      --bg-base: #0F0F12;
-      --bg-card: #17171C;
-      --bg-input: #1E1E26;
-      --accent-blue: #4F8EF7;
-      --accent-purple: #A855F7;
-      --accent-storm: #6366F1;
-      --accent-glow: #818CF8;
-      --accent-red: #EF4444;
-      --accent-green: #22C55E;
-      --text-primary: #F1F1F3;
-      --text-muted: #8888AA;
-      --border: #25252F;
+      --bg-base: #0a0a0c;
+      --bg-card: #121216;
+      --bg-input: #000000;
+      --accent-storm: #4f46e5;
+      --accent-glow: #a5b4fc;
+      --accent-red: #ef4444;
+      --accent-green: #10b981;
+      --text-primary: #f3f4f6;
+      --text-muted: #6b7280;
+      --border-brutal: #2e2e3a;
     }
-    * { box-sizing: border-box; }
+
+    * { 
+      box-sizing: border-box; 
+      border-radius: 0px !important;
+    }
+
     body {
-      background: var(--bg-base);
+      background-color: var(--bg-base);
       color: var(--text-primary);
       font-family: 'Inter', sans-serif;
       margin: 0;
       min-height: 100vh;
+      background-image: 
+        linear-gradient(rgba(46, 46, 58, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(46, 46, 58, 0.1) 1px, transparent 1px);
+      background-size: 30px 30px;
     }
-    .font-pixel { font-family: 'Pixelify Sans', monospace; }
 
-    /* CARD */
+    .font-pixel { 
+      font-family: 'Press Start 2P', monospace; 
+      line-height: 1.4;
+    }
+
     .card {
       background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
+      border: 2px solid var(--border-brutal);
+      box-shadow: 4px 4px 0px #000000;
     }
 
-    /* INPUTS */
-    .form-input, .form-select, .form-textarea {
-      width: 100%;
+    .input-field {
       background: var(--bg-input);
-      border: 1px solid var(--border);
-      border-radius: 6px;
+      border: 2px solid var(--border-brutal);
       color: var(--text-primary);
-      padding: 9px 12px;
-      font-family: 'Inter', sans-serif;
+      padding: 10px 12px;
       font-size: 13px;
       outline: none;
-      transition: border-color 0.2s;
-    }
-    .form-input:focus, .form-select:focus, .form-textarea:focus {
-      border-color: var(--accent-storm);
-    }
-    .form-input::placeholder, .form-textarea::placeholder { color: var(--text-muted); }
-    .form-select option { background: #1E1E26; }
-    .form-label {
-      display: block;
-      font-size: 12px;
-      font-weight: 500;
-      margin-bottom: 5px;
-      color: var(--text-muted);
-    }
-
-    /* BUTTONS */
-    .btn-add {
-      background: linear-gradient(135deg, var(--accent-storm), var(--accent-purple));
-      color: white;
-      border: none;
-      border-radius: 6px;
-      padding: 9px 18px;
-      font-family: 'Inter', sans-serif;
-      font-weight: 600;
-      font-size: 13px;
-      cursor: pointer;
-      transition: opacity 0.2s;
-    }
-    .btn-add:hover { opacity: 0.85; }
-    .btn-del {
-      background: transparent;
-      color: var(--accent-red);
-      border: 1px solid var(--accent-red);
-      border-radius: 5px;
-      padding: 4px 10px;
-      font-size: 12px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .btn-del:hover { background: rgba(239,68,68,0.12); }
-    .btn-export {
-      background: linear-gradient(135deg, #22C55E, #16A34A);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      padding: 12px 28px;
-      font-family: 'Pixelify Sans', monospace;
-      font-size: 15px;
-      cursor: pointer;
-      transition: opacity 0.2s, transform 0.1s;
-    }
-    .btn-export:hover { opacity: 0.9; transform: translateY(-1px); }
-    .btn-copy {
-      background: var(--bg-input);
-      color: var(--accent-glow);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 8px 16px;
-      font-size: 13px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .btn-copy:hover { background: rgba(99,102,241,0.15); }
-
-    /* TABS */
-    .admin-tab {
-      font-family: 'Pixelify Sans', monospace;
-      font-size: 13px;
-      padding: 8px 16px;
-      border-radius: 6px;
-      cursor: pointer;
-      border: 1px solid transparent;
-      background: transparent;
-      color: var(--text-muted);
-      transition: all 0.18s;
-    }
-    .admin-tab:hover { color: var(--text-primary); background: var(--bg-input); }
-    .admin-tab.active {
-      color: white;
-      background: linear-gradient(135deg, var(--accent-storm), var(--accent-purple));
-      border-color: var(--accent-storm);
-    }
-
-    /* SECTION */
-    .admin-section { display: none; }
-    .admin-section.active { display: block; }
-
-    /* LIST ITEM */
-    .list-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 10px 14px;
-      border-radius: 6px;
-      background: var(--bg-input);
-      border: 1px solid var(--border);
-      margin-bottom: 6px;
-    }
-    .list-item-info {
-      flex: 1;
-      min-width: 0;
-    }
-    .list-item-title {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-primary);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .list-item-sub {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-top: 2px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    /* BADGE */
-    .badge {
-      font-family: 'Pixelify Sans', monospace;
-      font-size: 10px;
-      padding: 2px 7px;
-      border-radius: 4px;
-      background: rgba(99,102,241,0.15);
-      color: var(--accent-glow);
-      border: 1px solid rgba(99,102,241,0.3);
-      shrink: 0;
-    }
-
-    /* JSON OUTPUT */
-    #json-output {
-      background: #0A0A0E;
-      border: 1px solid var(--accent-storm);
-      border-radius: 8px;
-      color: #A5F3FC;
-      font-family: 'Courier New', monospace;
-      font-size: 12px;
-      line-height: 1.6;
-      padding: 16px;
       width: 100%;
-      resize: vertical;
-      min-height: 260px;
+    }
+    .input-field:focus {
+      border-color: var(--accent-glow);
+    }
+
+    .select-field {
+      background: #1c1c24;
+      border: 2px solid var(--border-brutal);
+      color: var(--text-primary);
+      padding: 8px;
+      font-size: 12px;
       outline: none;
     }
 
-    /* LOGIN OVERLAY */
-    #login-overlay {
-      position: fixed;
-      inset: 0;
-      background: var(--bg-base);
-      z-index: 9999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    .btn-action {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      box-shadow: 2px 2px 0px #000000;
     }
-    .login-box {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 40px;
-      width: 100%;
-      max-width: 380px;
-      text-align: center;
-      box-shadow: 0 0 60px rgba(99,102,241,0.2);
-    }
-    .login-input {
-      width: 100%;
-      background: var(--bg-input);
-      border: 2px solid var(--border);
-      border-radius: 8px;
-      color: var(--text-primary);
+    
+    .btn-add { background: var(--accent-storm); color: #fff; }
+    .btn-add:hover { background: #3730a3; }
+    .btn-del { background: transparent; border-color: var(--accent-red); color: var(--accent-red); }
+    .btn-del:hover { background: var(--accent-red); color: #fff; }
+    .btn-edit { background: transparent; border-color: #eab308; color: #eab308; }
+    .btn-edit:hover { background: #eab308; color: #000; }
+
+    .nav-tab {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 9px;
       padding: 12px 16px;
-      font-size: 15px;
-      font-family: 'Inter', sans-serif;
-      outline: none;
-      text-align: center;
-      letter-spacing: 3px;
-      transition: border-color 0.2s;
-      margin-bottom: 12px;
+      cursor: pointer;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
     }
-    .login-input:focus { border-color: var(--accent-storm); }
-
-    /* SCROLLBAR */
-    ::-webkit-scrollbar { width: 5px; }
-    ::-webkit-scrollbar-track { background: var(--bg-base); }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--accent-storm); }
-
-    /* TOAST */
-    #toast {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      background: var(--accent-green);
-      color: white;
-      font-family: 'Pixelify Sans', monospace;
-      font-size: 13px;
-      padding: 10px 20px;
-      border-radius: 8px;
-      z-index: 9998;
-      display: none;
-      box-shadow: 0 4px 20px rgba(34,197,94,0.4);
+    .nav-tab.active {
+      color: var(--accent-glow);
+      border-bottom-color: var(--accent-storm);
     }
-
-    .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    @media (max-width: 640px) { .form-grid-2 { grid-template-columns: 1fr; } }
   </style>
 </head>
-<body>
+<body class="p-4 md:p-8">
 
-<!-- TOAST -->
-<div id="toast">✓ Copiado!</div>
-
-<!-- LOGIN OVERLAY -->
-<div id="login-overlay">
-  <div class="login-box">
-    <div class="text-5xl mb-4">🔐</div>
-    <p class="font-pixel text-xs mb-2" style="color:var(--accent-purple);">// ACESSO RESTRITO</p>
-    <h1 class="font-pixel text-2xl mb-1" style="color:var(--text-primary);">Overcast Admin</h1>
-    <p class="text-sm mb-6" style="color:var(--text-muted);">Painel exclusivo do professor.</p>
-    <input
-      type="password"
-      id="login-password"
-      class="login-input"
-      placeholder="••••••••••"
-      onkeydown="if(event.key==='Enter') doLogin()"
-    />
-    <div id="login-error" class="hidden text-sm mb-3" style="color:#F87171;">Senha incorreta.</div>
-    <button class="btn-add w-full text-base py-3" onclick="doLogin()">Entrar no Painel</button>
+<header class="max-w-6xl mx-auto mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b-2 border-[#2e2e3a] pb-4">
+  <div>
+    <h1 class="font-pixel text-sm text-white">[⚒ TERMINAL_MASTER_CONTROL]</h1>
+    <p id="sync-status" class="text-xs font-mono mt-2 text-gray-500">Iniciando barramento...</p>
   </div>
-</div>
+  <div class="flex gap-2">
+    <button class="btn-action bg-gray-800 text-white" onclick="exportData()">EXPORTAR_JSON</button>
+    <button class="btn-action bg-red-950 text-red-400" onclick="resetStorage()">RESET_FACTORY</button>
+  </div>
+</header>
 
-<!-- PANEL (hidden until login) -->
-<div id="admin-panel" style="display:none;">
-
-  <!-- HEADER -->
-  <header style="background:var(--bg-card); border-bottom:1px solid var(--border);" class="sticky top-0 z-40">
-    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
-      <div class="flex items-center gap-2">
-        <span class="font-pixel text-lg" style="color:var(--accent-glow);">⚙ OVERCAST</span>
-        <span class="font-pixel text-sm" style="color:var(--accent-purple);">ADMIN</span>
-      </div>
-      <div class="flex items-center gap-1 overflow-x-auto" id="admin-nav">
-        <button class="admin-tab active" onclick="switchAdminTab('alunos', this)">👾 Alunos</button>
-        <button class="admin-tab" onclick="switchAdminTab('videos', this)">🎬 Vídeos</button>
-        <button class="admin-tab" onclick="switchAdminTab('links', this)">🔗 Links</button>
-        <button class="admin-tab" onclick="switchAdminTab('jogos', this)">🎮 Jogos</button>
-      </div>
-    </div>
-  </header>
-
-  <div class="max-w-5xl mx-auto px-4 py-8">
-
-    <!-- ===== ABA ALUNOS ===== -->
-    <div id="admin-alunos" class="admin-section active">
-      <div class="mb-6">
-        <p class="font-pixel text-xs mb-1" style="color:var(--accent-purple);">// GERENCIAR</p>
-        <h2 class="font-pixel text-2xl" style="color:var(--text-primary);">Alunos</h2>
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- LIST -->
-        <div class="card p-5">
-          <h3 class="font-pixel text-sm mb-4" style="color:var(--accent-glow);">Alunos Cadastrados</h3>
-          <div id="list-alunos"><p class="text-sm" style="color:var(--text-muted);">Nenhum aluno.</p></div>
-        </div>
-        <!-- FORM -->
-        <div class="card p-5">
-          <h3 class="font-pixel text-sm mb-4" style="color:var(--accent-glow);">Adicionar Novo Aluno</h3>
-          <div class="space-y-3">
-            <div>
-              <label class="form-label">Nome *</label>
-              <input type="text" id="a-nome" class="form-input" placeholder="Ex: Pablo" />
-            </div>
-            <div>
-              <label class="form-label">Código Único *</label>
-              <input type="text" id="a-codigo" class="form-input" placeholder="Ex: pablo01 (sem espaços)" />
-            </div>
-            <div>
-              <label class="form-label">Link Pasta de Envios (Drive)</label>
-              <input type="url" id="a-envios" class="form-input" placeholder="https://drive.google.com/..." />
-            </div>
-            <div>
-              <label class="form-label">Link Pasta de Materiais (Drive)</label>
-              <input type="url" id="a-materiais" class="form-input" placeholder="https://drive.google.com/..." />
-            </div>
-            <div>
-              <label class="form-label">Etapa do Projeto *</label>
-              <select id="a-etapa" class="form-select">
-                <option value="Ideia">Ideia</option>
-                <option value="Mecânica">Mecânica</option>
-                <option value="Arte">Arte</option>
-                <option value="Polimento">Polimento</option>
-                <option value="Publicado">Publicado</option>
-              </select>
-            </div>
-            <button class="btn-add w-full mt-2" onclick="addAluno()">+ Adicionar Aluno</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ===== ABA VIDEOS ===== -->
-    <div id="admin-videos" class="admin-section">
-      <div class="mb-6">
-        <p class="font-pixel text-xs mb-1" style="color:var(--accent-purple);">// GERENCIAR</p>
-        <h2 class="font-pixel text-2xl" style="color:var(--text-primary);">Vídeos</h2>
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- LIST -->
-        <div class="card p-5">
-          <h3 class="font-pixel text-sm mb-4" style="color:var(--accent-glow);">Vídeos Cadastrados</h3>
-          <div id="list-videos"><p class="text-sm" style="color:var(--text-muted);">Nenhum vídeo.</p></div>
-        </div>
-        <!-- FORM -->
-        <div class="card p-5">
-          <h3 class="font-pixel text-sm mb-4" style="color:var(--accent-glow);">Adicionar Novo Vídeo</h3>
-          <div class="space-y-3">
-            <div>
-              <label class="form-label">Título *</label>
-              <input type="text" id="v-titulo" class="form-input" placeholder="Ex: Introdução ao Construct 3" />
-            </div>
-            <div>
-              <label class="form-label">URL Embed YouTube (youtube-nocookie) *</label>
-              <input type="url" id="v-url" class="form-input" placeholder="https://www.youtube-nocookie.com/embed/ID" />
-            </div>
-            <div class="card p-3" style="border-color:rgba(99,102,241,0.2);">
-              <p class="text-xs" style="color:var(--text-muted); line-height:1.6;">
-                💡 <strong style="color:var(--text-primary);">Como pegar o link:</strong> No YouTube, clique em Compartilhar → Incorporar, copie o link do campo <code style="color:var(--accent-glow);">src=""</code> e troque <code>youtube.com</code> por <code>youtube-nocookie.com</code>.
-              </p>
-            </div>
-            <div>
-              <label class="form-label">Categoria *</label>
-              <select id="v-categoria" class="form-select">
-                <option value="Básico">Básico</option>
-                <option value="Lógica">Lógica</option>
-                <option value="Arte">Arte</option>
-              </select>
-            </div>
-            <button class="btn-add w-full mt-2" onclick="addVideo()">+ Adicionar Vídeo</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ===== ABA LINKS ===== -->
-    <div id="admin-links" class="admin-section">
-      <div class="mb-6">
-        <p class="font-pixel text-xs mb-1" style="color:var(--accent-purple);">// GERENCIAR</p>
-        <h2 class="font-pixel text-2xl" style="color:var(--text-primary);">Links Úteis</h2>
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- LIST -->
-        <div class="card p-5">
-          <h3 class="font-pixel text-sm mb-4" style="color:var(--accent-glow);">Links Cadastrados</h3>
-          <div id="list-links"><p class="text-sm" style="color:var(--text-muted);">Nenhum link.</p></div>
-        </div>
-        <!-- FORM -->
-        <div class="card p-5">
-          <h3 class="font-pixel text-sm mb-4" style="color:var(--accent-glow);">Adicionar Novo Link</h3>
-          <div class="space-y-3">
-            <div>
-              <label class="form-label">Título *</label>
-              <input type="text" id="l-titulo" class="form-input" placeholder="Ex: Gerador de Paletas" />
-            </div>
-            <div>
-              <label class="form-label">URL *</label>
-              <input type="url" id="l-url" class="form-input" placeholder="https://..." />
-            </div>
-            <div>
-              <label class="form-label">Descrição</label>
-              <input type="text" id="l-descricao" class="form-input" placeholder="Uma linha explicando o recurso" />
-            </div>
-            <div>
-              <label class="form-label">Tag</label>
-              <input type="text" id="l-tag" class="form-input" placeholder="Ex: Arte, Assets, Publicação..." />
-            </div>
-            <button class="btn-add w-full mt-2" onclick="addLink()">+ Adicionar Link</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ===== ABA JOGOS ===== -->
-    <div id="admin-jogos" class="admin-section">
-      <div class="mb-6">
-        <p class="font-pixel text-xs mb-1" style="color:var(--accent-purple);">// GERENCIAR</p>
-        <h2 class="font-pixel text-2xl" style="color:var(--text-primary);">Jogos</h2>
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- LIST -->
-        <div class="card p-5">
-          <h3 class="font-pixel text-sm mb-4" style="color:var(--accent-glow);">Jogos Cadastrados</h3>
-          <div id="list-jogos"><p class="text-sm" style="color:var(--text-muted);">Nenhum jogo.</p></div>
-        </div>
-        <!-- FORM -->
-        <div class="card p-5">
-          <h3 class="font-pixel text-sm mb-4" style="color:var(--accent-glow);">Adicionar Novo Jogo</h3>
-          <div class="space-y-3">
-            <div>
-              <label class="form-label">Título do Jogo *</label>
-              <input type="text" id="j-titulo" class="form-input" placeholder="Ex: Sqare Bear" />
-            </div>
-            <div>
-              <label class="form-label">Nome do Autor *</label>
-              <input type="text" id="j-autor" class="form-input" placeholder="Ex: Emanoel" />
-            </div>
-            <div>
-              <label class="form-label">URL da Capa (imagem)</label>
-            
-              <input
-                type="url"
-                id="j-capa"
-                class="form-input"
-                placeholder="https://seusite.com/imagem.jpg"
-              />
-            
-              <div class="mt-2 card p-3" style="border-color:rgba(99,102,241,0.2);">
-                <p class="text-xs" style="color:var(--text-muted); line-height:1.6;">
-                  🖼️ <strong style="color:var(--text-primary);">Dica:</strong><br>
-            
-                  • Use imagens na proporção <strong>16:9</strong> (ex.: 1280×720).<br>
-                  • A URL deve apontar diretamente para a imagem (.png, .jpg ou .webp).<br>
-                  • Você pode hospedar a imagem no próprio GitHub do projeto.<br>
-                  • Exemplo de URL válida:<br>
-                  <code style="color:var(--accent-glow);">
-                  https://raw.githubusercontent.com/SEU_USUARIO/SEU_REPOSITORIO/main/capas/meujogo.png
-                  </code>
-                </p>
-              </div>
-            </div>
-            <div>
-              <label class="form-label">URL do Jogo (para jogar) *</label>
-              <input type="url" id="j-url" class="form-input" placeholder="https://... (itch.io, Poki, Construct...)" />
-            </div>
-            <div>
-              <label class="form-label">Descrição breve</label>
-              <input type="text" id="j-descricao" class="form-input" placeholder="Uma frase sobre o jogo e a mecânica" />
-            </div>
-            <div>
-              <label class="form-label">Controles</label>
-              <input type="text" id="j-controles" class="form-input" placeholder="Ex: Setas para mover, Espaço para pular" />
-            </div>
-            <div class="flex items-center gap-3 pt-1">
-              <input type="checkbox" id="j-mobile" style="width:16px;height:16px;accent-color:#6366f1;cursor:pointer;" />
-              <label for="j-mobile" class="form-label" style="margin:0;cursor:pointer;">📱 Compatível com mobile / touch</label>
-            </div>
-            <button class="btn-add w-full mt-2" onclick="addJogo()">+ Adicionar Jogo</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ===== SYNC STATUS + EXPORTAR JSON ===== -->
-    <div class="card p-6 mt-8" style="border-color:rgba(34,197,94,0.3);">
-      <div class="flex items-center gap-3 mb-3">
-        <span class="text-2xl">💾</span>
+<main class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+  
+  <div class="lg:col-span-5 space-y-6">
+    <div class="card p-5">
+      <h2 id="form-title" class="font-pixel text-[10px] text-indigo-400 mb-4">// REGISTRAR_ALUNO</h2>
+      <div class="space-y-3 font-mono text-xs">
+        <input type="hidden" id="edit-aluno-index" value="" />
         <div>
-          <p class="font-pixel text-xs mb-0.5" style="color:var(--accent-green);">// SINCRONIZAÇÃO</p>
-          <h3 class="font-pixel text-lg" style="color:var(--text-primary);">Status & Exportação</h3>
+          <label class="block mb-1 text-gray-500">CÓDIGO DE ACESSO (EX: pablo01)</label>
+          <input type="text" id="aluno-codigo" class="input-field" />
+        </div>
+        <div>
+          <label class="block mb-1 text-gray-500">NOME DO ALUNO</label>
+          <input type="text" id="aluno-nome" class="input-field" />
+        </div>
+        <div>
+          <label class="block mb-1 text-gray-500">URL PASTA DE ENVIOS (.C3P)</label>
+          <input type="text" id="aluno-envios" class="input-field" />
+        </div>
+        <div>
+          <label class="block mb-1 text-gray-500">URL PASTA DE MATERIAIS</label>
+          <input type="text" id="aluno-materiais" class="input-field" />
+        </div>
+        <div>
+          <label class="block mb-1 text-gray-500">ESTÁGIO ATUAL DO PROJETO</label>
+          <select id="aluno-etapa" class="input-field bg-black">
+            <option value="Ideia">Ideia</option>
+            <option value="Mecânica">Mecânica</option>
+            <option value="Arte">Arte</option>
+            <option value="Polimento">Polimento</option>
+            <option value="Publicado">Publicado</option>
+          </select>
+        </div>
+        <div class="pt-2 flex gap-2">
+          <button class="btn-action btn-add flex-1" id="btn-save-aluno" onclick="saveAluno()">SALVAR_ALUNO</button>
+          <button class="btn-action bg-gray-700 text-white hidden" id="btn-cancel-aluno" onclick="clearAlunoForm()">CANCELAR</button>
         </div>
       </div>
-
-      <!-- SYNC STATUS -->
-      <div class="mb-5 p-3" style="background:var(--bg-input); border:1px solid var(--border);">
-        <p class="font-pixel text-[9px] mb-1" style="color:var(--text-muted);">STATUS_ATUAL:</p>
-        <p id="sync-status" class="font-pixel text-[9px]" style="color:#6b7280; line-height:1.6;">● Carregando...</p>
-      </div>
-
-      <!-- COMO FUNCIONA -->
-      <div class="mb-5 p-4" style="background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.2);">
-        <p class="font-pixel text-[9px] mb-2" style="color:var(--accent-glow);">// COMO FUNCIONA</p>
-        <p class="text-xs leading-relaxed" style="color:var(--text-muted);">
-          Toda vez que você adiciona ou remove um item, os dados são salvos automaticamente neste navegador.
-          O <strong style="color:var(--text-primary);">index.html aberto neste mesmo navegador</strong> vai carregar esses dados na próxima vez que for acessado.<br/><br/>
-          Use <strong style="color:var(--text-primary);">Gerar JSON</strong> se quiser publicar num repositório (GitHub Pages, etc.) e garantir que qualquer pessoa veja os dados atualizados — cole o conteúdo no bloco <code style="color:var(--accent-glow);">overcastDataBase</code> do index.html.
-        </p>
-      </div>
-
-      <div class="flex flex-wrap gap-3 mb-4">
-        <button class="btn-export" onclick="generateJSON()">⚡ Gerar JSON para Publicar</button>
-        <button class="btn-copy" onclick="copyJSON()">📋 Copiar JSON</button>
-        <button onclick="resetStorage()" style="background:transparent;color:#ef4444;border:1px solid #ef4444;padding:8px 14px;font-size:12px;cursor:pointer;">🗑 Resetar para Dados Base</button>
-      </div>
-      <textarea id="json-output" readonly placeholder="Clique em 'Gerar JSON para Publicar' para ver o código aqui..."></textarea>
     </div>
 
-  </div><!-- end max-w -->
-</div><!-- end admin-panel -->
+    <div class="card p-4">
+      <div class="flex border-b border-[#2e2e3a] mb-4">
+        <button class="nav-tab active" id="tab-video" onclick="switchFormTab('video')">VÍDEOS</button>
+        <button class="nav-tab" id="tab-link" onclick="switchFormTab('link')">LINKS</button>
+        <button class="nav-tab" id="tab-jogo" onclick="switchFormTab('jogo')">JOGOS</button>
+      </div>
+
+      <div id="subform-video" class="space-y-3 font-mono text-xs">
+        <input type="hidden" id="edit-video-index" value="" />
+        <input type="text" id="video-titulo" placeholder="TÍTULO DA AULA" class="input-field" />
+        <input type="text" id="video-url" placeholder="URL EMBED DO YOUTUBE" class="input-field" />
+        <select id="video-categoria" class="input-field bg-black">
+          <option value="Básico">Básico</option>
+          <option value="Lógica">Lógica</option>
+          <option value="Arte">Arte</option>
+        </select>
+        <button class="btn-action btn-add w-full" id="btn-save-video" onclick="saveVideo()">GRAVAR_VIDEO</button>
+      </div>
+
+      <div id="subform-link" class="space-y-3 font-mono text-xs hidden">
+        <input type="hidden" id="edit-link-index" value="" />
+        <input type="text" id="link-titulo" placeholder="TÍTULO DO RECURSO" class="input-field" />
+        <input type="text" id="link-url" placeholder="URL" class="input-field" />
+        <input type="text" id="link-descricao" placeholder="DESCRIÇÃO CURTA" class="input-field" />
+        <input type="text" id="link-tag" placeholder="TAG (EX: ARTE, ASSETS)" class="input-field" />
+        <button class="btn-action btn-add w-full" id="btn-save-link" onclick="saveLink()">GRAVAR_LINK</button>
+      </div>
+
+      <div id="subform-jogo" class="space-y-3 font-mono text-xs hidden">
+        <input type="hidden" id="edit-jogo-index" value="" />
+        <input type="text" id="jogo-titulo" placeholder="NOME DO JOGO" class="input-field" />
+        <input type="text" id="jogo-autor" placeholder="AUTOR (ALUNO)" class="input-field" />
+        <input type="text" id="jogo-capa" placeholder="URL DA IMAGEM DE CAPA" class="input-field" />
+        <input type="text" id="jogo-url" placeholder="URL EMBED-UPLOAD DO ITCH.IO" class="input-field" />
+        <textarea id="jogo-descricao" placeholder="DESCRIÇÃO DO CONTEXTO TÉCNICO" class="input-field h-20"></textarea>
+        <input type="text" id="jogo-controles" placeholder="CONTROLES (EX: SETAS / ESPAÇO)" class="input-field" />
+        <button class="btn-action btn-add w-full" id="btn-save-jogo" onclick="saveJogo()">GRAVAR_JOGO</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="lg:col-span-7 space-y-6">
+    <div class="card p-5">
+      <h2 class="font-pixel text-[10px] text-emerald-400 mb-4">// BANCO_DE_DESENVOLVEDORES</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse font-mono text-xs">
+          <thead>
+            <tr class="border-b border-[#2e2e3a] text-gray-500">
+              <th class="p-2">CÓDIGO</th>
+              <th class="p-2">ALUNO</th>
+              <th class="p-2">ESTÁGIO_PROJETO</th>
+              <th class="p-2 text-right">AÇÕES</th>
+            </tr>
+          </thead>
+          <tbody id="table-alunos-rows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card p-5">
+      <h2 class="font-pixel text-[10px] text-emerald-400 mb-4">// ARQUIVO_DE_ELEMENTOS_EXTERNOS</h2>
+      <div id="recursos-lista-container" class="space-y-3 font-mono text-xs max-h-96 overflow-y-auto"></div>
+    </div>
+  </div>
+</main>
 
 <script>
-// ============================================================
-// ADMIN PASSWORD
-// ============================================================
-const ADMIN_PASSWORD = "overcast2026";
-
-function doLogin() {
-  const val = document.getElementById('login-password').value;
-  if (val === ADMIN_PASSWORD) {
-    document.getElementById('login-overlay').style.display = 'none';
-    document.getElementById('admin-panel').style.display = 'block';
-    initAdmin();
-  } else {
-    document.getElementById('login-error').classList.remove('hidden');
-    document.getElementById('login-password').value = '';
-    document.getElementById('login-password').focus();
-  }
-}
-
-// ============================================================
-// WORKING DATA (in-memory — starts from mock)
-// ============================================================
-let data = {
-  "alunos": [
-    {
-      "codigo": "pablo01",
-      "nome": "Pablo",
-      "pastaEnvios": "https://drive.google.com/",
-      "pastaMateriais": "https://drive.google.com/",
-      "etapa": "Arte"
-    },
-    {
-      "codigo": "teste.um",
-      "nome": "Teste Um",
-      "pastaEnvios": "https://drive.google.com/",
-      "pastaMateriais": "https://drive.google.com/",
-      "etapa": "Ideia"
-    }
-  ],
-  videos: [
-    {
-      titulo: "Introdução ao Construct 3",
-      url: "https://www.youtube-nocookie.com/embed/EXEMPLO",
-      categoria: "Básico"
-    }
-  ],
-  links: [
-    {
-      titulo: "Gerador de Paletas de Cores",
-      url: "https://lospec.com",
-      descricao: "Ferramenta para achar paletas pixel art.",
-      tag: "Arte"
-    },
-    {
-      titulo: "OpenGameArt",
-      url: "https://opengameart.org",
-      descricao: "Assets gratuitos para jogos.",
-      tag: "Assets"
-    },
-    {
-      titulo: "itch.io",
-      url: "https://itch.io",
-      descricao: "Plataforma indie para publicar jogos.",
-      tag: "Publicação"
-    }
-  ],
-  jogos: [
-    {
-      titulo: "Sqare Bear",
-      autor: "Emanoel",
-      capa: "https://placehold.co/300x200/1A1A1E/818CF8?text=Sqare+Bear",
-      url: "https://construct.net/"
-    }
-  ]
-};
-
-// ============================================================
-// NAVIGATION
-// ============================================================
-function switchAdminTab(name, btn) {
-  document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.admin-tab').forEach(b => b.classList.remove('active'));
-  document.getElementById('admin-' + name).classList.add('active');
-  if (btn) btn.classList.add('active');
-}
-
-// ============================================================
-// RENDER LISTS
-// ============================================================
-function renderAll() {
-  renderListAlunos();
-  renderListVideos();
-  renderListLinks();
-  renderListJogos();
-}
-
-function renderListAlunos() {
-  const el = document.getElementById('list-alunos');
-  if (data.alunos.length === 0) {
-    el.innerHTML = '<p class="text-sm" style="color:var(--text-muted);">Nenhum aluno cadastrado.</p>';
-    return;
-  }
-  el.innerHTML = data.alunos.map((a, i) => `
-    <div class="list-item">
-      <div class="list-item-info">
-        <div class="list-item-title">${a.nome}</div>
-        <div class="list-item-sub">Código: <code style="color:var(--accent-glow);">${a.codigo}</code> · ${a.etapa}</div>
-      </div>
-      <button class="btn-del" onclick="deleteItem('alunos', ${i})">Excluir</button>
-    </div>
-  `).join('');
-}
-
-function renderListVideos() {
-  const el = document.getElementById('list-videos');
-  if (data.videos.length === 0) {
-    el.innerHTML = '<p class="text-sm" style="color:var(--text-muted);">Nenhum vídeo cadastrado.</p>';
-    return;
-  }
-  el.innerHTML = data.videos.map((v, i) => `
-    <div class="list-item">
-      <div class="list-item-info">
-        <div class="list-item-title">${v.titulo}</div>
-        <div class="list-item-sub">${v.categoria}</div>
-      </div>
-      <button class="btn-del" onclick="deleteItem('videos', ${i})">Excluir</button>
-    </div>
-  `).join('');
-}
-
-function renderListLinks() {
-  const el = document.getElementById('list-links');
-  if (data.links.length === 0) {
-    el.innerHTML = '<p class="text-sm" style="color:var(--text-muted);">Nenhum link cadastrado.</p>';
-    return;
-  }
-  el.innerHTML = data.links.map((l, i) => `
-    <div class="list-item">
-      <div class="list-item-info">
-        <div class="list-item-title">${l.titulo}</div>
-        <div class="list-item-sub">${l.tag || '—'} · <a href="${l.url}" target="_blank" style="color:var(--accent-blue);">Abrir ↗</a></div>
-      </div>
-      <button class="btn-del" onclick="deleteItem('links', ${i})">Excluir</button>
-    </div>
-  `).join('');
-}
-
-function renderListJogos() {
-  const el = document.getElementById('list-jogos');
-  if (data.jogos.length === 0) {
-    el.innerHTML = '<p class="text-sm" style="color:var(--text-muted);">Nenhum jogo cadastrado.</p>';
-    return;
-  }
-  el.innerHTML = data.jogos.map((j, i) => `
-    <div class="list-item">
-      <div class="list-item-info">
-        <div class="list-item-title">${j.titulo}</div>
-        <div class="list-item-sub">por ${j.autor}</div>
-      </div>
-      <button class="btn-del" onclick="deleteItem('jogos', ${i})">Excluir</button>
-    </div>
-  `).join('');
-}
-
-// ============================================================
-// DELETE
-// ============================================================
-function deleteItem(collection, index) {
-  if (!confirm('Remover este item?')) return;
-  data[collection].splice(index, 1);
-  saveToStorage();
-  renderAll();
-}
-
-// ============================================================
-// ADD ALUNO
-// ============================================================
-function addAluno() {
-  const nome   = document.getElementById('a-nome').value.trim();
-  const codigo = document.getElementById('a-codigo').value.trim().replace(/\s+/g, '').toLowerCase();
-  const envios = document.getElementById('a-envios').value.trim();
-  const mats   = document.getElementById('a-materiais').value.trim();
-  const etapa  = document.getElementById('a-etapa').value;
-
-  if (!nome || !codigo) return alert('Nome e código são obrigatórios.');
-  if (data.alunos.find(a => a.codigo === codigo)) return alert('Esse código já existe. Use um código único.');
-
-  data.alunos.push({ codigo, nome, pastaEnvios: envios || '#', pastaMateriais: mats || '#', etapa });
-  document.getElementById('a-nome').value = '';
-  document.getElementById('a-codigo').value = '';
-  document.getElementById('a-envios').value = '';
-  document.getElementById('a-materiais').value = '';
-  saveToStorage();
-  renderListAlunos();
-  showToast('Aluno adicionado!');
-}
-
-// ============================================================
-// ADD VIDEO
-// ============================================================
-function addVideo() {
-  const titulo    = document.getElementById('v-titulo').value.trim();
-  const url       = document.getElementById('v-url').value.trim();
-  const categoria = document.getElementById('v-categoria').value;
-
-  if (!titulo || !url) return alert('Título e URL são obrigatórios.');
-
-  data.videos.push({ titulo, url, categoria });
-  document.getElementById('v-titulo').value = '';
-  document.getElementById('v-url').value = '';
-  saveToStorage();
-  renderListVideos();
-  showToast('Vídeo adicionado!');
-}
-
-// ============================================================
-// ADD LINK
-// ============================================================
-function addLink() {
-  const titulo   = document.getElementById('l-titulo').value.trim();
-  const url      = document.getElementById('l-url').value.trim();
-  const descricao = document.getElementById('l-descricao').value.trim();
-  const tag      = document.getElementById('l-tag').value.trim();
-
-  if (!titulo || !url) return alert('Título e URL são obrigatórios.');
-
-  data.links.push({ titulo, url, descricao, tag });
-  document.getElementById('l-titulo').value = '';
-  document.getElementById('l-url').value = '';
-  document.getElementById('l-descricao').value = '';
-  document.getElementById('l-tag').value = '';
-  saveToStorage();
-  renderListLinks();
-  showToast('Link adicionado!');
-}
-
-// ============================================================
-// ADD JOGO
-// ============================================================
-function addJogo() {
-  const titulo    = document.getElementById('j-titulo').value.trim();
-  const autor     = document.getElementById('j-autor').value.trim();
-  const capa      = document.getElementById('j-capa').value.trim();
-  const url       = document.getElementById('j-url').value.trim();
-  const descricao = document.getElementById('j-descricao').value.trim();
-  const controles = document.getElementById('j-controles').value.trim();
-  const mobile    = document.getElementById('j-mobile').checked;
-
-  if (!titulo || !autor || !url) return alert('Título, autor e URL do jogo são obrigatórios.');
-
-  data.jogos.push({
-    titulo,
-    autor,
-    capa: capa || 'https://placehold.co/300x200/131317/4f46e5?text=' + encodeURIComponent(titulo),
-    url,
-    descricao: descricao || '',
-    controles: controles || 'Não informado.',
-    mobile
-  });
-
-  document.getElementById('j-titulo').value = '';
-  document.getElementById('j-autor').value = '';
-  document.getElementById('j-capa').value = '';
-  document.getElementById('j-url').value = '';
-  document.getElementById('j-descricao').value = '';
-  document.getElementById('j-controles').value = '';
-  document.getElementById('j-mobile').checked = false;
-  saveToStorage();
-  renderListJogos();
-  showToast('Jogo adicionado!');
-}
-
-// ============================================================
-// GENERATE JSON
-// ============================================================
-function generateJSON() {
-  const output = `const overcastData = ${JSON.stringify(data, null, 2)};`;
-  document.getElementById('json-output').value = output;
-  document.getElementById('json-output').scrollIntoView({ behavior: 'smooth', block: 'center' });
-}
-
-function copyJSON() {
-  const textarea = document.getElementById('json-output');
-  if (!textarea.value) {
-    generateJSON();
-    setTimeout(() => {
-      textarea.select();
-      document.execCommand('copy');
-      showToast('JSON copiado!');
-    }, 100);
-    return;
-  }
-  textarea.select();
-  document.execCommand('copy');
-  navigator.clipboard.writeText(textarea.value).catch(() => {});
-  showToast('JSON copiado!');
-}
-
-// ============================================================
-// TOAST
-// ============================================================
-let toastTimer = null;
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = '✓ ' + msg;
-  t.style.display = 'block';
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { t.style.display = 'none'; }, 2400);
-}
-
-// ============================================================
-// LOCALSTORAGE SYNC
-// ============================================================
-const STORAGE_KEY = 'overcastData';
-
-function saveToStorage() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    updateSyncStatus(true);
-  } catch(e) {
-    alert('Erro ao salvar no localStorage: ' + e.message);
-  }
-}
+const STORAGE_KEY = 'overcast_v1_data';
+let data = { alunos: [], videos: [], links: [], jogos: [] };
 
 function loadFromStorage() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
-      const parsed = JSON.parse(saved);
-      if (parsed && parsed.alunos) {
-        // Merge: mantém campos que podem não existir em dados antigos
-        data.alunos   = parsed.alunos   || data.alunos;
-        data.videos   = parsed.videos   || data.videos;
-        data.links    = parsed.links    || data.links;
-        data.jogos    = parsed.jogos    || data.jogos;
-        updateSyncStatus(true);
-        return true;
-      }
+      data = JSON.parse(saved);
+      updateSyncStatus(true);
+      return;
     }
-  } catch(e) { /* usa dados base */ }
+  } catch(e) { console.error(e); }
   updateSyncStatus(false);
-  return false;
+}
+
+function saveToStorage() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    updateSyncStatus(true);
+    renderAll();
+  } catch(e) { alert("Erro ao sincronizar dados locais: " + e.message); }
+}
+
+function updateSyncStatus(active) {
+  const el = document.getElementById('sync-status');
+  if(active) {
+    el.textContent = "● MÓDULO LOCAL SINCRONIZADO COM O INDEX.HTML";
+    el.style.color = "#10b981";
+  } else {
+    el.textContent = "● ALERTA: BANCO DE DADOS VAZIO";
+    el.style.color = "#ef4444";
+  }
+}
+
+// ALUNOS ENGINE (INLINE EDIT INTEGRADO)
+function renderAlunos() {
+  const tbody = document.getElementById('table-alunos-rows');
+  tbody.innerHTML = data.alunos.map((aluno, i) => `
+    <tr class="border-b border-[#181822] hover:bg-[#111116]">
+      <td class="p-2 text-indigo-400 font-bold">${aluno.codigo}</td>
+      <td class="p-2 text-white">${aluno.nome}</td>
+      <td class="p-2">
+        <select class="select-field" onchange="updateEtapaInline(${i}, this.value)">
+          <option value="Ideia" ${aluno.etapa==='Ideia'?'selected':''}>Ideia</option>
+          <option value="Mecânica" ${aluno.etapa==='Mecânica'?'selected':''}>Mecânica</option>
+          <option value="Arte" ${aluno.etapa==='Arte'?'selected':''}>Arte</option>
+          <option value="Polimento" ${aluno.etapa==='Polimento'?'selected':''}>Polimento</option>
+          <option value="Publicado" ${aluno.etapa==='Publicado'?'selected':''}>Publicado</option>
+        </select>
+      </td>
+      <td class="p-2 text-right space-x-1">
+        <button class="btn-action btn-edit" onclick="editAluno(${i})">EDIT</button>
+        <button class="btn-action btn-del" onclick="deleteAluno(${i})">DEL</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function saveAluno() {
+  const idx = document.getElementById('edit-aluno-index').value;
+  const newAluno = {
+    codigo: document.getElementById('aluno-codigo').value.trim().toLowerCase(),
+    nome: document.getElementById('aluno-nome').value.trim(),
+    pastaEnvios: document.getElementById('aluno-envios').value.trim(),
+    pastaMateriais: document.getElementById('aluno-materiais').value.trim(),
+    etapa: document.getElementById('aluno-etapa').value
+  };
+
+  if(!newAluno.codigo || !newAluno.nome) { alert("Campos essenciais vazios."); return; }
+
+  if(idx !== "") {
+    data.alunos[parseInt(idx)] = newAluno;
+  } else {
+    if(data.alunos.some(a => a.codigo === newAluno.codigo)) { alert("Este código já existe!"); return; }
+    data.alunos.push(newAluno);
+  }
+  saveToStorage();
+  clearAlunoForm();
+}
+
+function editAluno(i) {
+  const aluno = data.alunos[i];
+  document.getElementById('edit-aluno-index').value = i;
+  document.getElementById('aluno-codigo').value = aluno.codigo;
+  document.getElementById('aluno-nome').value = aluno.nome;
+  document.getElementById('aluno-envios').value = aluno.pastaEnvios;
+  document.getElementById('aluno-materiais').value = aluno.pastaMateriais;
+  document.getElementById('aluno-etapa').value = aluno.etapa;
+  
+  document.getElementById('form-title').textContent = "// EDITAR_ALUNO_ID: #" + i;
+  document.getElementById('btn-cancel-aluno').classList.remove('hidden');
+}
+
+function updateEtapaInline(i, novaEtapa) {
+  data.alunos[i].etapa = novaEtapa;
+  saveToStorage();
+}
+
+function deleteAluno(i) {
+  if(confirm(`Remover definitivo: ${data.alunos[i].nome}?`)) {
+    data.alunos.splice(i, 1);
+    saveToStorage();
+  }
+}
+
+function clearAlunoForm() {
+  document.getElementById('edit-aluno-index').value = "";
+  document.getElementById('aluno-codigo').value = "";
+  document.getElementById('aluno-nome').value = "";
+  document.getElementById('aluno-envios').value = "";
+  document.getElementById('aluno-materiais').value = "";
+  document.getElementById('form-title').textContent = "// REGISTRAR_ALUNO";
+  document.getElementById('btn-cancel-aluno').classList.add('hidden');
+}
+
+// MULTI-FORM CONTROL
+let activeSubForm = 'video';
+function switchFormTab(formName) {
+  activeSubForm = formName;
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + formName).classList.add('active');
+  
+  document.getElementById('subform-video').classList.add('hidden');
+  document.getElementById('subform-link').classList.add('hidden');
+  document.getElementById('subform-jogo').classList.add('hidden');
+  document.getElementById('subform-' + formName).classList.remove('hidden');
+}
+
+// SESSÃO VIDEOS
+function saveVideo() {
+  const idx = document.getElementById('edit-video-index').value;
+  const v = {
+    titulo: document.getElementById('video-titulo').value.trim(),
+    url: document.getElementById('video-url').value.trim(),
+    categoria: document.getElementById('video-categoria').value
+  };
+  if(!v.titulo || !v.url) return;
+  if(idx !== "") data.videos[parseInt(idx)] = v; else data.videos.push(v);
+  document.getElementById('edit-video-index').value = "";
+  document.getElementById('video-titulo').value = "";
+  document.getElementById('video-url').value = "";
+  document.getElementById('btn-save-video').textContent = "GRAVAR_VIDEO";
+  saveToStorage();
+}
+
+function editVideo(i) {
+  switchFormTab('video');
+  const v = data.videos[i];
+  document.getElementById('edit-video-index').value = i;
+  document.getElementById('video-titulo').value = v.titulo;
+  document.getElementById('video-url').value = v.url;
+  document.getElementById('video-categoria').value = v.categoria;
+  document.getElementById('btn-save-video').textContent = "ATUALIZAR_VIDEO";
+}
+
+// SESSÃO LINKS
+function saveLink() {
+  const idx = document.getElementById('edit-link-index').value;
+  const l = {
+    titulo: document.getElementById('link-titulo').value.trim(),
+    url: document.getElementById('link-url').value.trim(),
+    descricao: document.getElementById('link-descricao').value.trim(),
+    tag: document.getElementById('link-tag').value.trim()
+  };
+  if(!l.titulo || !l.url) return;
+  if(idx !== "") data.links[parseInt(idx)] = l; else data.links.push(l);
+  document.getElementById('edit-link-index').value = "";
+  document.getElementById('link-titulo').value = "";
+  document.getElementById('link-url').value = "";
+  document.getElementById('link-descricao').value = "";
+  document.getElementById('link-tag').value = "";
+  document.getElementById('btn-save-link').textContent = "GRAVAR_LINK";
+  saveToStorage();
+}
+
+function editLink(i) {
+  switchFormTab('link');
+  const l = data.links[i];
+  document.getElementById('edit-link-index').value = i;
+  document.getElementById('link-titulo').value = l.titulo;
+  document.getElementById('link-url').value = l.url;
+  document.getElementById('link-descricao').value = l.descricao;
+  document.getElementById('link-tag').value = l.tag;
+  document.getElementById('btn-save-link').textContent = "ATUALIZAR_LINK";
+}
+
+// SESSÃO JOGOS
+function saveJogo() {
+  const idx = document.getElementById('edit-jogo-index').value;
+  const j = {
+    titulo: document.getElementById('jogo-titulo').value.trim(),
+    autor: document.getElementById('jogo-autor').value.trim(),
+    capa: document.getElementById('jogo-capa').value.trim(),
+    url: document.getElementById('jogo-url').value.trim(),
+    descricao: document.getElementById('jogo-descricao').value.trim(),
+    controles: document.getElementById('jogo-controles').value.trim()
+  };
+  if(!j.titulo || !j.url) return;
+  if(idx !== "") data.jogos[parseInt(idx)] = j; else data.jogos.push(j);
+  document.getElementById('edit-jogo-index').value = "";
+  document.getElementById('jogo-titulo').value = "";
+  document.getElementById('jogo-autor').value = "";
+  document.getElementById('jogo-capa').value = "";
+  document.getElementById('jogo-url').value = "";
+  document.getElementById('jogo-descricao').value = "";
+  document.getElementById('jogo-controles').value = "";
+  document.getElementById('btn-save-jogo').textContent = "GRAVAR_JOGO";
+  saveToStorage();
+}
+
+function editJogo(i) {
+  switchFormTab('jogo');
+  const j = data.jogos[i];
+  document.getElementById('edit-jogo-index').value = i;
+  document.getElementById('jogo-titulo').value = j.titulo;
+  document.getElementById('jogo-autor').value = j.autor;
+  document.getElementById('jogo-capa').value = j.capa;
+  document.getElementById('jogo-url').value = j.url;
+  document.getElementById('jogo-descricao').value = j.descricao;
+  document.getElementById('jogo-controles').value = j.controles;
+  document.getElementById('btn-save-jogo').textContent = "ATUALIZAR_JOGO";
+}
+
+// ELEMENTOS REMOÇÃO AUXILIAR
+function deleteRecurso(tipo, i) {
+  if(confirm(`Remover este item do tipo [${tipo.toUpperCase()}]?`)) {
+    data[tipo].splice(i, 1);
+    saveToStorage();
+  }
+}
+
+function renderRecursos() {
+  const container = document.getElementById('recursos-lista-container');
+  let html = '';
+
+  data.videos.forEach((v, i) => {
+    html += `<div class="p-2 border border-blue-900 bg-[#0c0c10] flex justify-between items-center">
+      <div><span class="text-blue-400">[VÍDEO]</span> ${v.titulo} (${v.categoria})</div>
+      <div class="space-x-1"><button class="btn-action btn-edit" onclick="editVideo(${i})">EDIT</button><button class="btn-action btn-del" onclick="deleteRecurso('videos', ${i})">X</button></div>
+    </div>`;
+  });
+
+  data.links.forEach((l, i) => {
+    html += `<div class="p-2 border border-purple-900 bg-[#0c0c10] flex justify-between items-center">
+      <div><span class="text-purple-400">[LINK]</span> ${l.titulo} [${l.tag}]</div>
+      <div class="space-x-1"><button class="btn-action btn-edit" onclick="editLink(${i})">EDIT</button><button class="btn-action btn-del" onclick="deleteRecurso('links', ${i})">X</button></div>
+    </div>`;
+  });
+
+  data.jogos.forEach((j, i) => {
+    html += `<div class="p-2 border border-yellow-900 bg-[#0c0c10] flex justify-between items-center">
+      <div><span class="text-yellow-500">[JOGO]</span> ${j.titulo} (Por: ${j.autor})</div>
+      <div class="space-x-1"><button class="btn-action btn-edit" onclick="editJogo(${i})">EDIT</button><button class="btn-action btn-del" onclick="deleteRecurso('jogos', ${i})">X</button></div>
+    </div>`;
+  });
+
+  container.innerHTML = html || '<p class="text-gray-600 font-pixel text-[8px] p-4">NENHUM RECURSO ADICIONADO.</p>';
+}
+
+function renderAll() {
+  renderAlunos();
+  renderRecursos();
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type : 'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'overcast_backup.json';
+  a.click();
 }
 
 function resetStorage() {
-  if (!confirm('Isso vai apagar todas as alterações feitas no admin e voltar para os dados base. Continuar?')) return;
+  if(!confirm('Deseja limpar todos os registros locais do navegador?')) return;
   localStorage.removeItem(STORAGE_KEY);
   location.reload();
 }
 
-function updateSyncStatus(synced) {
-  const el = document.getElementById('sync-status');
-  if (!el) return;
-  if (synced) {
-    el.innerHTML = '● DADOS SALVOS NO NAVEGADOR — o index.html vai carregar estes dados automaticamente';
-    el.style.color = '#86efac';
-  } else {
-    el.innerHTML = '● USANDO DADOS BASE — nenhuma alteração salva ainda';
-    el.style.color = '#6b7280';
-  }
-}
-
-// ============================================================
-// INIT
-// ============================================================
-function initAdmin() {
+document.addEventListener('DOMContentLoaded', () => {
   loadFromStorage();
   renderAll();
-}
+});
 </script>
 </body>
 </html>
