@@ -6,7 +6,6 @@
   <title>Overcast Realm — Hub de Gamedev</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <!-- Troca da Pixelify Sans pela Press Start 2P -->
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -23,13 +22,11 @@
       --border-brutal: #2e2e3a;
     }
 
-    * { box-sizing: border-box; }
-    /* Brutalismo: zera border-radius apenas em cards e botões, não em modal/iframe */
-    .card, .btn-primary, .btn-secondary, .nav-tab, .filter-btn, .badge, .search-input, .auth-input {
+    * { 
+      box-sizing: border-box; 
       border-radius: 0px !important;
     }
 
-    /* TEXTURA TECNICA DE FUNDO (GRID + SCANLINES) */
     body {
       background-color: var(--bg-base);
       color: var(--text-primary);
@@ -43,13 +40,11 @@
       background-size: 24px 24px, 24px 24px, 100% 4px;
     }
 
-    /* Ajuste fino na aplicação da fonte Press Start 2P */
     .font-pixel { 
       font-family: 'Press Start 2P', monospace; 
       line-height: 1.5;
     }
 
-    /* CARDS BRUTALISTAS DE JOGO */
     .card {
       background: var(--bg-card);
       border: 2px solid var(--border-brutal);
@@ -62,7 +57,6 @@
       box-shadow: 6px 6px 0px rgba(79, 70, 229, 0.4);
     }
 
-    /* BOTÕES COM ATUAÇÃO DIGITAL SECA */
     .btn-primary {
       background: #000000;
       color: var(--accent-glow);
@@ -72,6 +66,7 @@
       font-size: 10px;
       padding: 12px 20px;
       cursor: pointer;
+      display: inline-block;
     }
     .btn-primary:hover {
       background: var(--accent-storm);
@@ -95,7 +90,6 @@
       color: var(--text-primary);
     }
 
-    /* NAV TABS */
     .nav-tab {
       font-family: 'Press Start 2P', monospace;
       font-size: 10px;
@@ -121,7 +115,6 @@
     .section { display: none; }
     .section.active { display: block; }
 
-    /* BARRA DE PROGRESSO RETRO PIXEL */
     .pixel-progress-track {
       background: #000000;
       border: 2px solid var(--border-brutal);
@@ -145,42 +138,34 @@
     }
     .progress-step.done { color: var(--accent-glow); text-shadow: 0 0 4px var(--accent-storm); }
 
-    /* JANELA MODAL DO JOGO */
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.92);
+      background: rgba(0, 0, 0, 0.85);
       z-index: 9999;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 0;
-      -webkit-overflow-scrolling: touch;
+      padding: 16px;
     }
     .modal-box {
       background: var(--bg-card);
       border: 3px solid var(--border-brutal);
       max-width: 960px;
       width: 100%;
-      height: 100%;
-      max-height: 100dvh;
+      max-height: 92vh;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       box-shadow: 12px 12px 0px #000000;
     }
-    @media (min-width: 640px) {
-      .modal-overlay { padding: 16px; }
-      .modal-box { height: auto; max-height: 92vh; }
-    }
     .modal-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 10px 14px;
+      padding: 12px 20px;
       border-bottom: 2px solid var(--border-brutal);
       background: #191922;
-      flex-shrink: 0;
     }
     .modal-close {
       background: transparent;
@@ -189,26 +174,10 @@
       font-family: 'Press Start 2P', monospace;
       font-size: 10px;
       cursor: pointer;
-      padding: 6px 10px;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
+      padding: 4px 8px;
     }
-    .modal-close:hover, .modal-close:active { color: #ffffff; background: #ef4444; border-color: #ef4444; }
-    /* Badge mobile amigável no modal */
-    .modal-mobile-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-family: 'Press Start 2P', monospace;
-      font-size: 8px;
-      padding: 5px 8px;
-      background: rgba(34,197,94,0.15);
-      border: 1px solid rgba(34,197,94,0.4);
-      color: #86efac;
-      margin-top: 6px;
-    }
+    .modal-close:hover { color: #ffffff; background: #ef4444; border-color: #ef4444; }
 
-    /* FILTROS */
     .filter-btn {
       font-family: 'Press Start 2P', monospace;
       font-size: 9px;
@@ -226,7 +195,29 @@
       border-color: var(--accent-glow);
     }
 
-    /* REPRODUTOR DE VIDEO */
+    /* ESTILIZAÇÃO DO CONTEINER DE THUMBNAIL LAZY */
+    .thumb-container {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16/9;
+      background-size: cover;
+      background-position: center;
+      cursor: pointer;
+      border-bottom: 2px solid var(--border-brutal);
+    }
+    .thumb-play-btn {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.4);
+      transition: background 0.2s;
+    }
+    .thumb-container:hover .thumb-play-btn {
+      background: rgba(79, 70, 229, 0.6);
+    }
+
     .yt-embed-wrap {
       position: relative;
       width: 100%;
@@ -235,7 +226,6 @@
       border-bottom: 2px solid var(--border-brutal);
     }
 
-    /* INPUTS */
     .search-input {
       background: #000000;
       border: 2px solid var(--border-brutal);
@@ -253,7 +243,7 @@
       padding: 12px;
       font-family: 'Press Start 2P', monospace;
       font-size: 16px;
-      letter-spacing: 6px;
+      letter-spacing: 4px;
       text-align: center;
       outline: none;
       width: 100%;
@@ -269,7 +259,6 @@
       border: 1px solid var(--border-brutal);
     }
 
-    /* SCROLLBAR RETRO */
     ::-webkit-scrollbar { width: 8px; }
     ::-webkit-scrollbar-track { background: #000000; }
     ::-webkit-scrollbar-thumb { background: var(--border-brutal); }
@@ -278,35 +267,21 @@
 </head>
 <body>
 
-<!-- GAME MODAL -->
 <div id="game-modal" class="modal-overlay" style="display:none;" onclick="closeModal(event)">
   <div class="modal-box">
     <div class="modal-header">
-      <div style="min-width:0; flex:1;">
-        <span id="modal-game-title" class="font-pixel text-[10px] tracking-wider block truncate"></span>
-        <div id="modal-mobile-badge" class="modal-mobile-badge hidden">📱 COMPATÍVEL COM MOBILE</div>
-      </div>
-      <div class="flex items-center gap-2 shrink-0 ml-3">
-        <a id="modal-open-link" href="#" target="_blank" rel="noopener" class="modal-close text-[8px]" style="text-decoration:none; color:var(--text-muted);">↗ ABRIR</a>
-        <button class="modal-close" onclick="closeGameModal()">ESC_✕</button>
-      </div>
+      <span id="modal-game-title" class="font-pixel text-[10px] tracking-wider"></span>
+      <button class="modal-close" onclick="closeGameModal()">ESC_✕</button>
     </div>
     
-    <div class="modal-body-scroll flex-1 overflow-y-auto bg-[#070709]" style="-webkit-overflow-scrolling:touch;">
-      <div class="w-full relative bg-black border-b-2 border-black" style="aspect-ratio:16/9;">
-        <iframe 
-          id="modal-iframe" 
-          src="" 
-          allowfullscreen
-          allow="fullscreen; autoplay; gamepad *"
-          playsinline
-          webkit-playsinline
-          scrolling="yes"
-          style="position:absolute; inset:0; width:100%; height:100%; border:none; display:block;"
-        ></iframe>
+    <div class="modal-body-scroll flex-1 overflow-y-auto bg-[#070709]">
+      <div class="w-full relative aspect-video bg-black border-b-2 border-black flex flex-col items-center justify-center p-6 text-center">
+        <p class="font-pixel text-[11px] text-white mb-4">COMPILADO WEB CONDICIONADO</p>
+        <p class="text-xs text-gray-500 max-w-md mb-6 leading-relaxed">Para evitar congelamento de abas em segundo plano e perda de desempenho, execute em sandbox independente.</p>
+        <a id="modal-game-btn-link" href="#" target="_blank" class="btn-primary" onclick="closeGameModal()">ABRIR_JOGO_EM_NOVA_ABA</a>
       </div>
       
-      <div class="p-4 md:p-6 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 bg-[#111116]">
+      <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6 bg-[#111116]">
         <div class="md:col-span-2">
           <h4 class="font-pixel text-[9px] tracking-wider mb-3 text-violet-400">// CONTEXTO_DO_PROJETO</h4>
           <p id="modal-game-description" class="text-xs leading-relaxed text-gray-400"></p>
@@ -320,7 +295,6 @@
   </div>
 </div>
 
-<!-- NAVBAR -->
 <header class="border-b-2 border-[#22222c] bg-[#111116] sticky top-0 z-50">
   <div class="max-w-6xl mx-auto px-4 flex items-center justify-between gap-4 h-14">
     <div class="flex items-center gap-2">
@@ -338,9 +312,7 @@
 
 <main class="max-w-6xl mx-auto px-4 py-8">
 
-  <!-- ===== HOME ===== -->
   <section id="section-home" class="section active">
-    <!-- HERO COMPACTO BRUTALISTA -->
     <div class="card p-8 md:p-10 mb-10 relative bg-gradient-to-br from-[#131317] to-[#1a1a24] border-2 border-[#2a2a3a]">
       <div class="max-w-3xl">
         <p class="font-pixel text-[9px] text-violet-400 mb-3">// ENGINE_ROOT: CONSTRUCT_3</p>
@@ -351,14 +323,13 @@
           Desenvolvimento solo sem travar na sintaxe. Estruture mecânicas, gerencie escopo de projetos e construa portfólio diretamente no ambiente do itch.io.
         </p>
         <div class="flex flex-wrap gap-3">
-          <button class="btn-primary" onclick="switchTabByName('aluno')">ÁREA_DEV</button>
-          <button class="btn-secondary" onclick="switchTabByName('tutoriais')">VER_AULAS</button>
+          <button class="btn-primary" onclick="switchTab('aluno')">INICIAR_PAINEL</button>
+          <button class="btn-secondary" onclick="switchTab('tutoriais')">VER_AULAS</button>
         </div>
       </div>
       <div class="absolute right-8 bottom-6 hidden lg:block font-pixel text-7xl text-[#22222d] select-none" aria-hidden="true">&lt;/&gt;</div>
     </div>
 
-    <!-- METRICS CONSOLE -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
       <div class="card p-5">
         <div class="font-pixel text-[9px] text-blue-400 mb-3">:: METODOLOGIA</div>
@@ -368,7 +339,7 @@
       <div class="card p-5">
         <div class="font-pixel text-[9px] text-blue-400 mb-3">:: ARQUITETURA</div>
         <h3 class="font-pixel text-[11px] mb-3 text-white">[02] Lógica Visual</h3>
-        <p class="text-xs text-gray-400 leading-relaxed">Abstração via blocks de eventos no Construct 3. Foco completo em matrizes, variáveis, loops e lógica estrutural pura.</p>
+        <p class="text-xs text-gray-400 leading-relaxed">Abstração via blocos de eventos no Construct 3. Foco completo em matrizes, variáveis, loops e lógica estrutural pura.</p>
       </div>
       <div class="card p-5">
         <div class="font-pixel text-[9px] text-blue-400 mb-3">:: FLUXO</div>
@@ -377,39 +348,37 @@
       </div>
     </div>
 
-    <!-- DOCUMENTAÇÃO INTERNA (PARA OS PAIS) -->
     <div class="card p-6 md:p-8 mb-10 bg-[#0f0f13] border-dashed border-2 border-indigo-900/60">
       <div class="flex items-start gap-4 mb-4">
         <span class="font-pixel text-base text-violet-400">[i]</span>
         <div>
-          <p class="font-pixel text-[9px] text-violet-400 mb-2">// PARA_OS_PAIS</p>
-          <h2 class="font-pixel text-sm text-white">Por que criar jogos ensina de verdade?</h2>
+          <p class="font-pixel text-[9px] text-violet-400 mb-2">// DOCUMENTACAO_METODOLOGICA</p>
+          <h2 class="font-pixel text-sm text-white">Desenvolvimento Cognitivo Aplicado</h2>
         </div>
       </div>
       <p class="text-xs text-gray-400 mb-6 leading-relaxed max-w-4xl">
-        Criar um jogo do zero é uma das formas mais completas de aprendizado que existem. Quando seu filho desenvolve um jogo, ele usa a criatividade, resolve problemas reais e aprende habilidades que a escola raramente ensina de forma prática.
+        A criação de jogos digitais atua diretamente como um laboratório prático de resolução de problemas complexos. Ao criar arquiteturas de regras e contornar falhas nos sistemas, o aluno sedimenta competências essenciais de engenharia.
       </p>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="bg-[#09090d] border border-[#1e1e28] p-4">
-          <h4 class="font-pixel text-[9px] text-indigo-400 mb-2">&gt; LÓGICA E RACIOCÍNIO</h4>
-          <p class="text-xs text-gray-400 leading-relaxed">Para um personagem pular, ele precisa entender sequência, condição e resultado. É matemática e lógica aplicadas sem parecer uma prova.</p>
+          <h4 class="font-pixel text-[9px] text-indigo-400 mb-2">&gt; ESTRUTURACAO_LOGICA</h4>
+          <p class="text-xs text-gray-400 leading-relaxed">Divisão de problemas de escopo macro em pequenos blocos de eventos sequenciais condicionais.</p>
         </div>
         <div class="bg-[#09090d] border border-[#1e1e28] p-4">
-          <h4 class="font-pixel text-[9px] text-indigo-400 mb-2">&gt; LIDAR COM ERROS</h4>
-          <p class="text-xs text-gray-400 leading-relaxed">Quando o jogo não funciona como esperado, o aluno precisa investigar e corrigir. Isso ensina paciência e persistência de um jeito que nenhuma teoria consegue.</p>
+          <h4 class="font-pixel text-[9px] text-indigo-400 mb-2">&gt; TOLERANCIA_FRUSTRACAO</h4>
+          <p class="text-xs text-gray-400 leading-relaxed">Sistemas de depuração (debugging). O erro é tratado como um dado técnico a ser analisado e corrigido.</p>
         </div>
         <div class="bg-[#09090d] border border-[#1e1e28] p-4">
-          <h4 class="font-pixel text-[9px] text-indigo-400 mb-2">&gt; MATEMÁTICA NA PRÁTICA</h4>
-          <p class="text-xs text-gray-400 leading-relaxed">Velocidade, posição, pontuação — a física do jogo usa coordenadas e cálculos reais. A conta faz sentido porque o personagem cai na tela se ela estiver errada.</p>
+          <h4 class="font-pixel text-[9px] text-indigo-400 mb-2">&gt; MATEMATICA_PRATICA</h4>
+          <p class="text-xs text-gray-400 leading-relaxed">Aplicação imediata de eixos cartesianos (X, Y), vetores de velocidade, gravidade e lógica booleana.</p>
         </div>
         <div class="bg-[#09090d] border border-[#1e1e28] p-4">
-          <h4 class="font-pixel text-[9px] text-indigo-400 mb-2">&gt; CRIATIVIDADE COM RESPONSABILIDADE</h4>
-          <p class="text-xs text-gray-400 leading-relaxed">Arte, história e regras do jogo são escolhas do aluno. Ele aprende que cada decisão afeta a experiência de quem vai jogar.</p>
+          <h4 class="font-pixel text-[9px] text-indigo-400 mb-2">&gt; DESIGN_SISTEMICO</h4>
+          <p class="text-xs text-gray-400 leading-relaxed">Gerenciamento de regras de interação e balanceamento de dificuldade focados no usuário.</p>
         </div>
       </div>
     </div>
 
-    <!-- JOGOS DESTAQUE -->
     <div class="mb-4 flex items-center justify-between">
       <h2 class="font-pixel text-[10px] uppercase tracking-wider text-white">// COMPILADOS_RECENTES</h2>
       <button class="btn-secondary text-[8px]" onclick="switchTabByName('jogos')">VER_TODOS_&gt;</button>
@@ -417,7 +386,6 @@
     <div id="home-jogos-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
   </section>
 
-  <!-- ===== JOGOS ===== -->
   <section id="section-jogos" class="section">
     <div class="mb-6">
       <p class="font-pixel text-[9px] text-violet-400">// REPOSITORIO_WEB</p>
@@ -429,7 +397,6 @@
     </div>
   </section>
 
-  <!-- ===== TUTORIAIS ===== -->
   <section id="section-tutoriais" class="section">
     <div class="mb-6">
       <p class="font-pixel text-[9px] text-violet-400">// ARQUIVOS_DE_AULA</p>
@@ -447,7 +414,6 @@
     </div>
   </section>
 
-  <!-- ===== LINKS ===== -->
   <section id="section-links" class="section">
     <div class="mb-6">
       <p class="font-pixel text-[9px] text-violet-400">// INDEXADOR_RECURSOS</p>
@@ -466,9 +432,7 @@
     </div>
   </section>
 
-  <!-- ===== ÁREA DO ALUNO ===== -->
   <section id="section-aluno" class="section">
-    <!-- LOGIN STATE -->
     <div id="student-login" class="max-w-sm mx-auto mt-8">
       <div class="card p-6 bg-[#111116] text-center">
         <p class="font-pixel text-[9px] text-violet-400 mb-3">// TERMINAL_RESTRITO</p>
@@ -486,7 +450,6 @@
       </div>
     </div>
 
-    <!-- DASHBOARD STATE -->
     <div id="student-dashboard" class="hidden">
       <div class="mb-6 flex items-center justify-between flex-wrap gap-4">
         <div>
@@ -496,7 +459,6 @@
         <button class="btn-secondary" onclick="logoutAluno()">DESCONECTAR_</button>
       </div>
 
-      <!-- PROGRESS -->
       <div class="card p-6 mb-5 bg-[#111115]">
         <h3 class="font-pixel text-[9px] text-blue-400 mb-4">// RASTREIO_DE_ESTÁGIO_DO_PROJETO</h3>
         <div class="pixel-progress-track mb-2">
@@ -514,7 +476,6 @@
         </p>
       </div>
 
-      <!-- ACTIONS -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="card p-5">
           <h3 class="font-pixel text-[11px] text-white mb-2">[+] Submissão de Arquivos</h3>
@@ -539,10 +500,8 @@
 </footer>
 
 <script>
-// ============================================================
-// DADOS BASE (fallback hardcoded)
-// ============================================================
-const overcastDataBase = {
+// DATA BANCO BASE (Substituído automaticamente pelo LocalStorage se houver atualizações do Admin)
+let overcastData = {
   "alunos": [
     {
       "codigo": "pablo01",
@@ -550,19 +509,12 @@ const overcastDataBase = {
       "pastaEnvios": "https://drive.google.com/",
       "pastaMateriais": "https://drive.google.com/",
       "etapa": "Arte"
-    },
-    {
-      "codigo": "teste.um",
-      "nome": "Teste Um",
-      "pastaEnvios": "https://drive.google.com/",
-      "pastaMateriais": "https://drive.google.com/",
-      "etapa": "Ideia"
     }
   ],
   "videos": [
     {
       "titulo": "Introdução à IDE do Construct 3",
-      "url": "https://www.youtube-nocookie.com/embed/EXEMPLO",
+      "url": "https://www.youtube.com/embed/dQw4w9WgXcQ",
       "categoria": "Básico"
     }
   ],
@@ -572,65 +524,32 @@ const overcastDataBase = {
       "url": "https://lospec.com",
       "descricao": "Indexador de paletas cromáticas restritas para pixel art técnico.",
       "tag": "Arte"
-    },
-    {
-      "titulo": "OpenGameArt Platform",
-      "url": "https://opengameart.org",
-      "descricao": "Repositório aberto de spritesheets e texturas sob licença CC.",
-      "tag": "Assets"
-    },
-    {
-      "titulo": "itch.io Dashboard",
-      "url": "https://itch.io",
-      "descricao": "Servidor de hospedagem global para publicação de jogos indies.",
-      "tag": "Publicação"
     }
   ],
   "jogos": [
     {
-      "titulo": "Sqare Bear",
+      "titulo": "Among Us Adventures",
       "autor": "Emanoel",
-      "capa": "https://placehold.co/300x200/131317/4f46e5?text=Sqare+Bear",
+      "capa": "https://placehold.co/300x200/131317/4f46e5?text=Among+Us+Adventures",
       "url": "https://itch.io/embed-upload/14462910?color=ab5237",
-      "descricao": "Mecânicas de colisão em malha 2D. Pulo, gravidade e interface polidos no Construct 3.",
-      "controles": "Mover: SETAS / WASD<br/>Pular: ESPAÇO",
-      "mobile": true
+      "descricao": "Mecânicas de colisão estruturadas em malha 2D. O projeto explora ciclos de pulo, gravidade simulada via blocos de eventos e polimento básico de interface no Construct 3.",
+      "controles": "Mover: SETAS / WASD<br/>Pular: ESPAÇO"
     }
   ]
 };
 
-// ============================================================
-// CARREGAMENTO DE DADOS — localStorage tem prioridade
-// ============================================================
 function loadData() {
   try {
-    const saved = localStorage.getItem('overcastData');
+    const saved = localStorage.getItem('overcast_v1_data');
     if (saved) {
       const parsed = JSON.parse(saved);
-      // Valida estrutura mínima
-      if (parsed && parsed.alunos && parsed.jogos) {
-        window.__activeData = parsed;
-        showSyncBadge(true);
-        return;
-      }
+      if (parsed) overcastData = parsed;
     }
-  } catch(e) { /* fallback */ }
-  window.__activeData = JSON.parse(JSON.stringify(overcastDataBase));
-  showSyncBadge(false);
+  } catch (e) {
+    console.error("Erro ao ler localStorage", e);
+  }
 }
 
-function showSyncBadge(synced) {
-  const footer = document.querySelector('footer p');
-  if (!footer) return;
-  const badge = synced
-    ? ' <span style="color:#86efac; font-size:8px;">● DADOS DO ADMIN</span>'
-    : ' <span style="color:#6b7280; font-size:8px;">● DADOS BASE</span>';
-  footer.innerHTML += badge;
-}
-
-// ============================================================
-// SISTEMA DE ABAS
-// ============================================================
 function switchTab(tabName, btn) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
@@ -651,20 +570,16 @@ function switchTabByName(tabName) {
     if (btn.textContent.includes('Links') && tabName === 'links') btn.classList.add('active');
     if (btn.textContent.includes('Home') && tabName === 'home') btn.classList.add('active');
   });
-
   window.scrollTo({ top: 0 });
 }
 
-// ============================================================
-// RENDERIZADOR - JOGOS
-// ============================================================
 function renderJogos() {
   const grid = document.getElementById('jogos-grid');
   const homeGrid = document.getElementById('home-jogos-grid');
   const empty = document.getElementById('jogos-empty');
-  const jogos = window.__activeData.jogos;
+  const jogos = overcastData.jogos || [];
 
-  if (!jogos || jogos.length === 0) {
+  if (jogos.length === 0) {
     grid.innerHTML = '';
     if (empty) empty.classList.remove('hidden');
     if (homeGrid) homeGrid.innerHTML = '';
@@ -672,17 +587,13 @@ function renderJogos() {
   }
   if (empty) empty.classList.add('hidden');
 
-  const makeCard = (jogo, idx) => {
+  const makeCard = (jogo) => {
+    const desc = jogo.descricao || "Sem metadados descritivos.";
+    const ctrl = jogo.controles || "Não mapeados.";
     return `
-      <div class="card overflow-hidden cursor-pointer group" onclick="openGame(${idx})">
+      <div class="card overflow-hidden cursor-pointer group" onclick="openGame('${encodeURIComponent(jogo.url)}', '${encodeURIComponent(jogo.titulo)}', '${encodeURIComponent(jogo.autor)}', '${encodeURIComponent(desc)}', '${encodeURIComponent(ctrl)}')">
         <div class="relative overflow-hidden border-b-2 border-[#2e2e3a]" style="aspect-ratio:3/2;">
-          <img
-            src="${jogo.capa}"
-            alt="${jogo.titulo}"
-            class="w-full h-full object-cover filter brightness-90 group-hover:brightness-100"
-            onerror="this.src='https://placehold.co/300x200/131317/4f46e5?text=NO_CAPA'"
-          />
-          ${jogo.mobile ? `<div class="absolute top-2 left-2" style="background:rgba(34,197,94,0.85); border:1px solid #86efac; padding:2px 6px;"><span class="font-pixel text-[7px] text-white">📱 MOBILE</span></div>` : ''}
+          <img src="${jogo.capa}" alt="${jogo.titulo}" class="w-full h-full object-cover filter brightness-90 group-hover:brightness-100" />
           <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center">
             <span class="font-pixel text-[8px] text-white bg-indigo-700 px-2 py-1.5 border border-white">EXEC_JOGO</span>
           </div>
@@ -695,43 +606,31 @@ function renderJogos() {
     `;
   };
 
-  grid.innerHTML = jogos.map((j, i) => makeCard(j, i)).join('');
-  if (homeGrid) homeGrid.innerHTML = jogos.slice(0, 4).map((j, i) => makeCard(j, i)).join('');
+  grid.innerHTML = jogos.map(makeCard).join('');
+  if (homeGrid) homeGrid.innerHTML = jogos.slice(0, 4).map(makeCard).join('');
 }
 
-// ============================================================
-// CONTROLE DO FRAME MODAL
-// ============================================================
-function openGame(idx) {
-  const jogos = window.__activeData.jogos;
-  const jogo = jogos[idx];
-  if (!jogo) return;
-
-  const title = jogo.titulo || '';
-  const author = jogo.autor || '';
-  const url = jogo.url || '';
-  const desc = jogo.descricao || 'Sem descrição disponível.';
-  const ctrl = jogo.controles || 'Não informado.';
-  const isMobile = jogo.mobile === true;
-
-  document.getElementById('modal-game-title').innerHTML =
-    `<span class="text-white">${title}</span> <span class="text-gray-500 text-[9px] ml-2">// DEV: ${author}</span>`;
-
-  const badge = document.getElementById('modal-mobile-badge');
-  if (isMobile) badge.classList.remove('hidden');
-  else badge.classList.add('hidden');
-
-  document.getElementById('modal-open-link').href = url;
+function openGame(encodedUrl, encodedTitle, encodedAuthor, encodedDesc, encodedCtrl) {
+  const url = decodeURIComponent(encodedUrl);
+  const title = decodeURIComponent(encodedTitle);
+  const author = decodeURIComponent(encodedAuthor);
+  const desc = decodeURIComponent(encodedDesc);
+  const ctrl = decodeURIComponent(encodedCtrl);
+  
+  document.getElementById('modal-game-title').innerHTML = `
+    <span class="text-white">${title}</span> 
+    <span class="text-gray-500 text-[9px] ml-2">// DEV: ${author}</span>
+  `;
   document.getElementById('modal-game-description').innerHTML = desc;
   document.getElementById('modal-game-controls').innerHTML = ctrl;
-  document.getElementById('modal-iframe').src = url;
+  document.getElementById('modal-game-btn-link').href = url;
+  
   document.getElementById('game-modal').style.display = 'flex';
   document.body.style.overflow = 'hidden';
 }
 
 function closeGameModal() {
   document.getElementById('game-modal').style.display = 'none';
-  document.getElementById('modal-iframe').src = '';
   document.body.style.overflow = '';
 }
 
@@ -739,13 +638,16 @@ function closeModal(event) {
   if (event.target === document.getElementById('game-modal')) closeGameModal();
 }
 
-// ============================================================
-// RENDERIZADOR - TUTORIAIS
-// ============================================================
+function getYoutubeId(url) {
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
+}
+
 function renderTutoriais(filter) {
   const grid = document.getElementById('tutoriais-grid');
   const empty = document.getElementById('tutoriais-empty');
-  const videos = window.__activeData.videos || [];
+  const videos = overcastData.videos || [];
   const filtered = filter === 'Todos' ? videos : videos.filter(v => v.categoria === filter);
 
   if (filtered.length === 0) {
@@ -755,25 +657,53 @@ function renderTutoriais(filter) {
   }
   empty.classList.add('hidden');
 
-  grid.innerHTML = filtered.map(v => `
-    <div class="card overflow-hidden">
-      <div class="yt-embed-wrap">
-        <iframe
-          src="${v.url}"
-          title="${v.titulo}"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowfullscreen
-          loading="lazy"
-        ></iframe>
-      </div>
-      <div class="p-3 bg-[#131317]">
-        <div class="flex items-start justify-between gap-2">
-          <p class="font-pixel text-[9px] text-white leading-tight">${v.titulo.toUpperCase()}</p>
-          <span class="badge shrink-0">${v.categoria.toUpperCase()}</span>
+  grid.innerHTML = filtered.map((v, index) => {
+    const ytId = getYoutubeId(v.url);
+    // Gerador de Thumbnail Lazy Estática Padrão do YouTube para Evitar Travamentos de CPU
+    if (ytId) {
+      const thumbUrl = `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`;
+      return `
+        <div class="card overflow-hidden" id="tut-card-${index}">
+          <div class="thumb-container" style="background-image: url('${thumbUrl}')" onclick="loadRealVideo('${v.url}', ${index})">
+            <div class="thumb-play-btn">
+              <span class="font-pixel text-[9px] text-white bg-black px-3 py-1.5 border border-white">▶ PLAY</span>
+            </div>
+          </div>
+          <div class="p-3 bg-[#131317]">
+            <div class="flex items-start justify-between gap-2">
+              <p class="font-pixel text-[9px] text-white leading-tight">${v.titulo.toUpperCase()}</p>
+              <span class="badge shrink-0">${v.categoria.toUpperCase()}</span>
+            </div>
+          </div>
         </div>
-      </div>
+      `;
+    } else {
+      return `
+        <div class="card overflow-hidden">
+          <div class="yt-embed-wrap">
+            <iframe src="${v.url}" allowfullscreen loading="lazy"></iframe>
+          </div>
+          <div class="p-3 bg-[#131317]">
+            <div class="flex items-start justify-between gap-2">
+              <p class="font-pixel text-[9px] text-white leading-tight">${v.titulo.toUpperCase()}</p>
+              <span class="badge shrink-0">${v.categoria.toUpperCase()}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+  }).join('');
+}
+
+function loadRealVideo(url, index) {
+  const card = document.getElementById(`tut-card-${index}`);
+  if (!card) return;
+  const container = card.querySelector('.thumb-container');
+  container.outerHTML = `
+    <div class="yt-embed-wrap">
+      <iframe src="${url}?autoplay=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
     </div>
-  `).join('');
+  `;
 }
 
 function filterTutoriais(filter, btn) {
@@ -782,13 +712,10 @@ function filterTutoriais(filter, btn) {
   renderTutoriais(filter);
 }
 
-// ============================================================
-// RENDERIZADOR - LINKS
-// ============================================================
 function renderLinks(query) {
   const grid = document.getElementById('links-grid');
   const empty = document.getElementById('links-empty');
-  const links = window.__activeData.links || [];
+  const links = overcastData.links || [];
   const q = (query || '').toLowerCase().trim();
   const filtered = q
     ? links.filter(l => l.titulo.toLowerCase().includes(q) || (l.tag || '').toLowerCase().includes(q))
@@ -813,31 +740,38 @@ function renderLinks(query) {
   `).join('');
 }
 
-function filterLinks(q) {
-  renderLinks(q);
-}
+function filterLinks(q) { renderLinks(q); }
 
-// ============================================================
-// AUTH DO ALUNO / PROCESSAMENTO
-// ============================================================
 const etapaMap = {
-  'Ideia':     { pct: 15, steps: [1,0,0,0,0] },
-  'Mecânica':  { pct: 35, steps: [1,1,0,0,0] },
-  'Mecanica':  { pct: 35, steps: [1,1,0,0,0] },
-  'Arte':      { pct: 60, steps: [1,1,1,0,0] },
-  'Polimento': { pct: 80, steps: [1,1,1,1,0] },
-  'Publicado': { pct: 100, steps: [1,1,1,1,1] }
+  Ideia:      { pct: 15, steps: [1,0,0,0,0] },
+  Mecânica:   { pct: 35, steps: [1,1,0,0,0] },
+  Arte:       { pct: 60, steps: [1,1,1,0,0] },
+  Polimento:  { pct: 80, steps: [1,1,1,1,0] },
+  Publicado:  { pct: 100, steps: [1,1,1,1,1] }
 };
 
 function loginAluno() {
   const code = document.getElementById('student-code-input').value.trim().toLowerCase();
-  const aluno = window.__activeData.alunos.find(a => a.codigo.toLowerCase() === code);
+  const aluno = overcastData.alunos.find(a => a.codigo.toLowerCase() === code);
   if (!aluno) {
     document.getElementById('login-error').classList.remove('hidden');
     return;
   }
   document.getElementById('login-error').classList.add('hidden');
+  
+  // Persistindo Código do Aluno na Sessão Corrente
+  sessionStorage.setItem('active_student_code', code);
   showDashboard(aluno);
+}
+
+function checkPersistedLogin() {
+  const savedCode = sessionStorage.getItem('active_student_code');
+  if (savedCode) {
+    const aluno = overcastData.alunos.find(a => a.codigo.toLowerCase() === savedCode.toLowerCase());
+    if (aluno) {
+      showDashboard(aluno);
+    }
+  }
 }
 
 function showDashboard(aluno) {
@@ -854,24 +788,23 @@ function showDashboard(aluno) {
   const stepEls = ['step-ideia','step-mecanica','step-arte','step-polimento','step-publicado'];
   stepEls.forEach((id, i) => {
     const el = document.getElementById(id);
-    el.classList.toggle('done', info.steps[i] === 1);
+    if(el) el.classList.toggle('done', info.steps[i] === 1);
   });
 }
 
 function logoutAluno() {
+  sessionStorage.removeItem('active_student_code');
   document.getElementById('student-dashboard').classList.add('hidden');
   document.getElementById('student-login').classList.remove('hidden');
   document.getElementById('student-code-input').value = '';
 }
 
-// ============================================================
-// INITIALIZATION
-// ============================================================
 function init() {
   loadData();
   renderJogos();
   renderTutoriais('Todos');
   renderLinks('');
+  checkPersistedLogin();
 }
 
 document.addEventListener('DOMContentLoaded', init);
