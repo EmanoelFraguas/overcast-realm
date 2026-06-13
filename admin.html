@@ -117,7 +117,6 @@
 </head>
 <body class="p-4 md:p-8">
 
-<!-- TELA DE LOGIN RESTRITO -->
 <div id="admin-auth-screen" class="fixed inset-0 bg-[#0a0a0c] z-[99999] flex items-center justify-center p-4">
   <div class="card p-6 w-full max-w-sm bg-[#121216] text-center">
     <p class="font-pixel text-[9px] text-red-400 mb-3">// TERMINAL_RAIZ_RESTRITO</p>
@@ -134,7 +133,6 @@
   </div>
 </div>
 
-<!-- CONTEÚDO PRINCIPAL DO DASHBOARD -->
 <div id="admin-dashboard-content" class="hidden">
   <header class="max-w-6xl mx-auto mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b-2 border-[#2e2e3a] pb-4">
     <div>
@@ -150,7 +148,6 @@
 
   <main class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
     
-    <!-- FORMULÁRIOS DE CRIAÇÃO / EDIÇÃO -->
     <div class="lg:col-span-5 space-y-6">
       <div class="card p-5">
         <h2 id="form-title" class="font-pixel text-[10px] text-indigo-400 mb-4">// REGISTRAR_ALUNO</h2>
@@ -189,7 +186,6 @@
         </div>
       </div>
 
-      <!-- RECURSOS EXTRA: VÍDEOS, LINKS, JOGOS -->
       <div class="card p-4">
         <div class="flex border-b border-[#2e2e3a] mb-4">
           <button class="nav-tab active" id="tab-video" onclick="switchFormTab('video')">VÍDEOS</button>
@@ -197,7 +193,6 @@
           <button class="nav-tab" id="tab-jogo" onclick="switchFormTab('jogo')">JOGOS</button>
         </div>
 
-        <!-- FORM VIDEO -->
         <div id="subform-video" class="space-y-3 font-mono text-xs">
           <input type="hidden" id="edit-video-index" value="" />
           <input type="text" id="video-titulo" placeholder="TÍTULO DA AULA" class="input-field" />
@@ -210,7 +205,6 @@
           <button class="btn-action btn-add w-full" id="btn-save-video" onclick="saveVideo()">GRAVAR_VIDEO</button>
         </div>
 
-        <!-- FORM LINK -->
         <div id="subform-link" class="space-y-3 font-mono text-xs hidden">
           <input type="hidden" id="edit-link-index" value="" />
           <input type="text" id="link-titulo" placeholder="TÍTULO DO RECURSO" class="input-field" />
@@ -220,7 +214,6 @@
           <button class="btn-action btn-add w-full" id="btn-save-link" onclick="saveLink()">GRAVAR_LINK</button>
         </div>
 
-        <!-- FORM JOGO -->
         <div id="subform-jogo" class="space-y-3 font-mono text-xs hidden">
           <input type="hidden" id="edit-jogo-index" value="" />
           <input type="text" id="jogo-titulo" placeholder="NOME DO JOGO" class="input-field" />
@@ -234,7 +227,6 @@
       </div>
     </div>
 
-    <!-- LISTAGENS DE DADOS REAIS -->
     <div class="lg:col-span-7 space-y-6">
       <div class="card p-5">
         <h2 class="font-pixel text-[10px] text-emerald-400 mb-4">// BANCO_DE_DESENVOLVEDORES</h2>
@@ -262,24 +254,19 @@
 </div>
 
 <script>
-// Hash SHA-256 correspondente à chave "overcast2026@"
-const ADMIN_HASH = "90494451000b9a896d888da2089ebbd4ebec891cf15a3bb67087e5b2258fa1ef";
+// Chave de validação correspondente ao texto "overcast2026@"
+const ADMIN_AUTH_KEY = "b3ZlcmNhc3QyMDI2QA==";
 const STORAGE_KEY = 'overcast_v1_data';
 let data = { alunos: [], videos: [], links: [], jogos: [] };
 
-// ENGINE DE CRIPTOGRAFIA RESTRITA
-async function sha256(message) {
-  const msgBuffer = new TextEncoder().encode(message);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-async function loginAdmin() {
+// ENGINE DE AUTENTICAÇÃO COM TRATAMENTO DE STRING LITERAL
+function loginAdmin() {
   const input = document.getElementById('admin-password-input').value;
-  const computedHash = await sha256(input);
+  
+  // Converte de forma limpa sem quebrar a codificação de símbolos especiais
+  const computedKey = btoa(unescape(encodeURIComponent(input)));
 
-  if (computedHash === ADMIN_HASH) {
+  if (computedKey === ADMIN_AUTH_KEY) {
     document.getElementById('auth-error').classList.add('hidden');
     sessionStorage.setItem('admin_session_token', 'AUTHORIZED_SUCCESS');
     unlockDashboard();
@@ -567,7 +554,6 @@ function renderAll() {
   renderRecursos();
 }
 
-// EXPORTAÇÃO DOS DADOS SALVOS NO LOCALSTORAGE
 function exportData() {
   const blob = new Blob([JSON.stringify(data, null, 2)], {type : 'application/json'});
   const a = document.createElement('a');
