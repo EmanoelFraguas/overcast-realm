@@ -100,130 +100,212 @@
       color: var(--accent-glow);
       border-bottom-color: var(--accent-storm);
     }
+
+    .auth-input {
+      background: #000000;
+      border: 3px solid var(--border-brutal);
+      color: var(--text-primary);
+      padding: 12px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 14px;
+      text-align: center;
+      outline: none;
+      width: 100%;
+    }
+    .auth-input:focus { border-color: var(--accent-storm); }
   </style>
 </head>
 <body class="p-4 md:p-8">
 
-<header class="max-w-6xl mx-auto mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b-2 border-[#2e2e3a] pb-4">
-  <div>
-    <h1 class="font-pixel text-sm text-white">[⚒ TERMINAL_MASTER_CONTROL]</h1>
-    <p id="sync-status" class="text-xs font-mono mt-2 text-gray-500">Iniciando barramento...</p>
+<!-- TELA DE LOGIN RESTRITO -->
+<div id="admin-auth-screen" class="fixed inset-0 bg-[#0a0a0c] z-[99999] flex items-center justify-center p-4">
+  <div class="card p-6 w-full max-w-sm bg-[#121216] text-center">
+    <p class="font-pixel text-[9px] text-red-400 mb-3">// TERMINAL_RAIZ_RESTRITO</p>
+    <h2 class="font-pixel text-[11px] text-white mb-5">Autenticação do Administrador</h2>
+    <input
+      type="password"
+      id="admin-password-input"
+      class="auth-input mb-4"
+      placeholder="CHAVE_MESTRA"
+      onkeydown="if(event.key==='Enter') loginAdmin()"
+    />
+    <div id="auth-error" class="hidden font-pixel text-[8px] mb-4 text-red-500">[ACESSO_NEGADO: CHAVE_CORRUPTA]</div>
+    <button class="btn-action btn-add w-full tracking-wider py-3 text-[10px]" onclick="loginAdmin()">DECODIFICAR_ACOMPANHAMENTO</button>
   </div>
-  <div class="flex gap-2">
-    <button class="btn-action bg-gray-800 text-white" onclick="exportData()">EXPORTAR_JSON</button>
-    <button class="btn-action bg-red-950 text-red-400" onclick="resetStorage()">RESET_FACTORY</button>
-  </div>
-</header>
+</div>
 
-<main class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
-  
-  <div class="lg:col-span-5 space-y-6">
-    <div class="card p-5">
-      <h2 id="form-title" class="font-pixel text-[10px] text-indigo-400 mb-4">// REGISTRAR_ALUNO</h2>
-      <div class="space-y-3 font-mono text-xs">
-        <input type="hidden" id="edit-aluno-index" value="" />
-        <div>
-          <label class="block mb-1 text-gray-500">CÓDIGO DE ACESSO (EX: pablo01)</label>
-          <input type="text" id="aluno-codigo" class="input-field" />
+<!-- CONTEÚDO PRINCIPAL DO DASHBOARD -->
+<div id="admin-dashboard-content" class="hidden">
+  <header class="max-w-6xl mx-auto mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b-2 border-[#2e2e3a] pb-4">
+    <div>
+      <h1 class="font-pixel text-sm text-white">[⚒ TERMINAL_MASTER_CONTROL]</h1>
+      <p id="sync-status" class="text-xs font-mono mt-2 text-gray-500">Iniciando barramento...</p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <button class="btn-action bg-gray-800 text-white" onclick="exportData()">EXPORTAR_JSON</button>
+      <button class="btn-action bg-red-950 text-red-400" onclick="resetStorage()">RESET_FACTORY</button>
+      <button class="btn-action bg-zinc-900 text-zinc-400 border border-zinc-700" onclick="logoutAdmin()">LOGOUT_</button>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+    
+    <!-- FORMULÁRIOS DE CRIAÇÃO / EDIÇÃO -->
+    <div class="lg:col-span-5 space-y-6">
+      <div class="card p-5">
+        <h2 id="form-title" class="font-pixel text-[10px] text-indigo-400 mb-4">// REGISTRAR_ALUNO</h2>
+        <div class="space-y-3 font-mono text-xs">
+          <input type="hidden" id="edit-aluno-index" value="" />
+          <div>
+            <label class="block mb-1 text-gray-500">CÓDIGO DE ACESSO (EX: pablo01)</label>
+            <input type="text" id="aluno-codigo" class="input-field" />
+          </div>
+          <div>
+            <label class="block mb-1 text-gray-500">NOME DO ALUNO</label>
+            <input type="text" id="aluno-nome" class="input-field" />
+          </div>
+          <div>
+            <label class="block mb-1 text-gray-500">URL PASTA DE ENVIOS (.C3P)</label>
+            <input type="text" id="aluno-envios" class="input-field" />
+          </div>
+          <div>
+            <label class="block mb-1 text-gray-500">URL PASTA DE MATERIAIS</label>
+            <input type="text" id="aluno-materiais" class="input-field" />
+          </div>
+          <div>
+            <label class="block mb-1 text-gray-500">ESTÁGIO ATUAL DO PROJETO</label>
+            <select id="aluno-etapa" class="input-field bg-black">
+              <option value="Ideia">Ideia</option>
+              <option value="Mecânica">Mecânica</option>
+              <option value="Arte">Arte</option>
+              <option value="Polimento">Polimento</option>
+              <option value="Publicado">Publicado</option>
+            </select>
+          </div>
+          <div class="pt-2 flex gap-2">
+            <button class="btn-action btn-add flex-1" id="btn-save-aluno" onclick="saveAluno()">SALVAR_ALUNO</button>
+            <button class="btn-action bg-gray-700 text-white hidden" id="btn-cancel-aluno" onclick="clearAlunoForm()">CANCELAR</button>
+          </div>
         </div>
-        <div>
-          <label class="block mb-1 text-gray-500">NOME DO ALUNO</label>
-          <input type="text" id="aluno-nome" class="input-field" />
+      </div>
+
+      <!-- RECURSOS EXTRA: VÍDEOS, LINKS, JOGOS -->
+      <div class="card p-4">
+        <div class="flex border-b border-[#2e2e3a] mb-4">
+          <button class="nav-tab active" id="tab-video" onclick="switchFormTab('video')">VÍDEOS</button>
+          <button class="nav-tab" id="tab-link" onclick="switchFormTab('link')">LINKS</button>
+          <button class="nav-tab" id="tab-jogo" onclick="switchFormTab('jogo')">JOGOS</button>
         </div>
-        <div>
-          <label class="block mb-1 text-gray-500">URL PASTA DE ENVIOS (.C3P)</label>
-          <input type="text" id="aluno-envios" class="input-field" />
-        </div>
-        <div>
-          <label class="block mb-1 text-gray-500">URL PASTA DE MATERIAIS</label>
-          <input type="text" id="aluno-materiais" class="input-field" />
-        </div>
-        <div>
-          <label class="block mb-1 text-gray-500">ESTÁGIO ATUAL DO PROJETO</label>
-          <select id="aluno-etapa" class="input-field bg-black">
-            <option value="Ideia">Ideia</option>
-            <option value="Mecânica">Mecânica</option>
+
+        <!-- FORM VIDEO -->
+        <div id="subform-video" class="space-y-3 font-mono text-xs">
+          <input type="hidden" id="edit-video-index" value="" />
+          <input type="text" id="video-titulo" placeholder="TÍTULO DA AULA" class="input-field" />
+          <input type="text" id="video-url" placeholder="URL EMBED DO YOUTUBE" class="input-field" />
+          <select id="video-categoria" class="input-field bg-black">
+            <option value="Básico">Básico</option>
+            <option value="Lógica">Lógica</option>
             <option value="Arte">Arte</option>
-            <option value="Polimento">Polimento</option>
-            <option value="Publicado">Publicado</option>
           </select>
+          <button class="btn-action btn-add w-full" id="btn-save-video" onclick="saveVideo()">GRAVAR_VIDEO</button>
         </div>
-        <div class="pt-2 flex gap-2">
-          <button class="btn-action btn-add flex-1" id="btn-save-aluno" onclick="saveAluno()">SALVAR_ALUNO</button>
-          <button class="btn-action bg-gray-700 text-white hidden" id="btn-cancel-aluno" onclick="clearAlunoForm()">CANCELAR</button>
+
+        <!-- FORM LINK -->
+        <div id="subform-link" class="space-y-3 font-mono text-xs hidden">
+          <input type="hidden" id="edit-link-index" value="" />
+          <input type="text" id="link-titulo" placeholder="TÍTULO DO RECURSO" class="input-field" />
+          <input type="text" id="link-url" placeholder="URL" class="input-field" />
+          <input type="text" id="link-descricao" placeholder="DESCRIÇÃO CURTA" class="input-field" />
+          <input type="text" id="link-tag" placeholder="TAG (EX: ARTE, ASSETS)" class="input-field" />
+          <button class="btn-action btn-add w-full" id="btn-save-link" onclick="saveLink()">GRAVAR_LINK</button>
+        </div>
+
+        <!-- FORM JOGO -->
+        <div id="subform-jogo" class="space-y-3 font-mono text-xs hidden">
+          <input type="hidden" id="edit-jogo-index" value="" />
+          <input type="text" id="jogo-titulo" placeholder="NOME DO JOGO" class="input-field" />
+          <input type="text" id="jogo-autor" placeholder="AUTOR (ALUNO)" class="input-field" />
+          <input type="text" id="jogo-capa" placeholder="URL DA IMAGEM DE CAPA" class="input-field" />
+          <input type="text" id="jogo-url" placeholder="URL EMBED-UPLOAD DO ITCH.IO" class="input-field" />
+          <textarea id="jogo-descricao" placeholder="DESCRIÇÃO DO CONTEXTO TÉCNICO" class="input-field h-20"></textarea>
+          <input type="text" id="jogo-controles" placeholder="CONTROLES (EX: SETAS / ESPAÇO)" class="input-field" />
+          <button class="btn-action btn-add w-full" id="btn-save-jogo" onclick="saveJogo()">GRAVAR_JOGO</button>
         </div>
       </div>
     </div>
 
-    <div class="card p-4">
-      <div class="flex border-b border-[#2e2e3a] mb-4">
-        <button class="nav-tab active" id="tab-video" onclick="switchFormTab('video')">VÍDEOS</button>
-        <button class="nav-tab" id="tab-link" onclick="switchFormTab('link')">LINKS</button>
-        <button class="nav-tab" id="tab-jogo" onclick="switchFormTab('jogo')">JOGOS</button>
+    <!-- LISTAGENS DE DADOS REAIS -->
+    <div class="lg:col-span-7 space-y-6">
+      <div class="card p-5">
+        <h2 class="font-pixel text-[10px] text-emerald-400 mb-4">// BANCO_DE_DESENVOLVEDORES</h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse font-mono text-xs">
+            <thead>
+              <tr class="border-b border-[#2e2e3a] text-gray-500">
+                <th class="p-2">CÓDIGO</th>
+                <th class="p-2">ALUNO</th>
+                <th class="p-2">ESTÁGIO_PROJETO</th>
+                <th class="p-2 text-right">AÇÕES</th>
+              </tr>
+            </thead>
+            <tbody id="table-alunos-rows"></tbody>
+          </table>
+        </div>
       </div>
 
-      <div id="subform-video" class="space-y-3 font-mono text-xs">
-        <input type="hidden" id="edit-video-index" value="" />
-        <input type="text" id="video-titulo" placeholder="TÍTULO DA AULA" class="input-field" />
-        <input type="text" id="video-url" placeholder="URL EMBED DO YOUTUBE" class="input-field" />
-        <select id="video-categoria" class="input-field bg-black">
-          <option value="Básico">Básico</option>
-          <option value="Lógica">Lógica</option>
-          <option value="Arte">Arte</option>
-        </select>
-        <button class="btn-action btn-add w-full" id="btn-save-video" onclick="saveVideo()">GRAVAR_VIDEO</button>
-      </div>
-
-      <div id="subform-link" class="space-y-3 font-mono text-xs hidden">
-        <input type="hidden" id="edit-link-index" value="" />
-        <input type="text" id="link-titulo" placeholder="TÍTULO DO RECURSO" class="input-field" />
-        <input type="text" id="link-url" placeholder="URL" class="input-field" />
-        <input type="text" id="link-descricao" placeholder="DESCRIÇÃO CURTA" class="input-field" />
-        <input type="text" id="link-tag" placeholder="TAG (EX: ARTE, ASSETS)" class="input-field" />
-        <button class="btn-action btn-add w-full" id="btn-save-link" onclick="saveLink()">GRAVAR_LINK</button>
-      </div>
-
-      <div id="subform-jogo" class="space-y-3 font-mono text-xs hidden">
-        <input type="hidden" id="edit-jogo-index" value="" />
-        <input type="text" id="jogo-titulo" placeholder="NOME DO JOGO" class="input-field" />
-        <input type="text" id="jogo-autor" placeholder="AUTOR (ALUNO)" class="input-field" />
-        <input type="text" id="jogo-capa" placeholder="URL DA IMAGEM DE CAPA" class="input-field" />
-        <input type="text" id="jogo-url" placeholder="URL EMBED-UPLOAD DO ITCH.IO" class="input-field" />
-        <textarea id="jogo-descricao" placeholder="DESCRIÇÃO DO CONTEXTO TÉCNICO" class="input-field h-20"></textarea>
-        <input type="text" id="jogo-controles" placeholder="CONTROLES (EX: SETAS / ESPAÇO)" class="input-field" />
-        <button class="btn-action btn-add w-full" id="btn-save-jogo" onclick="saveJogo()">GRAVAR_JOGO</button>
+      <div class="card p-5">
+        <h2 class="font-pixel text-[10px] text-emerald-400 mb-4">// ARQUIVO_DE_ELEMENTOS_EXTERNOS</h2>
+        <div id="recursos-lista-container" class="space-y-3 font-mono text-xs max-h-96 overflow-y-auto"></div>
       </div>
     </div>
-  </div>
-
-  <div class="lg:col-span-7 space-y-6">
-    <div class="card p-5">
-      <h2 class="font-pixel text-[10px] text-emerald-400 mb-4">// BANCO_DE_DESENVOLVEDORES</h2>
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse font-mono text-xs">
-          <thead>
-            <tr class="border-b border-[#2e2e3a] text-gray-500">
-              <th class="p-2">CÓDIGO</th>
-              <th class="p-2">ALUNO</th>
-              <th class="p-2">ESTÁGIO_PROJETO</th>
-              <th class="p-2 text-right">AÇÕES</th>
-            </tr>
-          </thead>
-          <tbody id="table-alunos-rows"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="card p-5">
-      <h2 class="font-pixel text-[10px] text-emerald-400 mb-4">// ARQUIVO_DE_ELEMENTOS_EXTERNOS</h2>
-      <div id="recursos-lista-container" class="space-y-3 font-mono text-xs max-h-96 overflow-y-auto"></div>
-    </div>
-  </div>
-</main>
+  </main>
+</div>
 
 <script>
+// Hash SHA-256 correspondente à chave "overcast2026@"
+const ADMIN_HASH = "90494451000b9a896d888da2089ebbd4ebec891cf15a3bb67087e5b2258fa1ef";
 const STORAGE_KEY = 'overcast_v1_data';
 let data = { alunos: [], videos: [], links: [], jogos: [] };
+
+// ENGINE DE CRIPTOGRAFIA RESTRITA
+async function sha256(message) {
+  const msgBuffer = new TextEncoder().encode(message);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function loginAdmin() {
+  const input = document.getElementById('admin-password-input').value;
+  const computedHash = await sha256(input);
+
+  if (computedHash === ADMIN_HASH) {
+    document.getElementById('auth-error').classList.add('hidden');
+    sessionStorage.setItem('admin_session_token', 'AUTHORIZED_SUCCESS');
+    unlockDashboard();
+  } else {
+    document.getElementById('auth-error').classList.remove('hidden');
+  }
+}
+
+function checkPersistedSession() {
+  const token = sessionStorage.getItem('admin_session_token');
+  if (token === 'AUTHORIZED_SUCCESS') {
+    unlockDashboard();
+  }
+}
+
+function unlockDashboard() {
+  document.getElementById('admin-auth-screen').classList.add('hidden');
+  document.getElementById('admin-dashboard-content').classList.remove('hidden');
+  loadFromStorage();
+  renderAll();
+}
+
+function logoutAdmin() {
+  sessionStorage.removeItem('admin_session_token');
+  location.reload();
+}
 
 function loadFromStorage() {
   try {
@@ -445,7 +527,6 @@ function editJogo(i) {
   document.getElementById('btn-save-jogo').textContent = "ATUALIZAR_JOGO";
 }
 
-// ELEMENTOS REMOÇÃO AUXILIAR
 function deleteRecurso(tipo, i) {
   if(confirm(`Remover este item do tipo [${tipo.toUpperCase()}]?`)) {
     data[tipo].splice(i, 1);
@@ -486,6 +567,7 @@ function renderAll() {
   renderRecursos();
 }
 
+// EXPORTAÇÃO DOS DADOS SALVOS NO LOCALSTORAGE
 function exportData() {
   const blob = new Blob([JSON.stringify(data, null, 2)], {type : 'application/json'});
   const a = document.createElement('a');
@@ -501,8 +583,7 @@ function resetStorage() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  loadFromStorage();
-  renderAll();
+  checkPersistedSession();
 });
 </script>
 </body>
