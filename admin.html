@@ -488,29 +488,56 @@
               <label class="form-label">URL do Jogo (para jogar) *</label>
               <input type="url" id="j-url" class="form-input" placeholder="https://... (itch.io, Poki, Construct...)" />
             </div>
+            <div>
+              <label class="form-label">Descrição breve</label>
+              <input type="text" id="j-descricao" class="form-input" placeholder="Uma frase sobre o jogo e a mecânica" />
+            </div>
+            <div>
+              <label class="form-label">Controles</label>
+              <input type="text" id="j-controles" class="form-input" placeholder="Ex: Setas para mover, Espaço para pular" />
+            </div>
+            <div class="flex items-center gap-3 pt-1">
+              <input type="checkbox" id="j-mobile" style="width:16px;height:16px;accent-color:#6366f1;cursor:pointer;" />
+              <label for="j-mobile" class="form-label" style="margin:0;cursor:pointer;">📱 Compatível com mobile / touch</label>
+            </div>
             <button class="btn-add w-full mt-2" onclick="addJogo()">+ Adicionar Jogo</button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ===== EXPORTAR JSON ===== -->
+    <!-- ===== SYNC STATUS + EXPORTAR JSON ===== -->
     <div class="card p-6 mt-8" style="border-color:rgba(34,197,94,0.3);">
-      <div class="flex items-center gap-3 mb-4">
-        <span class="text-2xl">📋</span>
+      <div class="flex items-center gap-3 mb-3">
+        <span class="text-2xl">💾</span>
         <div>
-          <p class="font-pixel text-xs mb-0.5" style="color:var(--accent-green);">// EXPORTAR</p>
-          <h3 class="font-pixel text-lg" style="color:var(--text-primary);">Gerar Novo JSON</h3>
+          <p class="font-pixel text-xs mb-0.5" style="color:var(--accent-green);">// SINCRONIZAÇÃO</p>
+          <h3 class="font-pixel text-lg" style="color:var(--text-primary);">Status & Exportação</h3>
         </div>
       </div>
-      <p class="text-sm mb-5" style="color:var(--text-muted); line-height:1.7;">
-        Clique em <strong style="color:var(--text-primary);">Gerar Novo JSON</strong> para ver o código atualizado. Depois copie e cole no bloco <code style="color:var(--accent-glow); background:var(--bg-input); padding:2px 6px; border-radius:4px;">const overcastData = { ... }</code> dentro do arquivo <code style="color:var(--accent-glow); background:var(--bg-input); padding:2px 6px; border-radius:4px;">index.html</code>.
-      </p>
-      <div class="flex flex-wrap gap-3 mb-4">
-        <button class="btn-export" onclick="generateJSON()">⚡ Gerar Novo JSON</button>
-        <button class="btn-copy" onclick="copyJSON()">📋 Copiar Tudo</button>
+
+      <!-- SYNC STATUS -->
+      <div class="mb-5 p-3" style="background:var(--bg-input); border:1px solid var(--border);">
+        <p class="font-pixel text-[9px] mb-1" style="color:var(--text-muted);">STATUS_ATUAL:</p>
+        <p id="sync-status" class="font-pixel text-[9px]" style="color:#6b7280; line-height:1.6;">● Carregando...</p>
       </div>
-      <textarea id="json-output" readonly placeholder="Clique em 'Gerar Novo JSON' para ver o resultado aqui..."></textarea>
+
+      <!-- COMO FUNCIONA -->
+      <div class="mb-5 p-4" style="background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.2);">
+        <p class="font-pixel text-[9px] mb-2" style="color:var(--accent-glow);">// COMO FUNCIONA</p>
+        <p class="text-xs leading-relaxed" style="color:var(--text-muted);">
+          Toda vez que você adiciona ou remove um item, os dados são salvos automaticamente neste navegador.
+          O <strong style="color:var(--text-primary);">index.html aberto neste mesmo navegador</strong> vai carregar esses dados na próxima vez que for acessado.<br/><br/>
+          Use <strong style="color:var(--text-primary);">Gerar JSON</strong> se quiser publicar num repositório (GitHub Pages, etc.) e garantir que qualquer pessoa veja os dados atualizados — cole o conteúdo no bloco <code style="color:var(--accent-glow);">overcastDataBase</code> do index.html.
+        </p>
+      </div>
+
+      <div class="flex flex-wrap gap-3 mb-4">
+        <button class="btn-export" onclick="generateJSON()">⚡ Gerar JSON para Publicar</button>
+        <button class="btn-copy" onclick="copyJSON()">📋 Copiar JSON</button>
+        <button onclick="resetStorage()" style="background:transparent;color:#ef4444;border:1px solid #ef4444;padding:8px 14px;font-size:12px;cursor:pointer;">🗑 Resetar para Dados Base</button>
+      </div>
+      <textarea id="json-output" readonly placeholder="Clique em 'Gerar JSON para Publicar' para ver o código aqui..."></textarea>
     </div>
 
   </div><!-- end max-w -->
@@ -686,6 +713,7 @@ function renderListJogos() {
 function deleteItem(collection, index) {
   if (!confirm('Remover este item?')) return;
   data[collection].splice(index, 1);
+  saveToStorage();
   renderAll();
 }
 
@@ -707,6 +735,7 @@ function addAluno() {
   document.getElementById('a-codigo').value = '';
   document.getElementById('a-envios').value = '';
   document.getElementById('a-materiais').value = '';
+  saveToStorage();
   renderListAlunos();
   showToast('Aluno adicionado!');
 }
@@ -724,6 +753,7 @@ function addVideo() {
   data.videos.push({ titulo, url, categoria });
   document.getElementById('v-titulo').value = '';
   document.getElementById('v-url').value = '';
+  saveToStorage();
   renderListVideos();
   showToast('Vídeo adicionado!');
 }
@@ -744,6 +774,7 @@ function addLink() {
   document.getElementById('l-url').value = '';
   document.getElementById('l-descricao').value = '';
   document.getElementById('l-tag').value = '';
+  saveToStorage();
   renderListLinks();
   showToast('Link adicionado!');
 }
@@ -752,23 +783,34 @@ function addLink() {
 // ADD JOGO
 // ============================================================
 function addJogo() {
-  const titulo = document.getElementById('j-titulo').value.trim();
-  const autor  = document.getElementById('j-autor').value.trim();
-  const capa   = document.getElementById('j-capa').value.trim();
-  const url    = document.getElementById('j-url').value.trim();
+  const titulo    = document.getElementById('j-titulo').value.trim();
+  const autor     = document.getElementById('j-autor').value.trim();
+  const capa      = document.getElementById('j-capa').value.trim();
+  const url       = document.getElementById('j-url').value.trim();
+  const descricao = document.getElementById('j-descricao').value.trim();
+  const controles = document.getElementById('j-controles').value.trim();
+  const mobile    = document.getElementById('j-mobile').checked;
 
   if (!titulo || !autor || !url) return alert('Título, autor e URL do jogo são obrigatórios.');
 
   data.jogos.push({
     titulo,
     autor,
-    capa: capa || 'https://placehold.co/300x200/1A1A1E/818CF8?text=' + encodeURIComponent(titulo),
-    url
+    capa: capa || 'https://placehold.co/300x200/131317/4f46e5?text=' + encodeURIComponent(titulo),
+    url,
+    descricao: descricao || '',
+    controles: controles || 'Não informado.',
+    mobile
   });
+
   document.getElementById('j-titulo').value = '';
   document.getElementById('j-autor').value = '';
   document.getElementById('j-capa').value = '';
   document.getElementById('j-url').value = '';
+  document.getElementById('j-descricao').value = '';
+  document.getElementById('j-controles').value = '';
+  document.getElementById('j-mobile').checked = false;
+  saveToStorage();
   renderListJogos();
   showToast('Jogo adicionado!');
 }
@@ -812,9 +854,62 @@ function showToast(msg) {
 }
 
 // ============================================================
+// LOCALSTORAGE SYNC
+// ============================================================
+const STORAGE_KEY = 'overcastData';
+
+function saveToStorage() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    updateSyncStatus(true);
+  } catch(e) {
+    alert('Erro ao salvar no localStorage: ' + e.message);
+  }
+}
+
+function loadFromStorage() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed && parsed.alunos) {
+        // Merge: mantém campos que podem não existir em dados antigos
+        data.alunos   = parsed.alunos   || data.alunos;
+        data.videos   = parsed.videos   || data.videos;
+        data.links    = parsed.links    || data.links;
+        data.jogos    = parsed.jogos    || data.jogos;
+        updateSyncStatus(true);
+        return true;
+      }
+    }
+  } catch(e) { /* usa dados base */ }
+  updateSyncStatus(false);
+  return false;
+}
+
+function resetStorage() {
+  if (!confirm('Isso vai apagar todas as alterações feitas no admin e voltar para os dados base. Continuar?')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
+}
+
+function updateSyncStatus(synced) {
+  const el = document.getElementById('sync-status');
+  if (!el) return;
+  if (synced) {
+    el.innerHTML = '● DADOS SALVOS NO NAVEGADOR — o index.html vai carregar estes dados automaticamente';
+    el.style.color = '#86efac';
+  } else {
+    el.innerHTML = '● USANDO DADOS BASE — nenhuma alteração salva ainda';
+    el.style.color = '#6b7280';
+  }
+}
+
+// ============================================================
 // INIT
 // ============================================================
 function initAdmin() {
+  loadFromStorage();
   renderAll();
 }
 </script>
