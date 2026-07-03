@@ -1,25 +1,25 @@
 {
   "alunos": [
     {
-      "codigo": "pablo01",
-      "nome": "Pablo",
-      "pastaEnvios": "https://drive.google.com/",
-      "pastaMateriais": "https://drive.google.com/",
+      "codigo": "theo.arns",
+      "nome": "Theo Arns",
+      "pastaEnvios": "https://drive.google.com/drive/u/3/folders/19aopbNmnBIdlj-URJkT-EICQmP8RZG0lZuNlWjSZarX_SDTiME8Csuh_xKx9sxK48NBxmKZs",
+      "pastaMateriais": "https://docs.google.com/forms/d/e/1FAIpQLSf5mPFinMT_brB5skm9fvwRP5pJ4F9Aj6i_l10E2ghmCZsxyg/viewform",
       "etapa": "Arte"
     }
   ],
   "videos": [
     {
-      "titulo": "Introdução à IDE do Construct 3",
+      "titulo": "IntroduÃ§Ã£o Ã  IDE do Construct 3",
       "url": "https://www.youtube.com/embed/dQw4w9WgXcQ",
-      "categoria": "Básico"
+      "categoria": "BÃ¡sico"
     }
   ],
   "links": [
     {
       "titulo": "Lospec Color Palettes",
       "url": "https://lospec.com",
-      "descricao": "Indexador de paletas cromáticas restritas para pixel art técnico.",
+      "descricao": "Indexador de paletas cromÃ¡ticas restritas para pixel art tÃ©cnico.",
       "tag": "Arte"
     }
   ],
@@ -29,8 +29,8 @@
       "autor": "Emanoel",
       "capa": "https://placehold.co/300x200/131317/4f46e5?text=Among+Us+Adventures",
       "url": "https://itch.io/embed-upload/14462910?color=ab5237",
-      "descricao": "Mecânicas de colisão estruturadas em malha 2D. O projeto explora ciclos de pulo, gravidade simulada via blocos de eventos e polimento básico de interface no Construct 3.",
-      "controles": "Mover: SETAS / WASD<br/>Pular: ESPAÇO"
+      "descricao": "MecÃ¢nicas de colisÃ£o estruturadas em malha 2D. O projeto explora ciclos de pulo, gravidade simulada via blocos de eventos e polimento bÃ¡sico de interface no Construct 3.",
+      "controles": "Mover: SETAS / WASD<br/>Pular: ESPAÃO"
     }
   ]
 }
