@@ -500,53 +500,16 @@
 </footer>
 
 <script>
-// DATA BANCO BASE (Substituído automaticamente pelo LocalStorage se houver atualizações do Admin)
-let overcastData = {
-  "alunos": [
-    {
-      "codigo": "pablo01",
-      "nome": "Pablo",
-      "pastaEnvios": "https://drive.google.com/",
-      "pastaMateriais": "https://drive.google.com/",
-      "etapa": "Arte"
-    }
-  ],
-  "videos": [
-    {
-      "titulo": "Introdução à IDE do Construct 3",
-      "url": "https://www.youtube.com/embed/dQw4w9WgXcQ",
-      "categoria": "Básico"
-    }
-  ],
-  "links": [
-    {
-      "titulo": "Lospec Color Palettes",
-      "url": "https://lospec.com",
-      "descricao": "Indexador de paletas cromáticas restritas para pixel art técnico.",
-      "tag": "Arte"
-    }
-  ],
-  "jogos": [
-    {
-      "titulo": "Among Us Adventures",
-      "autor": "Emanoel",
-      "capa": "https://placehold.co/300x200/131317/4f46e5?text=Among+Us+Adventures",
-      "url": "https://itch.io/embed-upload/14462910?color=ab5237",
-      "descricao": "Mecânicas de colisão estruturadas em malha 2D. O projeto explora ciclos de pulo, gravidade simulada via blocos de eventos e polimento básico de interface no Construct 3.",
-      "controles": "Mover: SETAS / WASD<br/>Pular: ESPAÇO"
-    }
-  ]
-};
+// DATA carregado do data.json do repositório (fonte única de verdade)
+let overcastData = { alunos: [], videos: [], links: [], jogos: [] };
 
-function loadData() {
+async function loadData() {
   try {
-    const saved = localStorage.getItem('overcast_v1_data');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (parsed) overcastData = parsed;
-    }
+    const res = await fetch('./data.json?_=' + Date.now());
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    overcastData = await res.json();
   } catch (e) {
-    console.error("Erro ao ler localStorage", e);
+    console.error("Erro ao carregar data.json:", e);
   }
 }
 
@@ -799,8 +762,8 @@ function logoutAluno() {
   document.getElementById('student-code-input').value = '';
 }
 
-function init() {
-  loadData();
+async function init() {
+  await loadData();
   renderJogos();
   renderTutoriais('Todos');
   renderLinks('');
