@@ -31,9 +31,9 @@
   ],
   "jogos": [
     {
-      "titulo": "Among Us Adventures",
+      "titulo": "Sqare Bear",
       "autor": "Emanoel",
-      "capa": "https://placehold.co/300x200/131317/4f46e5?text=Among+Us+Adventures",
+      "capa": "https://placehold.co/300x200/131317/4f46e5?text=Sqare+Bear",
       "url": "https://itch.io/embed-upload/14462910?color=ab5237",
       "descricao": "MecÃ¢nicas de colisÃ£o estruturadas em malha 2D. O projeto explora ciclos de pulo, gravidade simulada via blocos de eventos e polimento bÃ¡sico de interface no Construct 3.",
       "controles": "Mover: SETAS / WASD<br/>Pular: ESPAÃO"
