@@ -124,8 +124,15 @@
     <input
       type="password"
       id="admin-password-input"
-      class="auth-input mb-4"
+      class="auth-input mb-3"
       placeholder="CHAVE_MESTRA"
+      onkeydown="if(event.key==='Enter') loginAdmin()"
+    />
+    <input
+      type="password"
+      id="admin-gh-token"
+      class="auth-input mb-4"
+      placeholder="GITHUB_TOKEN"
       onkeydown="if(event.key==='Enter') loginAdmin()"
     />
     <div id="auth-error" class="hidden font-pixel text-[8px] mb-4 text-red-500">[ACESSO_NEGADO: CHAVE_CORRUPTA]</div>
@@ -256,19 +263,28 @@
 <script>
 // Chave de validação correspondente ao texto "overcast2026@"
 const ADMIN_AUTH_KEY = "b3ZlcmNhc3QyMDI2QA==";
-const STORAGE_KEY = 'overcast_v1_data';
-let data = { alunos: [], videos: [], links: [], jogos: [] };
 
-// ENGINE DE AUTENTICAÇÃO COM TRATAMENTO DE STRING LITERAL
+// Config do repositório GitHub
+const GH_OWNER = "EmanoelFraguas";
+const GH_REPO  = "overcast-realm";
+const GH_FILE  = "data.json";
+const GH_BRANCH = "main"; // troque para "master" se necessário
+
+let data = { alunos: [], videos: [], links: [], jogos: [] };
+let ghToken = "";
+
+// ENGINE DE AUTENTICAÇÃO
 function loginAdmin() {
   const input = document.getElementById('admin-password-input').value;
-  
-  // Converte de forma limpa sem quebrar a codificação de símbolos especiais
+  const token = document.getElementById('admin-gh-token').value.trim();
   const computedKey = btoa(unescape(encodeURIComponent(input)));
 
   if (computedKey === ADMIN_AUTH_KEY) {
+    if (!token) { alert("Informe o GitHub Token para continuar."); return; }
     document.getElementById('auth-error').classList.add('hidden');
     sessionStorage.setItem('admin_session_token', 'AUTHORIZED_SUCCESS');
+    sessionStorage.setItem('admin_gh_token', token);
+    ghToken = token;
     unlockDashboard();
   } else {
     document.getElementById('auth-error').classList.remove('hidden');
@@ -277,7 +293,9 @@ function loginAdmin() {
 
 function checkPersistedSession() {
   const token = sessionStorage.getItem('admin_session_token');
-  if (token === 'AUTHORIZED_SUCCESS') {
+  const savedGhToken = sessionStorage.getItem('admin_gh_token');
+  if (token === 'AUTHORIZED_SUCCESS' && savedGhToken) {
+    ghToken = savedGhToken;
     unlockDashboard();
   }
 }
@@ -285,44 +303,87 @@ function checkPersistedSession() {
 function unlockDashboard() {
   document.getElementById('admin-auth-screen').classList.add('hidden');
   document.getElementById('admin-dashboard-content').classList.remove('hidden');
-  loadFromStorage();
-  renderAll();
+  loadFromGitHub();
 }
 
 function logoutAdmin() {
   sessionStorage.removeItem('admin_session_token');
+  sessionStorage.removeItem('admin_gh_token');
   location.reload();
 }
 
-function loadFromStorage() {
+// Carrega data.json do GitHub
+async function loadFromGitHub() {
+  updateSyncStatus('loading');
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      data = JSON.parse(saved);
-      updateSyncStatus(true);
-      return;
-    }
-  } catch(e) { console.error(e); }
-  updateSyncStatus(false);
-}
-
-function saveToStorage() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    updateSyncStatus(true);
+    const res = await fetch(
+      `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}?ref=${GH_BRANCH}`,
+      { headers: { Authorization: `Bearer ${ghToken}`, Accept: "application/vnd.github+json" } }
+    );
+    if (!res.ok) throw new Error(`GitHub API: ${res.status}`);
+    const json = await res.json();
+    data = JSON.parse(atob(json.content.replace(/\n/g, '')));
+    // guarda o SHA atual para o próximo commit
+    sessionStorage.setItem('gh_file_sha', json.sha);
+    updateSyncStatus('ok');
     renderAll();
-  } catch(e) { alert("Erro ao sincronizar dados locais: " + e.message); }
+  } catch(e) {
+    updateSyncStatus('error', e.message);
+    console.error(e);
+  }
 }
 
-function updateSyncStatus(active) {
-  const el = document.getElementById('sync-status');
-  if(active) {
-    el.textContent = "● MÓDULO LOCAL SINCRONIZADO COM O INDEX.HTML";
-    el.style.color = "#10b981";
-  } else {
-    el.textContent = "● ALERTA: BANCO DE DADOS VAZIO";
-    el.style.color = "#ef4444";
+// Salva data.json no GitHub via commit
+async function saveToStorage() {
+  updateSyncStatus('saving');
+  const sha = sessionStorage.getItem('gh_file_sha');
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+
+  try {
+    const body = {
+      message: "admin: atualiza data.json",
+      content,
+      branch: GH_BRANCH,
+      ...(sha ? { sha } : {})
+    };
+    const res = await fetch(
+      `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${ghToken}`,
+          Accept: "application/vnd.github+json",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(body)
+      }
+    );
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || res.status);
+    }
+    const json = await res.json();
+    // atualiza o SHA para o próximo save
+    sessionStorage.setItem('gh_file_sha', json.content.sha);
+    updateSyncStatus('ok');
+    renderAll();
+  } catch(e) {
+    updateSyncStatus('error', e.message);
+    alert("Erro ao salvar no GitHub: " + e.message);
   }
+}
+
+function updateSyncStatus(state, msg) {
+  const el = document.getElementById('sync-status');
+  const states = {
+    loading: ["● CARREGANDO DO GITHUB...",       "#a78bfa"],
+    saving:  ["● COMMITANDO NO GITHUB...",        "#facc15"],
+    ok:      ["● GITHUB SINCRONIZADO — DEPLOY EM ~30s", "#10b981"],
+    error:   ["● ERRO: " + (msg || ''),           "#ef4444"]
+  };
+  const [text, color] = states[state] || states.error;
+  el.textContent = text;
+  el.style.color = color;
 }
 
 // ALUNOS ENGINE (INLINE EDIT INTEGRADO)
@@ -563,9 +624,9 @@ function exportData() {
 }
 
 function resetStorage() {
-  if(!confirm('Deseja limpar todos os registros locais do navegador?')) return;
-  localStorage.removeItem(STORAGE_KEY);
-  location.reload();
+  if(!confirm('Isso vai sobrescrever o data.json no GitHub com um banco vazio. Tem certeza?')) return;
+  data = { alunos: [], videos: [], links: [], jogos: [] };
+  saveToStorage();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
