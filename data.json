@@ -13,26 +13,33 @@
       "pastaEnvios": "https://forms.gle/gBysNcr4rwnyDTu77",
       "pastaMateriais": "https://drive.google.com/drive/folders/1jJxqBnbY36VoEBGoMnBFzLqFjxo2deWk_eVwYdXnG7U0S0Nklzv3XK7-MkWXJcoQfSgReEwB?usp=sharing",
       "etapa": "Ideia"
+    },
+    {
+      "codigo": "antonio.morissi",
+      "nome": "Antonio Morissi",
+      "pastaEnvios": "https://forms.gle/Jco2SpFMsrgckYWR7",
+      "pastaMateriais": "https://drive.google.com/drive/folders/17Jia1Y79Qev_nCkjwwTlqn5GyKk4Xwcg_QiVLIAhFXfl3Czg8_-vX3jRclR3Fp9yl4-xw3vo?usp=sharing",
+      "etapa": "Ideia"
     }
   ],
   "videos": [
     {
-      "titulo": "IntroduÃÂ§ÃÂ£o ÃÂ  IDE do Construct 3",
+      "titulo": "IntroduÃÂÃÂ§ÃÂÃÂ£o ÃÂÃÂ  IDE do Construct 3",
       "url": "https://www.youtube.com/embed/dQw4w9WgXcQ",
-      "categoria": "BÃÂ¡sico"
+      "categoria": "BÃÂÃÂ¡sico"
     }
   ],
   "links": [
     {
       "titulo": "Lospec Color Palettes",
       "url": "https://lospec.com",
-      "descricao": "Indexador de paletas cromÃÂ¡ticas restritas para pixel art tÃÂ©cnico.",
+      "descricao": "Indexador de paletas cromÃÂÃÂ¡ticas restritas para pixel art tÃÂÃÂ©cnico.",
       "tag": "Arte"
     },
     {
-      "titulo": "Assets GrÃ¡tis",
+      "titulo": "Assets GrÃÂ¡tis",
       "url": "https://itch.io/game-assets/free",
-      "descricao": "Itch.io - Link de acesso a assets grÃ¡tis",
+      "descricao": "Itch.io - Link de acesso a assets grÃÂ¡tis",
       "tag": "Assets"
     }
   ],
@@ -42,8 +49,8 @@
       "autor": "Emanoel",
       "capa": "https://placehold.co/300x200/131317/4f46e5?text=Sqare+Bear",
       "url": "https://itch.io/embed-upload/14462910?color=ab5237",
-      "descricao": "MecÃÂ¢nicas de colisÃÂ£o estruturadas em malha 2D. O projeto explora ciclos de pulo, gravidade simulada via blocos de eventos e polimento bÃÂ¡sico de interface no Construct 3.",
-      "controles": "Mover: SETAS / WASD<br/>Pular: ESPAÃÂO"
+      "descricao": "MecÃÂÃÂ¢nicas de colisÃÂÃÂ£o estruturadas em malha 2D. O projeto explora ciclos de pulo, gravidade simulada via blocos de eventos e polimento bÃÂÃÂ¡sico de interface no Construct 3.",
+      "controles": "Mover: SETAS / WASD<br/>Pular: ESPAÃÂÃÂO"
     }
   ]
 }
