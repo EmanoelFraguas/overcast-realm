@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <style>
     :root {
       --bg-base: #0b0b0d;
@@ -306,6 +307,7 @@
       <button class="nav-tab" onclick="switchTab('tutoriais', this)">_Tutoriais</button>
       <button class="nav-tab" onclick="switchTab('links', this)">_Links</button>
       <button class="nav-tab" onclick="switchTab('aluno', this)">_Área_Dev</button>
+      <button class="nav-tab" onclick="switchTab('turma', this)">_Turma</button>
     </nav>
   </div>
 </header>
@@ -476,17 +478,37 @@
         </p>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="card p-5">
-          <h3 class="font-pixel text-[11px] text-white mb-2">[+] Submissão de Arquivos</h3>
-          <p class="text-xs text-gray-400 mb-4 leading-relaxed">Diretório dedicado para versionamento e upload de arquivos .c3p e builds parciais.</p>
-          <a id="link-envios" href="#" target="_blank" class="btn-primary inline-block">ABRIR_DIRETORIO</a>
+      <div class="card p-5">
+        <h3 class="font-pixel text-[11px] text-white mb-2">[+] Meus Arquivos (.c3p / builds)</h3>
+        <p class="text-xs text-gray-400 mb-4 leading-relaxed">Upload direto para o seu diretório na nuvem — sem depender de uma conta compartilhada. Envie quantas vezes quiser; a versão mais recente fica sempre disponível.</p>
+        <div class="flex flex-wrap items-center gap-3 mb-4">
+          <input type="file" id="dev-file-input" class="text-xs text-gray-400" />
+          <button class="btn-primary" onclick="uploadArquivoAluno('envio')">ENVIAR_ARQUIVO</button>
+          <span id="dev-upload-status" class="text-[10px] font-mono text-gray-500"></span>
         </div>
-        <div class="card p-5">
-          <h3 class="font-pixel text-[11px] text-white mb-2">[+] Assets da Sessão</h3>
-          <p class="text-xs text-gray-400 mb-4 leading-relaxed">Spritesheets, pacotes de áudio licenciados e guias estruturais das aulas vigentes.</p>
-          <a id="link-materiais" href="#" target="_blank" class="btn-primary inline-block">ENVIAR_ARQUIVO</a>
-        </div>
+        <div id="dev-arquivos-lista" class="space-y-2"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="section-turma" class="section">
+    <div class="mb-6">
+      <p class="font-pixel text-[9px] text-violet-400">// ESPACO_COMPARTILHADO</p>
+      <h2 class="font-pixel text-sm text-white mb-4">Turma & Projeto Final</h2>
+      <select id="turma-select" class="search-input text-xs" onchange="carregarTurmaSelecionada()"></select>
+    </div>
+
+    <div id="turma-alunos-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10"></div>
+    <p id="turma-empty" class="hidden text-center py-10 text-gray-500 font-pixel text-[10px]">[SELECIONE UMA TURMA]</p>
+
+    <div class="card p-6 max-w-xl">
+      <h3 class="font-pixel text-[11px] text-white mb-2">[+] Enviar Projeto Final</h3>
+      <p class="text-xs text-gray-400 mb-4 leading-relaxed">Selecione seu nome na lista da turma e envie o projeto final da aula, associado diretamente à sua identidade.</p>
+      <div class="space-y-3">
+        <select id="turma-final-aluno" class="search-input w-full text-xs"></select>
+        <input type="file" id="turma-final-file" class="text-xs text-gray-400" />
+        <button class="btn-primary" onclick="uploadProjetoFinal()">ENVIAR_PROJETO_FINAL</button>
+        <span id="turma-final-status" class="block text-[10px] font-mono text-gray-500"></span>
       </div>
     </div>
   </section>
@@ -500,8 +522,8 @@
 </footer>
 
 <script>
-// DATA carregado do data.json do repositório (fonte única de verdade)
-let overcastData = { alunos: [], videos: [], links: [], jogos: [] };
+// DATA curada (jogos/tutoriais/links) carregada do data.json do repositório
+let overcastData = { videos: [], links: [], jogos: [] };
 
 async function loadData() {
   try {
@@ -511,6 +533,24 @@ async function loadData() {
   } catch (e) {
     console.error("Erro ao carregar data.json:", e);
   }
+}
+
+// ============================================================================
+// SUPABASE — turmas / alunos / arquivos (upload individual, sem gargalo)
+// Chaves públicas (anon key), seguro expor no client. A escrita é sempre
+// validada no banco via funções RPC (veja supabase_schema.sql).
+// ============================================================================
+const SUPABASE_URL = "https://kezlmecrxhjahhoekybs.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlemxtZWNyeGhqYWhob2VreWJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5MDkwNjAsImV4cCI6MjEwMjQ4NTA2MH0.-TcsKrFxRMeiqKrzXk57E8-60eobk3fJ0Crn7ci0MW8";
+const sb = (SUPABASE_URL.startsWith("http"))
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+
+let alunoAtivo = null; // { id, nome, codigo, etapa, turma_id }
+
+function urlPublicoArquivo(path) {
+  if (!sb) return '#';
+  return sb.storage.from('submissoes').getPublicUrl(path).data.publicUrl;
 }
 
 function switchTab(tabName, btn) {
@@ -713,37 +753,36 @@ const etapaMap = {
   Publicado:  { pct: 100, steps: [1,1,1,1,1] }
 };
 
-function loginAluno() {
+async function loginAluno() {
   const code = document.getElementById('student-code-input').value.trim().toLowerCase();
-  const aluno = overcastData.alunos.find(a => a.codigo.toLowerCase() === code);
-  if (!aluno) {
+  if (!sb) { alert('Supabase não configurado neste site ainda.'); return; }
+
+  const { data: aluno, error } = await sb.from('alunos').select('*').eq('codigo', code).maybeSingle();
+  if (error || !aluno) {
     document.getElementById('login-error').classList.remove('hidden');
     return;
   }
   document.getElementById('login-error').classList.add('hidden');
-  
+
   // Persistindo Código do Aluno na Sessão Corrente
   sessionStorage.setItem('active_student_code', code);
   showDashboard(aluno);
 }
 
-function checkPersistedLogin() {
+async function checkPersistedLogin() {
   const savedCode = sessionStorage.getItem('active_student_code');
-  if (savedCode) {
-    const aluno = overcastData.alunos.find(a => a.codigo.toLowerCase() === savedCode.toLowerCase());
-    if (aluno) {
-      showDashboard(aluno);
-    }
+  if (savedCode && sb) {
+    const { data: aluno } = await sb.from('alunos').select('*').eq('codigo', savedCode.toLowerCase()).maybeSingle();
+    if (aluno) showDashboard(aluno);
   }
 }
 
-function showDashboard(aluno) {
+async function showDashboard(aluno) {
+  alunoAtivo = aluno;
   document.getElementById('student-login').classList.add('hidden');
   document.getElementById('student-dashboard').classList.remove('hidden');
   document.getElementById('dashboard-nome').textContent = 'Estação: ' + aluno.nome.toUpperCase();
   document.getElementById('dashboard-etapa').textContent = aluno.etapa;
-  document.getElementById('link-envios').href = aluno.pastaEnvios || '#';
-  document.getElementById('link-materiais').href = aluno.pastaMateriais || '#';
 
   const info = etapaMap[aluno.etapa] || etapaMap['Ideia'];
   document.getElementById('progress-bar').style.width = info.pct + '%';
@@ -753,13 +792,139 @@ function showDashboard(aluno) {
     const el = document.getElementById(id);
     if(el) el.classList.toggle('done', info.steps[i] === 1);
   });
+
+  renderArquivosAluno();
 }
 
 function logoutAluno() {
   sessionStorage.removeItem('active_student_code');
+  alunoAtivo = null;
   document.getElementById('student-dashboard').classList.add('hidden');
   document.getElementById('student-login').classList.remove('hidden');
   document.getElementById('student-code-input').value = '';
+}
+
+// ---- Upload/Download individual do aluno logado ----------------------------
+
+async function renderArquivosAluno() {
+  const container = document.getElementById('dev-arquivos-lista');
+  if (!sb || !alunoAtivo) { container.innerHTML = ''; return; }
+
+  const { data: arquivos, error } = await sb.from('arquivos')
+    .select('*').eq('aluno_id', alunoAtivo.id).order('criado_em', { ascending: false });
+
+  if (error || !arquivos || arquivos.length === 0) {
+    container.innerHTML = `<p class="text-[11px] text-gray-600 font-mono">Nenhum arquivo enviado ainda.</p>`;
+    return;
+  }
+
+  container.innerHTML = arquivos.filter(f => f.tipo === 'envio').map(f => `
+    <div class="flex items-center justify-between bg-[#09090d] border border-[#1e1e28] px-3 py-2">
+      <a href="${urlPublicoArquivo(f.storage_path)}" target="_blank" class="text-[11px] text-blue-400 hover:underline truncate">${f.nome_arquivo}</a>
+      <button class="btn-secondary text-[8px]" onclick="removerArquivoAluno('${f.id}')">EXCLUIR</button>
+    </div>
+  `).join('');
+}
+
+async function uploadArquivoAluno(tipo) {
+  const input = document.getElementById('dev-file-input');
+  const statusEl = document.getElementById('dev-upload-status');
+  const file = input.files[0];
+  if (!file || !alunoAtivo) { statusEl.textContent = 'Selecione um arquivo.'; return; }
+
+  statusEl.textContent = 'Enviando...';
+  const path = `envios/${alunoAtivo.codigo}/${Date.now()}_${file.name}`;
+
+  const { error: upErr } = await sb.storage.from('submissoes').upload(path, file, { upsert: true });
+  if (upErr) { statusEl.textContent = 'Erro no upload: ' + upErr.message; return; }
+
+  const { error: rpcErr } = await sb.rpc('registrar_envio', {
+    p_codigo: alunoAtivo.codigo, p_nome_arquivo: file.name, p_storage_path: path,
+    p_tipo: tipo, p_tamanho_bytes: file.size
+  });
+  if (rpcErr) { statusEl.textContent = 'Erro ao registrar: ' + rpcErr.message; return; }
+
+  statusEl.textContent = 'Enviado com sucesso!';
+  input.value = '';
+  renderArquivosAluno();
+}
+
+async function removerArquivoAluno(arquivoId) {
+  if (!alunoAtivo || !confirm('Excluir este arquivo?')) return;
+  const { error } = await sb.rpc('remover_envio', { p_codigo: alunoAtivo.codigo, p_arquivo_id: arquivoId });
+  if (error) { alert('Erro: ' + error.message); return; }
+  renderArquivosAluno();
+}
+
+// ---- Aba Turma: visão coletiva + envio de projeto final --------------------
+
+let turmasDisponiveis = [];
+
+async function carregarTurmasDisponiveis() {
+  if (!sb) return;
+  const { data: turmas, error } = await sb.from('turmas').select('*').order('nome');
+  if (error || !turmas) return;
+  turmasDisponiveis = turmas;
+
+  const sel = document.getElementById('turma-select');
+  sel.innerHTML = turmas.map(t => `<option value="${t.id}">${t.nome}</option>`).join('')
+    || '<option value="">Nenhuma turma cadastrada</option>';
+
+  if (turmas.length > 0) carregarTurmaSelecionada();
+}
+
+async function carregarTurmaSelecionada() {
+  const turmaId = document.getElementById('turma-select').value;
+  const grid = document.getElementById('turma-alunos-grid');
+  const empty = document.getElementById('turma-empty');
+  const selectFinal = document.getElementById('turma-final-aluno');
+
+  if (!turmaId || !sb) { grid.innerHTML = ''; empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+
+  const { data: alunos } = await sb.from('alunos').select('*').eq('turma_id', turmaId).order('nome');
+  const { data: arquivos } = await sb.from('arquivos').select('*').eq('turma_id', turmaId).order('criado_em', { ascending: false });
+
+  selectFinal.innerHTML = (alunos || []).map(a => `<option value="${a.id}">${a.nome}</option>`).join('');
+
+  grid.innerHTML = (alunos || []).map(aluno => {
+    const finalDoAluno = (arquivos || []).find(f => f.aluno_id === aluno.id && f.tipo === 'projeto_final');
+    return `
+      <div class="card p-4">
+        <p class="font-pixel text-[10px] text-white mb-1">${aluno.nome.toUpperCase()}</p>
+        <p class="text-[10px] text-gray-500 font-mono mb-3">Estágio: ${aluno.etapa}</p>
+        ${finalDoAluno
+          ? `<a href="${urlPublicoArquivo(finalDoAluno.storage_path)}" target="_blank" class="btn-secondary text-[8px] inline-block">BAIXAR_PROJETO_FINAL</a>`
+          : `<span class="text-[10px] text-gray-700 font-mono">Projeto final ainda não enviado</span>`}
+      </div>
+    `;
+  }).join('');
+}
+
+async function uploadProjetoFinal() {
+  const alunoId = document.getElementById('turma-final-aluno').value;
+  const file = document.getElementById('turma-final-file').files[0];
+  const statusEl = document.getElementById('turma-final-status');
+  if (!alunoId || !file) { statusEl.textContent = 'Selecione seu nome e um arquivo.'; return; }
+
+  const { data: aluno, error: aErr } = await sb.from('alunos').select('*').eq('id', alunoId).maybeSingle();
+  if (aErr || !aluno) { statusEl.textContent = 'Aluno não encontrado.'; return; }
+
+  statusEl.textContent = 'Enviando...';
+  const path = `finais/${aluno.codigo}/${Date.now()}_${file.name}`;
+
+  const { error: upErr } = await sb.storage.from('submissoes').upload(path, file, { upsert: true });
+  if (upErr) { statusEl.textContent = 'Erro no upload: ' + upErr.message; return; }
+
+  const { error: rpcErr } = await sb.rpc('registrar_envio', {
+    p_codigo: aluno.codigo, p_nome_arquivo: file.name, p_storage_path: path,
+    p_tipo: 'projeto_final', p_tamanho_bytes: file.size
+  });
+  if (rpcErr) { statusEl.textContent = 'Erro ao registrar: ' + rpcErr.message; return; }
+
+  statusEl.textContent = 'Projeto final enviado com sucesso!';
+  document.getElementById('turma-final-file').value = '';
+  carregarTurmaSelecionada();
 }
 
 async function init() {
@@ -768,6 +933,7 @@ async function init() {
   renderTutoriais('Todos');
   renderLinks('');
   checkPersistedLogin();
+  carregarTurmasDisponiveis();
 }
 
 document.addEventListener('DOMContentLoaded', init);
