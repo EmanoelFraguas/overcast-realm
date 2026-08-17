@@ -601,6 +601,7 @@ function renderTurmaAtiva() {
                   ${['Ideia','Mecânica','Arte','Polimento','Publicado'].map(e =>
                     `<option value="${e}" ${aluno.etapa===e?'selected':''}>${e}</option>`).join('')}
                 </select>
+                <button class="btn-action btn-edit" onclick="trocarCodigoAluno('${aluno.id}', '${aluno.codigo}')">CÓDIGO</button>
                 <button class="btn-action btn-del" onclick="removerAluno('${aluno.id}', '${aluno.nome.replace(/'/g, "\\'")}')">DEL</button>
               </div>
             </div>
@@ -685,6 +686,17 @@ async function adicionarAlunosLote() {
 async function atualizarEtapaAluno(alunoId, novaEtapa) {
   const { error } = await sb.rpc('admin_atualizar_etapa', { chave: sbAdminKey, p_aluno_id: alunoId, p_etapa: novaEtapa });
   if (error) { alert('Erro: ' + error.message); return; }
+  carregarTurmas();
+}
+
+async function trocarCodigoAluno(alunoId, codigoAtual) {
+  const novo = prompt('Novo código de acesso do aluno:', codigoAtual);
+  if (!novo || novo.trim() === '') return;
+  const codigoLimpo = novo.trim().toLowerCase().replace(/\s+/g, '.');
+  const { error } = await sb.rpc('admin_atualizar_codigo_aluno', {
+    chave: sbAdminKey, p_aluno_id: alunoId, p_novo_codigo: codigoLimpo
+  });
+  if (error) { alert('Erro ao trocar código (talvez já esteja em uso): ' + error.message); return; }
   carregarTurmas();
 }
 
