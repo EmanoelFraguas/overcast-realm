@@ -136,21 +136,7 @@
       placeholder="GITHUB_TOKEN"
       onkeydown="if(event.key==='Enter') loginAdmin()"
     />
-    <p class="font-pixel text-[8px] text-gray-600 mb-2 text-left">// BARRAMENTO_TURMAS (SUPABASE)</p>
-    <input
-      type="text"
-      id="admin-sb-url"
-      class="input-field mb-2 text-left"
-      placeholder="SUPABASE_URL"
-      onkeydown="if(event.key==='Enter') loginAdmin()"
-    />
-    <input
-      type="password"
-      id="admin-sb-anon"
-      class="input-field mb-2 text-left"
-      placeholder="SUPABASE_ANON_KEY"
-      onkeydown="if(event.key==='Enter') loginAdmin()"
-    />
+    <p id="sb-key-label" class="font-pixel text-[8px] text-gray-600 mb-2 text-left">// BARRAMENTO_TURMAS (SUPABASE)</p>
     <input
       type="password"
       id="admin-sb-key"
@@ -159,6 +145,7 @@
       onkeydown="if(event.key==='Enter') loginAdmin()"
     />
     <div id="auth-error" class="hidden font-pixel text-[8px] mb-4 text-red-500">[ACESSO_NEGADO: CHAVE_CORRUPTA]</div>
+    <div id="gh-token-expired-notice" class="hidden font-pixel text-[8px] mb-4 text-yellow-400 leading-relaxed">[GITHUB_TOKEN SALVO EXPIROU OU FOI REVOGADO — INFORME UM NOVO ACIMA]</div>
     <button class="btn-action btn-add w-full tracking-wider py-3 text-[10px]" onclick="loginAdmin()">DECODIFICAR_ACOMPANHAMENTO</button>
   </div>
 </div>
@@ -278,56 +265,98 @@ const GH_REPO  = "overcast-realm";
 const GH_FILE  = "data.json";
 const GH_BRANCH = "main"; // troque para "master" se necessário
 
+// Config do Supabase (turmas/alunos/arquivos) — anon key é pública, seguro fixar aqui
+const SUPABASE_URL = "COLE_AQUI_SUA_SUPABASE_URL";
+const SUPABASE_ANON_KEY = "COLE_AQUI_SUA_SUPABASE_ANON_KEY";
+
 let data = { alunos: [], videos: [], links: [], jogos: [] };
-let ghToken = "";
 
 // Barramento Supabase (turmas/alunos/arquivos)
 let sb = null;
 let sbAdminKey = "";
 let turmasCache = [];
+let ghToken = "";
+let tokenOnlyMode = false; // true quando só o GITHUB_TOKEN precisa ser reinformado
 
 // ENGINE DE AUTENTICAÇÃO
 function loginAdmin() {
-  const input = document.getElementById('admin-password-input').value;
   const token = document.getElementById('admin-gh-token').value.trim();
-  const sbUrl = document.getElementById('admin-sb-url').value.trim();
-  const sbAnon = document.getElementById('admin-sb-anon').value.trim();
+
+  if (tokenOnlyMode) {
+    // Chave mestra e chave admin do Supabase já validadas antes — só precisa do token novo
+    if (!token) { alert("Informe o novo GitHub Token."); return; }
+    tentarEntrarComToken(token, sbAdminKey);
+    return;
+  }
+
+  const input = document.getElementById('admin-password-input').value;
   const sbKey = document.getElementById('admin-sb-key').value.trim();
   const computedKey = btoa(unescape(encodeURIComponent(input)));
 
-  if (computedKey === ADMIN_AUTH_KEY) {
-    if (!token) { alert("Informe o GitHub Token para continuar."); return; }
-    document.getElementById('auth-error').classList.add('hidden');
-    sessionStorage.setItem('admin_session_token', 'AUTHORIZED_SUCCESS');
-    sessionStorage.setItem('admin_gh_token', token);
-    sessionStorage.setItem('admin_sb_url', sbUrl);
-    sessionStorage.setItem('admin_sb_anon', sbAnon);
-    sessionStorage.setItem('admin_sb_key', sbKey);
-    ghToken = token;
-    unlockDashboard();
-  } else {
+  if (computedKey !== ADMIN_AUTH_KEY) {
     document.getElementById('auth-error').classList.remove('hidden');
+    return;
+  }
+  if (!token) { alert("Informe o GitHub Token para continuar."); return; }
+  document.getElementById('auth-error').classList.add('hidden');
+  tentarEntrarComToken(token, sbKey);
+}
+
+async function tentarEntrarComToken(token, sbKey) {
+  const ok = await testarGithubToken(token);
+  if (!ok) {
+    document.getElementById('gh-token-expired-notice').classList.remove('hidden');
+    return;
+  }
+  document.getElementById('gh-token-expired-notice').classList.add('hidden');
+  localStorage.setItem('admin_master_ok', '1');
+  localStorage.setItem('admin_gh_token', token);
+  localStorage.setItem('admin_sb_key', sbKey);
+  ghToken = token;
+  sbAdminKey = sbKey;
+  unlockDashboard();
+}
+
+async function testarGithubToken(token) {
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}?ref=${GH_BRANCH}`,
+      { headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json" } }
+    );
+    return res.ok;
+  } catch (e) {
+    return false;
   }
 }
 
-function checkPersistedSession() {
-  const token = sessionStorage.getItem('admin_session_token');
-  const savedGhToken = sessionStorage.getItem('admin_gh_token');
-  if (token === 'AUTHORIZED_SUCCESS' && savedGhToken) {
-    ghToken = savedGhToken;
+async function checkPersistedSession() {
+  const masterOk = localStorage.getItem('admin_master_ok') === '1';
+  const savedToken = localStorage.getItem('admin_gh_token');
+  const savedSbKey = localStorage.getItem('admin_sb_key') || "";
+  if (!masterOk || !savedToken) return; // mostra a tela de login normal
+
+  const ok = await testarGithubToken(savedToken);
+  if (ok) {
+    ghToken = savedToken;
+    sbAdminKey = savedSbKey;
     unlockDashboard();
+  } else {
+    // Token salvo expirou/foi revogado — pede só o token novo, sem repetir a chave mestra
+    sbAdminKey = savedSbKey;
+    tokenOnlyMode = true;
+    document.getElementById('admin-password-input').classList.add('hidden');
+    document.getElementById('admin-sb-key').classList.add('hidden');
+    document.getElementById('sb-key-label').classList.add('hidden');
+    document.getElementById('gh-token-expired-notice').classList.remove('hidden');
   }
 }
 
 function initSupabase() {
-  const sbUrl = sessionStorage.getItem('admin_sb_url');
-  const sbAnon = sessionStorage.getItem('admin_sb_anon');
-  sbAdminKey = sessionStorage.getItem('admin_sb_key') || "";
-  if (!sbUrl || !sbAnon) {
-    document.getElementById('turmas-sync-status').textContent = "SUPABASE_URL/ANON_KEY não configurados no login.";
+  if (!SUPABASE_URL.startsWith('http')) {
+    document.getElementById('turmas-sync-status').textContent = "Configure SUPABASE_URL/ANON_KEY no topo do arquivo.";
     return false;
   }
-  sb = window.supabase.createClient(sbUrl, sbAnon);
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   return true;
 }
 
@@ -339,11 +368,9 @@ function unlockDashboard() {
 }
 
 function logoutAdmin() {
-  sessionStorage.removeItem('admin_session_token');
-  sessionStorage.removeItem('admin_gh_token');
-  sessionStorage.removeItem('admin_sb_url');
-  sessionStorage.removeItem('admin_sb_anon');
-  sessionStorage.removeItem('admin_sb_key');
+  localStorage.removeItem('admin_master_ok');
+  localStorage.removeItem('admin_gh_token');
+  localStorage.removeItem('admin_sb_key');
   location.reload();
 }
 
@@ -355,6 +382,7 @@ async function loadFromGitHub() {
       `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}?ref=${GH_BRANCH}`,
       { headers: { Authorization: `Bearer ${ghToken}`, Accept: "application/vnd.github+json" } }
     );
+    if (res.status === 401 || res.status === 403) { forcarReautenticacaoToken(); return; }
     if (!res.ok) throw new Error(`GitHub API: ${res.status}`);
     const json = await res.json();
     data = JSON.parse(atob(json.content.replace(/\n/g, '')));
@@ -366,6 +394,20 @@ async function loadFromGitHub() {
     updateSyncStatus('error', e.message);
     console.error(e);
   }
+}
+
+// Chamado quando uma chamada à API do GitHub falha por token inválido/expirado
+// em qualquer momento (não só no login) — devolve pra tela de login só pedindo o token
+function forcarReautenticacaoToken() {
+  localStorage.removeItem('admin_gh_token'); // força reentrada; master_ok e sb_key continuam salvos
+  document.getElementById('admin-dashboard-content').classList.add('hidden');
+  document.getElementById('admin-auth-screen').classList.remove('hidden');
+  tokenOnlyMode = true;
+  document.getElementById('admin-password-input').classList.add('hidden');
+  document.getElementById('admin-sb-key').classList.add('hidden');
+  document.getElementById('sb-key-label').classList.add('hidden');
+  document.getElementById('gh-token-expired-notice').classList.remove('hidden');
+  updateSyncStatus('error', 'token expirado');
 }
 
 // Salva data.json no GitHub via commit
@@ -393,6 +435,7 @@ async function saveToStorage() {
         body: JSON.stringify(body)
       }
     );
+    if (res.status === 401 || res.status === 403) { forcarReautenticacaoToken(); return; }
     if (!res.ok) {
       const err = await res.json();
       throw new Error(err.message || res.status);
