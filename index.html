@@ -482,7 +482,7 @@
         <h3 class="font-pixel text-[11px] text-white mb-2">[+] Meus Arquivos (.c3p / builds)</h3>
         <p class="text-xs text-gray-400 mb-4 leading-relaxed">Upload direto para o seu diretório na nuvem — sem depender de uma conta compartilhada. Envie quantas vezes quiser; a versão mais recente fica sempre disponível.</p>
         <div class="flex flex-wrap items-center gap-3 mb-4">
-          <input type="file" id="dev-file-input" class="text-xs text-gray-400" />
+          <input type="file" id="dev-file-input" accept=".c3p,.txt,.png,.mp3,.ogg,.wav" class="text-xs text-gray-400" />
           <button class="btn-primary" onclick="uploadArquivoAluno('envio')">ENVIAR_ARQUIVO</button>
           <span id="dev-upload-status" class="text-[10px] font-mono text-gray-500"></span>
         </div>
@@ -506,7 +506,7 @@
       <p class="text-xs text-gray-400 mb-4 leading-relaxed">Selecione seu nome na lista da turma e envie o projeto final da aula, associado diretamente à sua identidade.</p>
       <div class="space-y-3">
         <select id="turma-final-aluno" class="search-input w-full text-xs"></select>
-        <input type="file" id="turma-final-file" class="text-xs text-gray-400" />
+        <input type="file" id="turma-final-file" accept=".c3p,.txt,.png,.mp3,.ogg,.wav" class="text-xs text-gray-400" />
         <button class="btn-primary" onclick="uploadProjetoFinal()">ENVIAR_PROJETO_FINAL</button>
         <span id="turma-final-status" class="block text-[10px] font-mono text-gray-500"></span>
       </div>
@@ -545,6 +545,13 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const sb = (SUPABASE_URL.startsWith("http"))
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
   : null;
+
+// Extensões aceitas nos uploads (arquivos de desenvolvimento — amplia quando entrar arte digital)
+const EXTENSOES_PERMITIDAS = ['.c3p', '.txt', '.png', '.mp3', '.ogg', '.wav'];
+function extensaoPermitida(nomeArquivo) {
+  const nome = nomeArquivo.toLowerCase();
+  return EXTENSOES_PERMITIDAS.some(ext => nome.endsWith(ext));
+}
 
 let alunoAtivo = null; // { id, nome, codigo, etapa, turma_id }
 
@@ -831,6 +838,10 @@ async function uploadArquivoAluno(tipo) {
   const statusEl = document.getElementById('dev-upload-status');
   const file = input.files[0];
   if (!file || !alunoAtivo) { statusEl.textContent = 'Selecione um arquivo.'; return; }
+  if (!extensaoPermitida(file.name)) {
+    statusEl.textContent = `Tipo não permitido. Aceitos: ${EXTENSOES_PERMITIDAS.join(', ')}`;
+    return;
+  }
 
   statusEl.textContent = 'Enviando...';
   const path = `envios/${alunoAtivo.codigo}/${Date.now()}_${file.name}`;
@@ -906,6 +917,10 @@ async function uploadProjetoFinal() {
   const file = document.getElementById('turma-final-file').files[0];
   const statusEl = document.getElementById('turma-final-status');
   if (!alunoId || !file) { statusEl.textContent = 'Selecione seu nome e um arquivo.'; return; }
+  if (!extensaoPermitida(file.name)) {
+    statusEl.textContent = `Tipo não permitido. Aceitos: ${EXTENSOES_PERMITIDAS.join(', ')}`;
+    return;
+  }
 
   const { data: aluno, error: aErr } = await sb.from('alunos').select('*').eq('id', alunoId).maybeSingle();
   if (aErr || !aluno) { statusEl.textContent = 'Aluno não encontrado.'; return; }
