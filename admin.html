@@ -171,11 +171,15 @@
         <div class="space-y-3 font-mono text-xs">
           <div>
             <label class="block mb-1 text-gray-500">NOME DA TURMA</label>
-            <input type="text" id="turma-nome" class="input-field" placeholder="EX: Turma Sábado Manhã" />
+            <input type="text" id="turma-nome" class="input-field" placeholder="EX: Israelita 5" />
           </div>
           <div>
             <label class="block mb-1 text-gray-500">SLUG (SEM ESPAÇOS/ACENTOS)</label>
-            <input type="text" id="turma-slug" class="input-field" placeholder="EX: sabado-manha" />
+            <input type="text" id="turma-slug" class="input-field" placeholder="EX: israelita-5" />
+          </div>
+          <div>
+            <label class="block mb-1 text-gray-500">CÓDIGO DE ACESSO (OS ALUNOS USAM ESSE CÓDIGO NA ABA TURMA)</label>
+            <input type="text" id="turma-codigo-acesso" class="input-field" placeholder="EX: israelita5" />
           </div>
           <button class="btn-action btn-add w-full" onclick="criarTurma()">CRIAR_TURMA</button>
         </div>
@@ -183,11 +187,8 @@
 
       <div class="card p-5">
         <h2 class="font-pixel text-[10px] text-indigo-400 mb-4">// ADICIONAR_ALUNOS_EM_LOTE</h2>
+        <p class="text-[10px] text-gray-500 font-mono mb-3">Adiciona na turma selecionada na aba ao lado →</p>
         <div class="space-y-3 font-mono text-xs">
-          <div>
-            <label class="block mb-1 text-gray-500">TURMA DE DESTINO</label>
-            <select id="turma-destino-alunos" class="input-field bg-black"></select>
-          </div>
           <div>
             <label class="block mb-1 text-gray-500">NOMES (UM POR LINHA) — CÓDIGO É GERADO AUTOMATICAMENTE</label>
             <textarea id="alunos-em-lote" class="input-field h-28" placeholder="Theo Arns&#10;Guilherme Bley Merlin&#10;Antonio Morrissy"></textarea>
@@ -252,6 +253,7 @@
             <div id="storage-usage-bar" class="h-full bg-emerald-500" style="width:0%"></div>
           </div>
         </div>
+        <div id="turmas-tabs" class="flex flex-wrap gap-1.5 mb-4"></div>
         <div id="turmas-container" class="space-y-4"></div>
         <p id="turmas-empty" class="hidden text-gray-600 font-pixel text-[8px] p-4">NENHUMA TURMA CRIADA AINDA.</p>
       </div>
@@ -291,6 +293,7 @@ let data = { alunos: [], videos: [], links: [], jogos: [] };
 let sb = null;
 let sbAdminKey = "";
 let turmasCache = [];
+let turmaAtivaId = null;
 let ghToken = "";
 let tokenOnlyMode = false; // true quando só o GITHUB_TOKEN precisa ser reinformado
 
@@ -534,19 +537,35 @@ async function carregarTurmas() {
   }));
 
   setTurmasStatus('● SINCRONIZADO', '#10b981');
-  renderTurmasSelect();
-  renderTurmas();
+
+  // mantém a aba ativa se ela ainda existir; senão cai na primeira turma
+  if (!turmaAtivaId || !turmasCache.some(t => t.id === turmaAtivaId)) {
+    turmaAtivaId = turmasCache[0] ? turmasCache[0].id : null;
+  }
+  renderTurmasTabs();
+  renderTurmaAtiva();
 }
 
-function renderTurmasSelect() {
-  const sel = document.getElementById('turma-destino-alunos');
-  sel.innerHTML = turmasCache.map(t => `<option value="${t.id}">${t.nome}</option>`).join('')
-    || '<option value="">Crie uma turma primeiro</option>';
+function renderTurmasTabs() {
+  const tabsEl = document.getElementById('turmas-tabs');
+  tabsEl.innerHTML = turmasCache.map(t => `
+    <button
+      class="px-3 py-1.5 font-pixel text-[8px] border ${t.id === turmaAtivaId ? 'bg-indigo-600 border-indigo-500 text-white' : 'border-[#2e2e3a] text-gray-500 hover:text-white'}"
+      onclick="selecionarTurma('${t.id}')"
+    >${t.nome} (${t.alunos.length})</button>
+  `).join('');
 }
 
-function renderTurmas() {
+function selecionarTurma(turmaId) {
+  turmaAtivaId = turmaId;
+  renderTurmasTabs();
+  renderTurmaAtiva();
+}
+
+function renderTurmaAtiva() {
   const container = document.getElementById('turmas-container');
   const empty = document.getElementById('turmas-empty');
+
   if (turmasCache.length === 0) {
     container.innerHTML = '';
     empty.classList.remove('hidden');
@@ -554,14 +573,20 @@ function renderTurmas() {
   }
   empty.classList.add('hidden');
 
-  container.innerHTML = turmasCache.map(turma => `
+  const turma = turmasCache.find(t => t.id === turmaAtivaId);
+  if (!turma) { container.innerHTML = ''; return; }
+
+  container.innerHTML = `
     <div class="border border-[#22222c] bg-[#0c0c10]">
       <div class="flex items-center justify-between p-3 border-b border-[#22222c]">
         <div>
           <p class="font-pixel text-[9px] text-white">${turma.nome}</p>
-          <p class="text-[10px] text-gray-500 font-mono">/${turma.slug} · ${turma.alunos.length} aluno(s)</p>
+          <p class="text-[10px] text-gray-500 font-mono">código de acesso: <span class="text-emerald-400">${turma.codigo_acesso}</span> · ${turma.alunos.length} aluno(s)</p>
         </div>
-        <button class="btn-action btn-del" onclick="removerTurma('${turma.id}', '${turma.nome.replace(/'/g, "\\'")}')">DEL_TURMA</button>
+        <div class="flex items-center gap-2">
+          <button class="btn-action btn-edit" onclick="trocarCodigoTurma('${turma.id}', '${turma.codigo_acesso}')">TROCAR_CÓDIGO</button>
+          <button class="btn-action btn-del" onclick="removerTurma('${turma.id}', '${turma.nome.replace(/'/g, "\\'")}')">DEL_TURMA</button>
+        </div>
       </div>
       <div class="divide-y divide-[#181822]">
         ${turma.alunos.map(aluno => `
@@ -598,7 +623,7 @@ function renderTurmas() {
         `).join('') || `<p class="p-3 text-[10px] text-gray-600 font-mono">nenhum aluno nesta turma ainda</p>`}
       </div>
     </div>
-  `).join('');
+  `;
 }
 
 function urlPublicoArquivo(path) {
@@ -610,13 +635,28 @@ async function criarTurma() {
   if (!sb) { alert('Configure o Supabase no login.'); return; }
   const nome = document.getElementById('turma-nome').value.trim();
   const slug = document.getElementById('turma-slug').value.trim().toLowerCase().replace(/\s+/g, '-');
-  if (!nome || !slug) { alert('Preencha nome e slug da turma.'); return; }
+  const codigoAcesso = document.getElementById('turma-codigo-acesso').value.trim().toLowerCase().replace(/\s+/g, '');
+  if (!nome || !slug || !codigoAcesso) { alert('Preencha nome, slug e código de acesso da turma.'); return; }
 
-  const { error } = await sb.rpc('admin_criar_turma', { chave: sbAdminKey, p_nome: nome, p_slug: slug });
+  const { data: nova, error } = await sb.rpc('admin_criar_turma', {
+    chave: sbAdminKey, p_nome: nome, p_slug: slug, p_codigo_acesso: codigoAcesso
+  });
   if (error) { alert('Erro ao criar turma: ' + error.message); return; }
 
   document.getElementById('turma-nome').value = '';
   document.getElementById('turma-slug').value = '';
+  document.getElementById('turma-codigo-acesso').value = '';
+  turmaAtivaId = nova.id;
+  carregarTurmas();
+}
+
+async function trocarCodigoTurma(turmaId, codigoAtual) {
+  const novo = prompt('Novo código de acesso da turma:', codigoAtual);
+  if (!novo || novo.trim() === '') return;
+  const { error } = await sb.rpc('admin_atualizar_codigo_turma', {
+    chave: sbAdminKey, p_turma_id: turmaId, p_novo_codigo: novo.trim().toLowerCase().replace(/\s+/g, '')
+  });
+  if (error) { alert('Erro: ' + error.message); return; }
   carregarTurmas();
 }
 
@@ -624,18 +664,18 @@ async function removerTurma(turmaId, nome) {
   if (!confirm(`Remover a turma "${nome}" e todos os alunos/arquivos dela?`)) return;
   const { error } = await sb.rpc('admin_remover_turma', { chave: sbAdminKey, p_turma_id: turmaId });
   if (error) { alert('Erro: ' + error.message); return; }
+  turmaAtivaId = null;
   carregarTurmas();
 }
 
 async function adicionarAlunosLote() {
   if (!sb) { alert('Configure o Supabase no login.'); return; }
-  const turmaId = document.getElementById('turma-destino-alunos').value;
-  if (!turmaId) { alert('Crie uma turma primeiro.'); return; }
+  if (!turmaAtivaId) { alert('Selecione (ou crie) uma turma na aba acima primeiro.'); return; }
   const nomes = document.getElementById('alunos-em-lote').value
     .split('\n').map(n => n.trim()).filter(Boolean);
   if (nomes.length === 0) { alert('Digite ao menos um nome.'); return; }
 
-  const { error } = await sb.rpc('admin_adicionar_alunos', { chave: sbAdminKey, p_turma_id: turmaId, p_nomes: nomes });
+  const { error } = await sb.rpc('admin_adicionar_alunos', { chave: sbAdminKey, p_turma_id: turmaAtivaId, p_nomes: nomes });
   if (error) { alert('Erro ao adicionar alunos: ' + error.message); return; }
 
   document.getElementById('alunos-em-lote').value = '';
