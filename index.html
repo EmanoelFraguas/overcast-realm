@@ -492,23 +492,36 @@
   </section>
 
   <section id="section-turma" class="section">
-    <div class="mb-6">
-      <p class="font-pixel text-[9px] text-violet-400">// ESPACO_COMPARTILHADO</p>
-      <h2 class="font-pixel text-sm text-white mb-4">Turma & Projeto Final</h2>
-      <select id="turma-select" class="search-input text-xs" onchange="carregarTurmaSelecionada()"></select>
+
+    <div id="turma-gate" class="max-w-md mx-auto card p-6 text-center">
+      <p class="font-pixel text-[9px] text-violet-400 mb-2">// ESPACO_COMPARTILHADO</p>
+      <h2 class="font-pixel text-sm text-white mb-4">Acessar Turma</h2>
+      <p class="text-xs text-gray-400 mb-4 leading-relaxed">Digite o código de acesso que o professor passou pra sua turma.</p>
+      <input type="text" id="turma-codigo-input" class="search-input w-full text-xs mb-3" placeholder="CÓDIGO DA TURMA" onkeydown="if(event.key==='Enter') acessarTurma()" />
+      <button class="btn-primary w-full" onclick="acessarTurma()">ACESSAR</button>
+      <p id="turma-codigo-erro" class="hidden text-[10px] text-red-500 font-mono mt-3">Código inválido.</p>
     </div>
 
-    <div id="turma-alunos-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10"></div>
-    <p id="turma-empty" class="hidden text-center py-10 text-gray-500 font-pixel text-[10px]">[SELECIONE UMA TURMA]</p>
+    <div id="turma-conteudo" class="hidden">
+      <div class="mb-6 flex items-center justify-between">
+        <div>
+          <p class="font-pixel text-[9px] text-violet-400">// ESPACO_COMPARTILHADO</p>
+          <h2 id="turma-titulo" class="font-pixel text-sm text-white"></h2>
+        </div>
+        <button class="btn-secondary text-[9px]" onclick="sairDaTurma()">TROCAR_TURMA</button>
+      </div>
 
-    <div class="card p-6 max-w-xl">
-      <h3 class="font-pixel text-[11px] text-white mb-2">[+] Enviar Projeto Final</h3>
-      <p class="text-xs text-gray-400 mb-4 leading-relaxed">Selecione seu nome na lista da turma e envie o projeto final da aula, associado diretamente à sua identidade.</p>
-      <div class="space-y-3">
-        <select id="turma-final-aluno" class="search-input w-full text-xs"></select>
-        <input type="file" id="turma-final-file" accept=".c3p,.txt,.png,.mp3,.ogg,.wav" class="text-xs text-gray-400" />
-        <button class="btn-primary" onclick="uploadProjetoFinal()">ENVIAR_PROJETO_FINAL</button>
-        <span id="turma-final-status" class="block text-[10px] font-mono text-gray-500"></span>
+      <div id="turma-alunos-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10"></div>
+
+      <div class="card p-6 max-w-xl">
+        <h3 class="font-pixel text-[11px] text-white mb-2">[+] Enviar Projeto Final</h3>
+        <p class="text-xs text-gray-400 mb-4 leading-relaxed">Selecione seu nome na lista da turma e envie o projeto final da aula, associado diretamente à sua identidade.</p>
+        <div class="space-y-3">
+          <select id="turma-final-aluno" class="search-input w-full text-xs"></select>
+          <input type="file" id="turma-final-file" accept=".c3p,.txt,.png,.mp3,.ogg,.wav" class="text-xs text-gray-400" />
+          <button class="btn-primary" onclick="uploadProjetoFinal()">ENVIAR_PROJETO_FINAL</button>
+          <span id="turma-final-status" class="block text-[10px] font-mono text-gray-500"></span>
+        </div>
       </div>
     </div>
   </section>
@@ -867,34 +880,54 @@ async function removerArquivoAluno(arquivoId) {
   renderArquivosAluno();
 }
 
-// ---- Aba Turma: visão coletiva + envio de projeto final --------------------
+// ---- Aba Turma: acesso por código + visão coletiva + envio de projeto final --
 
-let turmasDisponiveis = [];
+let turmaAtiva = null; // { id, nome, codigo_acesso, slug }
 
-async function carregarTurmasDisponiveis() {
-  if (!sb) return;
-  const { data: turmas, error } = await sb.from('turmas').select('*').order('nome');
-  if (error || !turmas) return;
-  turmasDisponiveis = turmas;
+async function acessarTurma() {
+  const codigo = document.getElementById('turma-codigo-input').value.trim().toLowerCase();
+  if (!codigo || !sb) return;
 
-  const sel = document.getElementById('turma-select');
-  sel.innerHTML = turmas.map(t => `<option value="${t.id}">${t.nome}</option>`).join('')
-    || '<option value="">Nenhuma turma cadastrada</option>';
-
-  if (turmas.length > 0) carregarTurmaSelecionada();
+  const { data: turma, error } = await sb.from('turmas').select('*').eq('codigo_acesso', codigo).maybeSingle();
+  if (error || !turma) {
+    document.getElementById('turma-codigo-erro').classList.remove('hidden');
+    return;
+  }
+  document.getElementById('turma-codigo-erro').classList.add('hidden');
+  localStorage.setItem('turma_codigo_acesso', codigo);
+  abrirTurma(turma);
 }
 
-async function carregarTurmaSelecionada() {
-  const turmaId = document.getElementById('turma-select').value;
+function sairDaTurma() {
+  localStorage.removeItem('turma_codigo_acesso');
+  turmaAtiva = null;
+  document.getElementById('turma-conteudo').classList.add('hidden');
+  document.getElementById('turma-gate').classList.remove('hidden');
+  document.getElementById('turma-codigo-input').value = '';
+}
+
+async function checarAcessoTurmaPersistido() {
+  const codigoSalvo = localStorage.getItem('turma_codigo_acesso');
+  if (!codigoSalvo || !sb) return;
+  const { data: turma } = await sb.from('turmas').select('*').eq('codigo_acesso', codigoSalvo).maybeSingle();
+  if (turma) abrirTurma(turma);
+}
+
+function abrirTurma(turma) {
+  turmaAtiva = turma;
+  document.getElementById('turma-gate').classList.add('hidden');
+  document.getElementById('turma-conteudo').classList.remove('hidden');
+  document.getElementById('turma-titulo').textContent = turma.nome;
+  carregarTurmaAtiva();
+}
+
+async function carregarTurmaAtiva() {
+  if (!turmaAtiva) return;
   const grid = document.getElementById('turma-alunos-grid');
-  const empty = document.getElementById('turma-empty');
   const selectFinal = document.getElementById('turma-final-aluno');
 
-  if (!turmaId || !sb) { grid.innerHTML = ''; empty.classList.remove('hidden'); return; }
-  empty.classList.add('hidden');
-
-  const { data: alunos } = await sb.from('alunos').select('*').eq('turma_id', turmaId).order('nome');
-  const { data: arquivos } = await sb.from('arquivos').select('*').eq('turma_id', turmaId).order('criado_em', { ascending: false });
+  const { data: alunos } = await sb.from('alunos').select('*').eq('turma_id', turmaAtiva.id).order('nome');
+  const { data: arquivos } = await sb.from('arquivos').select('*').eq('turma_id', turmaAtiva.id).order('criado_em', { ascending: false });
 
   selectFinal.innerHTML = (alunos || []).map(a => `<option value="${a.id}">${a.nome}</option>`).join('');
 
@@ -939,7 +972,7 @@ async function uploadProjetoFinal() {
 
   statusEl.textContent = 'Projeto final enviado com sucesso!';
   document.getElementById('turma-final-file').value = '';
-  carregarTurmaSelecionada();
+  carregarTurmaAtiva();
 }
 
 async function init() {
@@ -948,7 +981,7 @@ async function init() {
   renderTutoriais('Todos');
   renderLinks('');
   checkPersistedLogin();
-  carregarTurmasDisponiveis();
+  checarAcessoTurmaPersistido();
 }
 
 document.addEventListener('DOMContentLoaded', init);
