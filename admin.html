@@ -266,8 +266,8 @@ const GH_FILE  = "data.json";
 const GH_BRANCH = "main"; // troque para "master" se necessário
 
 // Config do Supabase (turmas/alunos/arquivos) — anon key é pública, seguro fixar aqui
-const SUPABASE_URL = "https://kezlmecrxhjahhoekybs.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlemxtZWNyeGhqYWhob2VreWJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5MDkwNjAsImV4cCI6MjEwMjQ4NTA2MH0.-TcsKrFxRMeiqKrzXk57E8-60eobk3fJ0Crn7ci0MW8";
+const SUPABASE_URL = "COLE_AQUI_SUA_SUPABASE_URL";
+const SUPABASE_ANON_KEY = "COLE_AQUI_SUA_SUPABASE_ANON_KEY";
 
 let data = { alunos: [], videos: [], links: [], jogos: [] };
 
@@ -545,7 +545,8 @@ function renderTurmas() {
                 ${aluno.arquivos.map(f => `
                   <div class="text-[10px] font-mono text-gray-500 flex items-center gap-2">
                     <span class="text-gray-600">[${f.tipo === 'projeto_final' ? 'FINAL' : 'ENVIO'}]</span>
-                    <a href="${urlPublicoArquivo(f.storage_path)}" target="_blank" class="text-blue-400 hover:underline">${f.nome_arquivo}</a>
+                    <a href="${urlPublicoArquivo(f.storage_path)}" target="_blank" class="text-blue-400 hover:underline flex-1 truncate">${f.nome_arquivo}</a>
+                    <button class="btn-action btn-del text-[8px] py-0.5 px-1.5" onclick="removerArquivoAdmin('${f.id}', '${f.storage_path.replace(/'/g, "\\'")}', '${f.nome_arquivo.replace(/'/g, "\\'")}')">EXCLUIR</button>
                   </div>
                 `).join('')}
               </div>
@@ -601,6 +602,23 @@ async function adicionarAlunosLote() {
 async function atualizarEtapaAluno(alunoId, novaEtapa) {
   const { error } = await sb.rpc('admin_atualizar_etapa', { chave: sbAdminKey, p_aluno_id: alunoId, p_etapa: novaEtapa });
   if (error) { alert('Erro: ' + error.message); return; }
+  carregarTurmas();
+}
+
+async function removerArquivoAdmin(arquivoId, storagePath, nomeArquivo) {
+  if (!confirm(`Excluir o arquivo "${nomeArquivo}"? Essa ação não pode ser desfeita.`)) return;
+
+  // 1) remove o objeto do Storage
+  const { error: storageErr } = await sb.storage.from('submissoes').remove([storagePath]);
+  if (storageErr) {
+    // se o arquivo já não existir no storage, segue em frente e limpa o registro mesmo assim
+    console.warn('Aviso ao remover do storage:', storageErr.message);
+  }
+
+  // 2) remove a linha no banco
+  const { error } = await sb.rpc('admin_remover_arquivo', { chave: sbAdminKey, p_arquivo_id: arquivoId });
+  if (error) { alert('Erro ao excluir: ' + error.message); return; }
+
   carregarTurmas();
 }
 
