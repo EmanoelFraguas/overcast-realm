@@ -102,6 +102,79 @@
       border-bottom-color: var(--accent-storm);
     }
 
+    /* ---- Layout tipo Classroom: sidebar + grid de cards ---- */
+    .admin-shell { display: flex; min-height: 100vh; }
+    .admin-sidebar {
+      width: 220px;
+      flex-shrink: 0;
+      background: var(--bg-card);
+      border-right: 2px solid var(--border-brutal);
+      display: flex;
+      flex-direction: column;
+      padding: 20px 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+    .sidebar-brand {
+      padding: 0 20px 20px;
+      border-bottom: 2px solid var(--border-brutal);
+      margin-bottom: 12px;
+    }
+    .sidebar-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 20px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 9px;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+    .sidebar-nav-item:hover { color: var(--text-primary); }
+    .sidebar-nav-item.active {
+      color: white;
+      border-left-color: var(--accent-storm);
+      background: rgba(79, 70, 229, 0.12);
+    }
+    .sidebar-bottom { margin-top: auto; padding: 12px 20px 0; border-top: 2px solid var(--border-brutal); }
+    .admin-main { flex: 1; padding: 32px; overflow-x: hidden; max-width: 100%; }
+
+    .turma-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
+    .turma-card {
+      background: var(--bg-card);
+      border: 2px solid var(--border-brutal);
+      box-shadow: 4px 4px 0px #000000;
+      cursor: pointer;
+      overflow: hidden;
+      transition: transform 0.1s;
+    }
+    .turma-card:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px #000000; }
+    .turma-card-banner {
+      height: 72px;
+      display: flex;
+      align-items: flex-end;
+      padding: 10px 14px;
+    }
+    .turma-card-body { padding: 12px 14px; }
+    .turma-card-new {
+      border: 2px dashed var(--border-brutal);
+      box-shadow: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 148px;
+      color: var(--text-muted);
+      font-family: 'Press Start 2P', monospace;
+      font-size: 9px;
+      cursor: pointer;
+    }
+    .turma-card-new:hover { color: white; border-color: var(--accent-glow); }
+
     .auth-input {
       background: #000000;
       border: 3px solid var(--border-brutal);
@@ -114,6 +187,72 @@
       width: 100%;
     }
     .auth-input:focus { border-color: var(--accent-storm); }
+
+    /* Layout estilo Classroom */
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      text-align: left;
+      padding: 10px 12px;
+      font-size: 12px;
+      font-family: 'Inter', sans-serif;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      background: transparent;
+    }
+    .sidebar-item:hover { background: #16161c; color: var(--text-primary); }
+    .sidebar-item.active {
+      background: #16161c;
+      color: #fff;
+      border-left-color: var(--accent-storm);
+    }
+    .sidebar-item .badge {
+      margin-left: auto;
+      font-size: 10px;
+      color: var(--text-muted);
+      font-family: 'Press Start 2P', monospace;
+    }
+
+    .turma-banner {
+      background: linear-gradient(135deg, #1e1b3a 0%, #0f0d1f 100%);
+      border: 2px solid var(--border-brutal);
+      box-shadow: 4px 4px 0px #000000;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .student-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-bottom: 1px solid #181822;
+    }
+    .student-row:last-child { border-bottom: none; }
+    .student-avatar {
+      width: 32px;
+      height: 32px;
+      background: var(--accent-storm);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      flex-shrink: 0;
+    }
   </style>
 </head>
 <body class="p-4 md:p-8">
@@ -151,119 +290,155 @@
 </div>
 
 <div id="admin-dashboard-content" class="hidden">
-  <header class="max-w-6xl mx-auto mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b-2 border-[#2e2e3a] pb-4">
-    <div>
-      <h1 class="font-pixel text-sm text-white">[⚒ TERMINAL_MASTER_CONTROL]</h1>
-      <p id="sync-status" class="text-xs font-mono mt-2 text-gray-500">Iniciando barramento...</p>
-    </div>
-    <div class="flex flex-wrap gap-2">
-      <button class="btn-action bg-gray-800 text-white" onclick="exportData()">EXPORTAR_JSON</button>
-      <button class="btn-action bg-red-950 text-red-400" onclick="resetStorage()">RESET_FACTORY</button>
-      <button class="btn-action bg-zinc-900 text-zinc-400 border border-zinc-700" onclick="logoutAdmin()">LOGOUT_</button>
-    </div>
-  </header>
+<div class="admin-shell">
 
-  <main class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
-    
-    <div class="lg:col-span-5 space-y-6">
-      <div class="card p-5">
-        <h2 class="font-pixel text-[10px] text-indigo-400 mb-4">// NOVA_TURMA</h2>
-        <div class="space-y-3 font-mono text-xs">
-          <div>
-            <label class="block mb-1 text-gray-500">NOME DA TURMA</label>
-            <input type="text" id="turma-nome" class="input-field" placeholder="EX: Israelita 5" />
-          </div>
-          <div>
-            <label class="block mb-1 text-gray-500">SLUG (SEM ESPAÇOS/ACENTOS)</label>
-            <input type="text" id="turma-slug" class="input-field" placeholder="EX: israelita-5" />
-          </div>
-          <div>
-            <label class="block mb-1 text-gray-500">CÓDIGO DE ACESSO (OS ALUNOS USAM ESSE CÓDIGO NA ABA TURMA)</label>
-            <input type="text" id="turma-codigo-acesso" class="input-field" placeholder="EX: israelita5" />
-          </div>
-          <button class="btn-action btn-add w-full" onclick="criarTurma()">CRIAR_TURMA</button>
+  <aside class="admin-sidebar">
+    <div class="sidebar-brand">
+      <p class="font-pixel text-[9px] text-white">OVERCAST</p>
+      <p class="font-pixel text-[7px] text-gray-500 mt-1">TERMINAL_MASTER</p>
+    </div>
+    <button class="sidebar-nav-item active" id="nav-turmas" onclick="switchPanel('turmas')">🏫 TURMAS</button>
+    <button class="sidebar-nav-item" id="nav-conteudo" onclick="switchPanel('conteudo')">🎮 CONTEÚDO</button>
+    <div class="sidebar-bottom pb-5 space-y-2">
+      <button class="btn-action bg-gray-800 text-white w-full" onclick="exportData()">EXPORTAR_JSON</button>
+      <button class="btn-action bg-red-950 text-red-400 w-full" onclick="resetStorage()">RESET_FACTORY</button>
+      <button class="btn-action bg-zinc-900 text-zinc-400 border border-zinc-700 w-full" onclick="logoutAdmin()">LOGOUT_</button>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+
+    <!-- ================= PAINEL: TURMAS ================= -->
+    <section id="panel-turmas">
+      <header class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div>
+          <h1 class="font-pixel text-sm text-white">[⚒ TURMAS]</h1>
+          <p id="sync-status" class="text-xs font-mono mt-2 text-gray-500">Iniciando barramento...</p>
+        </div>
+        <span id="turmas-sync-status" class="text-[10px] font-mono text-gray-500">—</span>
+      </header>
+
+      <div class="mb-6 p-3 border border-[#22222c] bg-[#0c0c10] max-w-md">
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="font-pixel text-[8px] text-gray-500">ARMAZENAMENTO_SUPABASE</span>
+          <span id="storage-usage-text" class="text-[10px] font-mono text-gray-400">calculando...</span>
+        </div>
+        <div class="w-full h-1.5 bg-[#1a1a22] overflow-hidden">
+          <div id="storage-usage-bar" class="h-full bg-emerald-500" style="width:0%"></div>
         </div>
       </div>
 
-      <div class="card p-5">
-        <h2 class="font-pixel text-[10px] text-indigo-400 mb-4">// ADICIONAR_ALUNOS_EM_LOTE</h2>
-        <p class="text-[10px] text-gray-500 font-mono mb-3">Adiciona na turma selecionada na aba ao lado →</p>
-        <div class="space-y-3 font-mono text-xs">
-          <div>
-            <label class="block mb-1 text-gray-500">NOMES (UM POR LINHA) — CÓDIGO É GERADO AUTOMATICAMENTE</label>
-            <textarea id="alunos-em-lote" class="input-field h-28" placeholder="Theo Arns&#10;Guilherme Bley Merlin&#10;Antonio Morrissy"></textarea>
-          </div>
-          <button class="btn-action btn-add w-full" onclick="adicionarAlunosLote()">GERAR_CÓDIGOS_E_ADICIONAR</button>
+      <!-- Grade de cards de turma -->
+      <div id="turmas-grid-view">
+        <div class="turma-grid mb-6">
+          <div id="turmas-grid" class="contents"></div>
+          <div class="turma-card-new" onclick="abrirFormNovaTurma()">+ NOVA_TURMA</div>
         </div>
-      </div>
-
-      <div class="card p-4">
-        <div class="flex border-b border-[#2e2e3a] mb-4">
-          <button class="nav-tab active" id="tab-video" onclick="switchFormTab('video')">VÍDEOS</button>
-          <button class="nav-tab" id="tab-link" onclick="switchFormTab('link')">LINKS</button>
-          <button class="nav-tab" id="tab-jogo" onclick="switchFormTab('jogo')">JOGOS</button>
-        </div>
-
-        <div id="subform-video" class="space-y-3 font-mono text-xs">
-          <input type="hidden" id="edit-video-index" value="" />
-          <input type="text" id="video-titulo" placeholder="TÍTULO DA AULA" class="input-field" />
-          <input type="text" id="video-url" placeholder="URL EMBED DO YOUTUBE" class="input-field" />
-          <select id="video-categoria" class="input-field bg-black">
-            <option value="Básico">Básico</option>
-            <option value="Lógica">Lógica</option>
-            <option value="Arte">Arte</option>
-          </select>
-          <button class="btn-action btn-add w-full" id="btn-save-video" onclick="saveVideo()">GRAVAR_VIDEO</button>
-        </div>
-
-        <div id="subform-link" class="space-y-3 font-mono text-xs hidden">
-          <input type="hidden" id="edit-link-index" value="" />
-          <input type="text" id="link-titulo" placeholder="TÍTULO DO RECURSO" class="input-field" />
-          <input type="text" id="link-url" placeholder="URL" class="input-field" />
-          <input type="text" id="link-descricao" placeholder="DESCRIÇÃO CURTA" class="input-field" />
-          <input type="text" id="link-tag" placeholder="TAG (EX: ARTE, ASSETS)" class="input-field" />
-          <button class="btn-action btn-add w-full" id="btn-save-link" onclick="saveLink()">GRAVAR_LINK</button>
-        </div>
-
-        <div id="subform-jogo" class="space-y-3 font-mono text-xs hidden">
-          <input type="hidden" id="edit-jogo-index" value="" />
-          <input type="text" id="jogo-titulo" placeholder="NOME DO JOGO" class="input-field" />
-          <input type="text" id="jogo-autor" placeholder="AUTOR (ALUNO)" class="input-field" />
-          <input type="text" id="jogo-capa" placeholder="URL DA IMAGEM DE CAPA" class="input-field" />
-          <input type="text" id="jogo-url" placeholder="URL EMBED-UPLOAD DO ITCH.IO" class="input-field" />
-          <textarea id="jogo-descricao" placeholder="DESCRIÇÃO DO CONTEXTO TÉCNICO" class="input-field h-20"></textarea>
-          <input type="text" id="jogo-controles" placeholder="CONTROLES (EX: SETAS / ESPAÇO)" class="input-field" />
-          <button class="btn-action btn-add w-full" id="btn-save-jogo" onclick="saveJogo()">GRAVAR_JOGO</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="lg:col-span-7 space-y-6">
-      <div class="card p-5">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="font-pixel text-[10px] text-emerald-400">// TURMAS_E_ALUNOS</h2>
-          <span id="turmas-sync-status" class="text-[10px] font-mono text-gray-500">—</span>
-        </div>
-        <div class="mb-4 p-3 border border-[#22222c] bg-[#0c0c10]">
-          <div class="flex items-center justify-between mb-1.5">
-            <span class="font-pixel text-[8px] text-gray-500">ARMAZENAMENTO_SUPABASE</span>
-            <span id="storage-usage-text" class="text-[10px] font-mono text-gray-400">calculando...</span>
-          </div>
-          <div class="w-full h-1.5 bg-[#1a1a22] overflow-hidden">
-            <div id="storage-usage-bar" class="h-full bg-emerald-500" style="width:0%"></div>
-          </div>
-        </div>
-        <div id="turmas-tabs" class="flex flex-wrap gap-1.5 mb-4"></div>
-        <div id="turmas-container" class="space-y-4"></div>
         <p id="turmas-empty" class="hidden text-gray-600 font-pixel text-[8px] p-4">NENHUMA TURMA CRIADA AINDA.</p>
+
+        <div id="form-nova-turma" class="hidden card p-5 max-w-md mt-2">
+          <h2 class="font-pixel text-[10px] text-indigo-400 mb-4">// NOVA_TURMA</h2>
+          <div class="space-y-3 font-mono text-xs">
+            <div>
+              <label class="block mb-1 text-gray-500">NOME DA TURMA</label>
+              <input type="text" id="turma-nome" class="input-field" placeholder="EX: Israelita 5" />
+            </div>
+            <div>
+              <label class="block mb-1 text-gray-500">SLUG (SEM ESPAÇOS/ACENTOS)</label>
+              <input type="text" id="turma-slug" class="input-field" placeholder="EX: israelita-5" />
+            </div>
+            <div>
+              <label class="block mb-1 text-gray-500">CÓDIGO DE ACESSO (OS ALUNOS USAM ESSE CÓDIGO NA ABA TURMA)</label>
+              <input type="text" id="turma-codigo-acesso" class="input-field" placeholder="EX: israelita5" />
+            </div>
+            <div class="flex gap-2">
+              <button class="btn-action btn-add flex-1" onclick="criarTurma()">CRIAR_TURMA</button>
+              <button class="btn-action bg-zinc-800 text-zinc-400" onclick="fecharFormNovaTurma()">CANCELAR</button>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="card p-5">
-        <h2 class="font-pixel text-[10px] text-emerald-400 mb-4">// ARQUIVO_DE_ELEMENTOS_EXTERNOS</h2>
-        <div id="recursos-lista-container" class="space-y-3 font-mono text-xs max-h-96 overflow-y-auto"></div>
+      <!-- Detalhe de uma turma (alunos, uploads) -->
+      <div id="turmas-detail-view" class="hidden">
+        <button class="btn-action bg-zinc-900 text-zinc-400 border border-zinc-700 mb-4" onclick="voltarParaGridTurmas()">← VOLTAR</button>
+
+        <div class="card p-5 mb-6 max-w-md">
+          <h2 class="font-pixel text-[10px] text-indigo-400 mb-4">// ADICIONAR_ALUNOS_EM_LOTE</h2>
+          <div class="space-y-3 font-mono text-xs">
+            <div>
+              <label class="block mb-1 text-gray-500">NOMES (UM POR LINHA) — CÓDIGO É GERADO AUTOMATICAMENTE</label>
+              <textarea id="alunos-em-lote" class="input-field h-28" placeholder="Theo Arns&#10;Guilherme Bley Merlin&#10;Antonio Morrissy"></textarea>
+            </div>
+            <button class="btn-action btn-add w-full" onclick="adicionarAlunosLote()">GERAR_CÓDIGOS_E_ADICIONAR</button>
+          </div>
+        </div>
+
+        <div id="turmas-container" class="space-y-4"></div>
       </div>
-    </div>
+    </section>
+
+    <!-- ================= PAINEL: CONTEÚDO ================= -->
+    <section id="panel-conteudo" class="hidden">
+      <header class="mb-6">
+        <h1 class="font-pixel text-sm text-white">[⚒ CONTEÚDO_DO_SITE]</h1>
+        <p class="text-xs font-mono mt-2 text-gray-500">Jogos, tutoriais e links (sincronizado via GitHub)</p>
+      </header>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div class="lg:col-span-5">
+          <div class="card p-4">
+            <div class="flex border-b border-[#2e2e3a] mb-4">
+              <button class="nav-tab active" id="tab-video" onclick="switchFormTab('video')">VÍDEOS</button>
+              <button class="nav-tab" id="tab-link" onclick="switchFormTab('link')">LINKS</button>
+              <button class="nav-tab" id="tab-jogo" onclick="switchFormTab('jogo')">JOGOS</button>
+            </div>
+
+            <div id="subform-video" class="space-y-3 font-mono text-xs">
+              <input type="hidden" id="edit-video-index" value="" />
+              <input type="text" id="video-titulo" placeholder="TÍTULO DA AULA" class="input-field" />
+              <input type="text" id="video-url" placeholder="URL EMBED DO YOUTUBE" class="input-field" />
+              <select id="video-categoria" class="input-field bg-black">
+                <option value="Básico">Básico</option>
+                <option value="Lógica">Lógica</option>
+                <option value="Arte">Arte</option>
+              </select>
+              <button class="btn-action btn-add w-full" id="btn-save-video" onclick="saveVideo()">GRAVAR_VIDEO</button>
+            </div>
+
+            <div id="subform-link" class="space-y-3 font-mono text-xs hidden">
+              <input type="hidden" id="edit-link-index" value="" />
+              <input type="text" id="link-titulo" placeholder="TÍTULO DO RECURSO" class="input-field" />
+              <input type="text" id="link-url" placeholder="URL" class="input-field" />
+              <input type="text" id="link-descricao" placeholder="DESCRIÇÃO CURTA" class="input-field" />
+              <input type="text" id="link-tag" placeholder="TAG (EX: ARTE, ASSETS)" class="input-field" />
+              <button class="btn-action btn-add w-full" id="btn-save-link" onclick="saveLink()">GRAVAR_LINK</button>
+            </div>
+
+            <div id="subform-jogo" class="space-y-3 font-mono text-xs hidden">
+              <input type="hidden" id="edit-jogo-index" value="" />
+              <input type="text" id="jogo-titulo" placeholder="NOME DO JOGO" class="input-field" />
+              <input type="text" id="jogo-autor" placeholder="AUTOR (ALUNO)" class="input-field" />
+              <input type="text" id="jogo-capa" placeholder="URL DA IMAGEM DE CAPA" class="input-field" />
+              <input type="text" id="jogo-url" placeholder="URL EMBED-UPLOAD DO ITCH.IO" class="input-field" />
+              <textarea id="jogo-descricao" placeholder="DESCRIÇÃO DO CONTEXTO TÉCNICO" class="input-field h-20"></textarea>
+              <input type="text" id="jogo-controles" placeholder="CONTROLES (EX: SETAS / ESPAÇO)" class="input-field" />
+              <button class="btn-action btn-add w-full" id="btn-save-jogo" onclick="saveJogo()">GRAVAR_JOGO</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="lg:col-span-7">
+          <div class="card p-5">
+            <h2 class="font-pixel text-[10px] text-emerald-400 mb-4">// ARQUIVO_DE_ELEMENTOS_EXTERNOS</h2>
+            <div id="recursos-lista-container" class="space-y-3 font-mono text-xs max-h-96 overflow-y-auto"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </main>
+</div>
 </div>
 
 <script>
@@ -538,43 +713,70 @@ async function carregarTurmas() {
 
   setTurmasStatus('● SINCRONIZADO', '#10b981');
 
-  // mantém a aba ativa se ela ainda existir; senão cai na primeira turma
-  if (!turmaAtivaId || !turmasCache.some(t => t.id === turmaAtivaId)) {
-    turmaAtivaId = turmasCache[0] ? turmasCache[0].id : null;
+  renderTurmasGrid();
+  // se uma turma já estava aberta em detalhe, atualiza o conteúdo dela
+  if (turmaAtivaId && document.getElementById('turmas-detail-view').classList.contains('hidden') === false) {
+    renderTurmaAtiva();
   }
-  renderTurmasTabs();
-  renderTurmaAtiva();
 }
 
-function renderTurmasTabs() {
-  const tabsEl = document.getElementById('turmas-tabs');
-  tabsEl.innerHTML = turmasCache.map(t => `
-    <button
-      class="px-3 py-1.5 font-pixel text-[8px] border ${t.id === turmaAtivaId ? 'bg-indigo-600 border-indigo-500 text-white' : 'border-[#2e2e3a] text-gray-500 hover:text-white'}"
-      onclick="selecionarTurma('${t.id}')"
-    >${t.nome} (${t.alunos.length})</button>
-  `).join('');
+// Paleta de banners no estilo "card de turma" (tons roxo/violeta/rosa do Overcast)
+const CORES_TURMA = ['#4f46e5', '#7c3aed', '#a21caf', '#0e7490', '#065f46', '#9d174d'];
+function corTurma(id) {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  return CORES_TURMA[hash % CORES_TURMA.length];
 }
 
-function selecionarTurma(turmaId) {
-  turmaAtivaId = turmaId;
-  renderTurmasTabs();
-  renderTurmaAtiva();
-}
-
-function renderTurmaAtiva() {
-  const container = document.getElementById('turmas-container');
+function renderTurmasGrid() {
+  const gridEl = document.getElementById('turmas-grid');
   const empty = document.getElementById('turmas-empty');
 
   if (turmasCache.length === 0) {
-    container.innerHTML = '';
+    gridEl.innerHTML = '';
     empty.classList.remove('hidden');
     return;
   }
   empty.classList.add('hidden');
 
+  gridEl.innerHTML = turmasCache.map(t => `
+    <div class="turma-card" onclick="abrirTurmaDetalhe('${t.id}')">
+      <div class="turma-card-banner" style="background:${corTurma(t.id)}">
+        <p class="font-pixel text-[10px] text-white truncate">${t.nome}</p>
+      </div>
+      <div class="turma-card-body">
+        <p class="text-[10px] text-gray-500 font-mono">código: <span class="text-emerald-400">${t.codigo_acesso}</span></p>
+        <p class="text-[10px] text-gray-500 font-mono mt-1">${t.alunos.length} aluno(s)</p>
+      </div>
+    </div>
+  `).join('');
+}
+
+function abrirFormNovaTurma() {
+  document.getElementById('form-nova-turma').classList.remove('hidden');
+}
+function fecharFormNovaTurma() {
+  document.getElementById('form-nova-turma').classList.add('hidden');
+}
+
+function abrirTurmaDetalhe(turmaId) {
+  turmaAtivaId = turmaId;
+  document.getElementById('turmas-grid-view').classList.add('hidden');
+  document.getElementById('turmas-detail-view').classList.remove('hidden');
+  renderTurmaAtiva();
+}
+
+function voltarParaGridTurmas() {
+  document.getElementById('turmas-detail-view').classList.add('hidden');
+  document.getElementById('turmas-grid-view').classList.remove('hidden');
+  renderTurmasGrid();
+}
+
+function renderTurmaAtiva() {
+  const container = document.getElementById('turmas-container');
+
   const turma = turmasCache.find(t => t.id === turmaAtivaId);
-  if (!turma) { container.innerHTML = ''; return; }
+  if (!turma) { container.innerHTML = '<p class="text-gray-600 font-pixel text-[8px] p-4">TURMA NÃO ENCONTRADA — talvez tenha sido removida.</p>'; return; }
 
   container.innerHTML = `
     <div class="border border-[#22222c] bg-[#0c0c10]">
@@ -647,8 +849,9 @@ async function criarTurma() {
   document.getElementById('turma-nome').value = '';
   document.getElementById('turma-slug').value = '';
   document.getElementById('turma-codigo-acesso').value = '';
-  turmaAtivaId = nova.id;
-  carregarTurmas();
+  fecharFormNovaTurma();
+  await carregarTurmas();
+  abrirTurmaDetalhe(nova.id);
 }
 
 async function trocarCodigoTurma(turmaId, codigoAtual) {
@@ -666,7 +869,8 @@ async function removerTurma(turmaId, nome) {
   const { error } = await sb.rpc('admin_remover_turma', { chave: sbAdminKey, p_turma_id: turmaId });
   if (error) { alert('Erro: ' + error.message); return; }
   turmaAtivaId = null;
-  carregarTurmas();
+  await carregarTurmas();
+  voltarParaGridTurmas();
 }
 
 async function adicionarAlunosLote() {
@@ -748,6 +952,13 @@ async function removerAluno(alunoId, nome) {
 
 // MULTI-FORM CONTROL
 let activeSubForm = 'video';
+function switchPanel(panelName) {
+  document.getElementById('panel-turmas').classList.toggle('hidden', panelName !== 'turmas');
+  document.getElementById('panel-conteudo').classList.toggle('hidden', panelName !== 'conteudo');
+  document.getElementById('nav-turmas').classList.toggle('active', panelName === 'turmas');
+  document.getElementById('nav-conteudo').classList.toggle('active', panelName === 'conteudo');
+}
+
 function switchFormTab(formName) {
   activeSubForm = formName;
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
