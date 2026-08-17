@@ -266,8 +266,8 @@ const GH_FILE  = "data.json";
 const GH_BRANCH = "main"; // troque para "master" se necessário
 
 // Config do Supabase (turmas/alunos/arquivos) — anon key é pública, seguro fixar aqui
-const SUPABASE_URL = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlemxtZWNyeGhqYWhob2VreWJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5MDkwNjAsImV4cCI6MjEwMjQ4NTA2MH0.-TcsKrFxRMeiqKrzXk57E8-60eobk3fJ0Crn7ci0MW8";
-const SUPABASE_ANON_KEY = "https://kezlmecrxhjahhoekybs.supabase.co";
+const SUPABASE_URL = "https://kezlmecrxhjahhoekybs.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlemxtZWNyeGhqYWhob2VreWJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5MDkwNjAsImV4cCI6MjEwMjQ4NTA2MH0.-TcsKrFxRMeiqKrzXk57E8-60eobk3fJ0Crn7ci0MW8";
 
 let data = { alunos: [], videos: [], links: [], jogos: [] };
 
@@ -551,6 +551,10 @@ function renderTurmas() {
                 `).join('')}
               </div>
             ` : `<p class="mt-1 text-[10px] text-gray-700 font-mono">nenhum arquivo enviado ainda</p>`}
+            <div class="mt-2 pl-1 flex items-center gap-2">
+              <input type="file" id="upload-input-${aluno.id}" class="text-[9px] text-gray-500 flex-1 min-w-0" />
+              <button class="btn-action btn-add text-[8px] py-0.5 px-1.5 shrink-0" onclick="uploadArquivoAdmin('${aluno.id}', '${aluno.codigo}')">UPLOAD_MANUAL</button>
+            </div>
           </div>
         `).join('') || `<p class="p-3 text-[10px] text-gray-600 font-mono">nenhum aluno nesta turma ainda</p>`}
       </div>
@@ -602,6 +606,24 @@ async function adicionarAlunosLote() {
 async function atualizarEtapaAluno(alunoId, novaEtapa) {
   const { error } = await sb.rpc('admin_atualizar_etapa', { chave: sbAdminKey, p_aluno_id: alunoId, p_etapa: novaEtapa });
   if (error) { alert('Erro: ' + error.message); return; }
+  carregarTurmas();
+}
+
+async function uploadArquivoAdmin(alunoId, alunoCodigo) {
+  const input = document.getElementById(`upload-input-${alunoId}`);
+  const file = input.files[0];
+  if (!file) { alert('Selecione um arquivo primeiro.'); return; }
+
+  const path = `envios/${alunoCodigo}/${Date.now()}_${file.name}`;
+  const { error: upErr } = await sb.storage.from('submissoes').upload(path, file, { upsert: true });
+  if (upErr) { alert('Erro no upload: ' + upErr.message); return; }
+
+  const { error: rpcErr } = await sb.rpc('registrar_envio', {
+    p_codigo: alunoCodigo, p_nome_arquivo: file.name, p_storage_path: path,
+    p_tipo: 'envio', p_tamanho_bytes: file.size
+  });
+  if (rpcErr) { alert('Erro ao registrar: ' + rpcErr.message); return; }
+
   carregarTurmas();
 }
 
