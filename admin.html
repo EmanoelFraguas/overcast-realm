@@ -239,9 +239,18 @@
 
     <div class="lg:col-span-7 space-y-6">
       <div class="card p-5">
-        <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center justify-between mb-3">
           <h2 class="font-pixel text-[10px] text-emerald-400">// TURMAS_E_ALUNOS</h2>
           <span id="turmas-sync-status" class="text-[10px] font-mono text-gray-500">—</span>
+        </div>
+        <div class="mb-4 p-3 border border-[#22222c] bg-[#0c0c10]">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="font-pixel text-[8px] text-gray-500">ARMAZENAMENTO_SUPABASE</span>
+            <span id="storage-usage-text" class="text-[10px] font-mono text-gray-400">calculando...</span>
+          </div>
+          <div class="w-full h-1.5 bg-[#1a1a22] overflow-hidden">
+            <div id="storage-usage-bar" class="h-full bg-emerald-500" style="width:0%"></div>
+          </div>
         </div>
         <div id="turmas-container" class="space-y-4"></div>
         <p id="turmas-empty" class="hidden text-gray-600 font-pixel text-[8px] p-4">NENHUMA TURMA CRIADA AINDA.</p>
@@ -268,6 +277,13 @@ const GH_BRANCH = "main"; // troque para "master" se necessário
 // Config do Supabase (turmas/alunos/arquivos) — anon key é pública, seguro fixar aqui
 const SUPABASE_URL = "https://kezlmecrxhjahhoekybs.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlemxtZWNyeGhqYWhob2VreWJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5MDkwNjAsImV4cCI6MjEwMjQ4NTA2MH0.-TcsKrFxRMeiqKrzXk57E8-60eobk3fJ0Crn7ci0MW8";
+
+// Extensões aceitas nos uploads (arquivos de desenvolvimento — amplia quando entrar arte digital)
+const EXTENSOES_PERMITIDAS = ['.c3p', '.txt', '.png', '.mp3', '.ogg', '.wav'];
+function extensaoPermitida(nomeArquivo) {
+  const nome = nomeArquivo.toLowerCase();
+  return EXTENSOES_PERMITIDAS.some(ext => nome.endsWith(ext));
+}
 
 let data = { alunos: [], videos: [], links: [], jogos: [] };
 
@@ -474,6 +490,27 @@ function setTurmasStatus(msg, color) {
   el.style.color = color || '#6b7280';
 }
 
+// Estimativa de uso do Storage (soma do tamanho dos arquivos registrados no banco).
+// Free tier do Supabase = 1GB de Storage — ajuste FREE_TIER_BYTES se seu plano mudar.
+const FREE_TIER_BYTES = 1024 * 1024 * 1024;
+
+function formatarBytes(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+}
+
+function atualizarUsoStorage(arquivos) {
+  const totalBytes = arquivos.reduce((soma, f) => soma + (f.tamanho_bytes || 0), 0);
+  const pct = Math.min(100, (totalBytes / FREE_TIER_BYTES) * 100);
+  document.getElementById('storage-usage-text').textContent =
+    `${formatarBytes(totalBytes)} / ${formatarBytes(FREE_TIER_BYTES)} (${pct.toFixed(1)}%)`;
+  const bar = document.getElementById('storage-usage-bar');
+  bar.style.width = pct.toFixed(1) + '%';
+  bar.className = 'h-full ' + (pct > 90 ? 'bg-red-500' : pct > 70 ? 'bg-yellow-500' : 'bg-emerald-500');
+}
+
 async function carregarTurmas() {
   if (!sb) return;
   setTurmasStatus('● CARREGANDO TURMAS...', '#a78bfa');
@@ -485,6 +522,8 @@ async function carregarTurmas() {
 
   const { data: arquivos, error: errAr } = await sb.from('arquivos').select('*').order('criado_em', { ascending: false });
   if (errAr) { setTurmasStatus('● ERRO: ' + errAr.message, '#ef4444'); return; }
+
+  atualizarUsoStorage(arquivos);
 
   turmasCache = turmas.map(t => ({
     ...t,
@@ -552,7 +591,7 @@ function renderTurmas() {
               </div>
             ` : `<p class="mt-1 text-[10px] text-gray-700 font-mono">nenhum arquivo enviado ainda</p>`}
             <div class="mt-2 pl-1 flex items-center gap-2">
-              <input type="file" id="upload-input-${aluno.id}" class="text-[9px] text-gray-500 flex-1 min-w-0" />
+              <input type="file" id="upload-input-${aluno.id}" accept=".c3p,.txt,.png,.mp3,.ogg,.wav" class="text-[9px] text-gray-500 flex-1 min-w-0" />
               <button class="btn-action btn-add text-[8px] py-0.5 px-1.5 shrink-0" onclick="uploadArquivoAdmin('${aluno.id}', '${aluno.codigo}')">UPLOAD_MANUAL</button>
             </div>
           </div>
@@ -613,6 +652,10 @@ async function uploadArquivoAdmin(alunoId, alunoCodigo) {
   const input = document.getElementById(`upload-input-${alunoId}`);
   const file = input.files[0];
   if (!file) { alert('Selecione um arquivo primeiro.'); return; }
+  if (!extensaoPermitida(file.name)) {
+    alert(`Tipo de arquivo não permitido. Extensões aceitas: ${EXTENSOES_PERMITIDAS.join(', ')}`);
+    return;
+  }
 
   const path = `envios/${alunoCodigo}/${Date.now()}_${file.name}`;
   const { error: upErr } = await sb.storage.from('submissoes').upload(path, file, { upsert: true });
