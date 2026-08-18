@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Puzzle de Lógica — Overcast Realm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#fff8ec;
+    --sky:#5ec9ff;
+    --sky-dark:#2fa8ec;
+    --sun:#ffc93c;
+    --coral:#ff7a6b;
+    --mint:#3ddc97;
+    --grape:#a06bff;
+    --ink:#3a2b52;
+    --ink-soft:#6b5b8a;
+    --card:#ffffff;
+    --card-edge:#f0e4d0;
+    --ok:#2bb673;
+    --ok-bg:#e3fbf0;
+    --bad:#ff5c5c;
+    --bad-bg:#ffecec;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 8% 6%, #ffe9b8 0%, transparent 40%),
+      radial-gradient(circle at 95% 15%, #bfeaff 0%, transparent 38%),
+      radial-gradient(circle at 90% 95%, #d8f5e6 0%, transparent 40%),
+      var(--bg);
+    color:var(--ink);
+    font-family:'Nunito', sans-serif;
+    font-size:20px;
+    min-height:100vh;
+    padding:20px 14px 70px;
+  }
+  .wrap{max-width:1100px;margin:0 auto;}
+
+  header{
+    text-align:center;
+    margin-bottom:22px;
+  }
+  .eyebrow{
+    display:inline-block;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:15px;
+    color:#fff;
+    background:var(--grape);
+    padding:6px 18px;
+    border-radius:999px;
+    letter-spacing:0.5px;
+    margin-bottom:14px;
+    box-shadow:0 3px 0 #7d4fd6;
+  }
+  h1{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:38px;
+    line-height:1.15;
+    margin:0 0 10px;
+    color:var(--sky-dark);
+    text-shadow:3px 3px 0 #fff, -3px -3px 0 #fff, 3px -3px 0 #fff, -3px 3px 0 #fff;
+  }
+  h1 .em{color:var(--coral);}
+  header p{
+    color:var(--ink-soft);
+    font-size:20px;
+    font-weight:700;
+    margin:0;
+    max-width:560px;
+    margin:0 auto;
+  }
+
+  .progress-bar-wrap{
+    max-width:520px;
+    margin:22px auto 6px;
+    background:var(--card);
+    border:3px solid var(--card-edge);
+    border-radius:999px;
+    padding:6px;
+    box-shadow:0 4px 0 var(--card-edge);
+  }
+  .progress-bar{
+    height:22px;
+    border-radius:999px;
+    background:linear-gradient(90deg, var(--mint), var(--sky-dark));
+    width:0%;
+    transition:width .3s ease;
+  }
+  .progress-label{
+    text-align:center;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    color:var(--ink-soft);
+    font-size:16px;
+    margin-bottom:26px;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:20px;
+  }
+
+  .exercise{
+    background:var(--card);
+    border:3px solid var(--card-edge);
+    border-radius:22px;
+    box-shadow:0 6px 0 var(--card-edge);
+    padding:18px 18px 20px;
+    position:relative;
+  }
+  .num-badge{
+    position:absolute;
+    top:-16px;
+    left:16px;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:15px;
+    width:34px;
+    height:34px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#fff;
+    box-shadow:0 3px 0 rgba(0,0,0,0.15);
+  }
+  .c0{background:var(--sky-dark);}
+  .c1{background:var(--coral);}
+  .c2{background:var(--mint);}
+  .c3{background:var(--grape);}
+
+  .ex-title{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:19px;
+    margin:8px 0 8px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .ex-title .icon{font-size:24px;}
+
+  .scenario{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:600;
+    font-size:17px;
+    color:var(--ink);
+    background:#fff4de;
+    border:2px dashed var(--sun);
+    border-radius:14px;
+    padding:10px 14px;
+    margin-bottom:16px;
+    line-height:1.35;
+  }
+  .scenario b{color:var(--coral);}
+
+  .board{
+    display:flex;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+  .col{flex:1;min-width:170px;}
+  .col-label{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:14px;
+    margin-bottom:8px;
+    padding:3px 10px;
+    border-radius:8px;
+    display:inline-block;
+  }
+  .col-label.cond{background:#e3f4ff;color:var(--sky-dark);}
+  .col-label.act{background:#ffe3ee;color:var(--coral);}
+
+  .block{
+    cursor:grab;
+    user-select:none;
+    background:#fff;
+    border:2px solid var(--card-edge);
+    border-radius:12px;
+    padding:9px 11px;
+    margin-bottom:8px;
+    font-size:15px;
+    font-weight:700;
+    line-height:1.3;
+    color:var(--ink);
+    box-shadow:0 3px 0 var(--card-edge);
+    transition:transform .1s, border-color .15s, box-shadow .1s;
+  }
+  .block[data-group="cond"]{border-color:#bfe4ff;}
+  .block[data-group="act"]{border-color:#ffd0e0;}
+  .block:active{cursor:grabbing;}
+  .block:hover{transform:translateY(-2px);}
+  .block.dragging{opacity:0.3;}
+  .block.placed{
+    opacity:0.3;
+    pointer-events:none;
+    box-shadow:none;
+  }
+
+  .connectors{
+    flex:1.3;
+    min-width:180px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:8px;
+  }
+  .conn-row{
+    display:flex;
+    align-items:stretch;
+    gap:6px;
+  }
+  .slot{
+    flex:1;
+    min-height:56px;
+    background:#fbf9f4;
+    border:2px dashed #d8cdb8;
+    border-radius:12px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:8px;
+    font-size:14.5px;
+    font-weight:700;
+    color:#b8ac93;
+    transition:border-color .15s, background .15s;
+  }
+  .slot.dragover{border-color:var(--grape);background:#f2e9ff;}
+  .slot.filled{
+    border-style:solid;
+    color:var(--ink);
+    background:#fff;
+  }
+  .slot.correct{border-color:var(--ok);background:var(--ok-bg);color:var(--ok);}
+  .slot.wrong{border-color:var(--bad);background:var(--bad-bg);color:var(--bad);}
+  .arrow{
+    align-self:center;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    color:var(--grape);
+    font-size:20px;
+  }
+
+  .actions-row{
+    margin-top:14px;
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  button{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:14px;
+    padding:9px 16px;
+    border-radius:12px;
+    border:none;
+    cursor:pointer;
+    transition:transform .08s;
+  }
+  button.primary{
+    background:var(--mint);
+    color:#fff;
+    box-shadow:0 4px 0 #299f6e;
+  }
+  button.primary:active{transform:translateY(3px);box-shadow:0 1px 0 #299f6e;}
+  button.secondary{
+    background:#fff;
+    color:var(--ink-soft);
+    border:2px solid var(--card-edge);
+    box-shadow:0 4px 0 var(--card-edge);
+  }
+  button.secondary:active{transform:translateY(3px);box-shadow:0 1px 0 var(--card-edge);}
+
+  .feedback{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:14px;
+    color:var(--ink-soft);
+    min-height:18px;
+  }
+  .feedback.ok{color:var(--ok);}
+  .feedback.bad{color:var(--bad);}
+
+  footer{
+    text-align:center;
+    margin-top:44px;
+    color:var(--ink-soft);
+    font-size:16px;
+    font-weight:700;
+  }
+
+  @media (max-width:760px){
+    .grid{grid-template-columns:1fr;}
+    body{font-size:18px;}
+    h1{font-size:28px;}
+    .board{flex-direction:column;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">OVERCAST REALM · TURMA DE LÓGICA</div>
+    <h1>Monte a <span class="em">Lógica</span> do Jogo!</h1>
+    <p>Arraste os blocos SE e ENTÃO até o lugar certo em cada quadradinho. 🧩</p>
+  </header>
+
+  <div class="progress-bar-wrap">
+    <div class="progress-bar" id="progress-bar"></div>
+  </div>
+  <div class="progress-label" id="progress-label">0 de 20 completos</div>
+
+  <div class="grid" id="grid"></div>
+
+  <footer>🎮 Overcast Game Studio — material de apoio para aulas de lógica</footer>
+</div>
+
+<script>
+const exercises = [
+  {icon:"⚡", title:"Espinho", scenario:'Se o personagem <b>colidir com o espinho</b>, o sistema reinicia o layout.',
+   cond:[["Personagem colide com o Espinho",true],["Personagem colide com a Moeda",false]],
+   act:[["Sistema reinicia o layout",true],["Sistema vai para o layout seguinte",false]]},
+  {icon:"🔫", title:"Atirar", scenario:'Se for pressionada a tecla <b>Espaço</b>, o personagem atira.',
+   cond:[["Teclado: tecla Espaço pressionada",true],["Teclado: seta Cima pressionada",false]],
+   act:[["Personagem atira",true],["Personagem pula",false]]},
+  {icon:"🪙", title:"Moeda", scenario:'Se o personagem <b>colidir com a moeda</b>, aumenta 1 na contagem de moedas.',
+   cond:[["Personagem colide com a Moeda",true],["Personagem colide com o Espinho",false]],
+   act:[["Aumentar 1 na contagem de Moedas",true],["Sistema reinicia o layout",false]]},
+  {icon:"🏁", title:"Chegada", scenario:'Se o personagem <b>colidir com a chegada</b>, o sistema vai para o layout seguinte.',
+   cond:[["Personagem colide com a Chegada",true],["Personagem colide com o Inimigo",false]],
+   act:[["Sistema vai para o layout seguinte",true],["Sistema reinicia o layout",false]]},
+  {icon:"💥", title:"Inimigo", scenario:'Se o <b>tiro colidir com o inimigo</b>, destruir o inimigo.',
+   cond:[["Tiro colide com o Inimigo",true],["Personagem colide com o Inimigo",false]],
+   act:[["Destruir Inimigo",true],["Destruir Personagem",false]]},
+  {icon:"⬆️", title:"Pular", scenario:'Se for pressionada a <b>seta para cima</b>, o personagem pula.',
+   cond:[["Teclado: seta Cima pressionada",true],["Teclado: seta Baixo pressionada",false]],
+   act:[["Personagem pula",true],["Personagem agacha",false]]},
+  {icon:"☠️", title:"Perder vida", scenario:'Se o personagem <b>colidir com o inimigo</b>, o sistema reinicia o layout.',
+   cond:[["Personagem colide com o Inimigo",true],["Tiro colide com o Inimigo",false]],
+   act:[["Sistema reinicia o layout",true],["Destruir Inimigo",false]]},
+  {icon:"➡️", title:"Andar direita", scenario:'Se for pressionada a <b>seta direita</b>, o personagem anda para a direita.',
+   cond:[["Teclado: seta Direita pressionada",true],["Teclado: seta Esquerda pressionada",false]],
+   act:[["Personagem anda para a direita",true],["Personagem anda para a esquerda",false]]},
+  {icon:"⬅️", title:"Andar esquerda", scenario:'Se for pressionada a <b>seta esquerda</b>, o personagem anda para a esquerda.',
+   cond:[["Teclado: seta Esquerda pressionada",true],["Teclado: seta Direita pressionada",false]],
+   act:[["Personagem anda para a esquerda",true],["Personagem anda para a direita",false]]},
+  {icon:"❤️", title:"Sem vidas", scenario:'Se a <b>vida chegar a 0</b>, o sistema reinicia o layout.',
+   cond:[["Variável Vida = 0",true],["Variável Moedas = 10",false]],
+   act:[["Sistema reinicia o layout",true],["Sistema vai para o layout seguinte",false]]},
+  {icon:"🌟", title:"Power-up", scenario:'Se o personagem <b>colidir com o power-up</b>, ele fica invencível.',
+   cond:[["Personagem colide com o Power-up",true],["Personagem colide com a Moeda",false]],
+   act:[["Personagem fica invencível",true],["Personagem ganha uma vida",false]]},
+  {icon:"⏳", title:"Tempo esgotado", scenario:'Se o <b>tempo chegar a 0</b>, o sistema reinicia o layout.',
+   cond:[["Variável Tempo = 0",true],["Variável Moedas = 10",false]],
+   act:[["Sistema reinicia o layout",true],["Sistema vai para o layout seguinte",false]]},
+  {icon:"🚪", title:"Porta", scenario:'Se o personagem <b>colidir com a porta</b>, o sistema vai para o layout seguinte.',
+   cond:[["Personagem colide com a Porta",true],["Personagem colide com o Espinho",false]],
+   act:[["Sistema vai para o layout seguinte",true],["Sistema reinicia o layout",false]]},
+  {icon:"⏸️", title:"Pausar", scenario:'Se for pressionada a tecla <b>"P"</b>, o jogo pausa.',
+   cond:[['Teclado: tecla "P" pressionada',true],["Teclado: tecla Espaço pressionada",false]],
+   act:[["Jogo pausa",true],["Personagem atira",false]]},
+  {icon:"👾", title:"Inimigo sai da tela", scenario:'Se o <b>inimigo sair da área de jogo</b>, destruir o inimigo.',
+   cond:[["Inimigo sai da área de jogo",true],["Tiro sai da área de jogo",false]],
+   act:[["Destruir Inimigo",true],["Destruir Tiro",false]]},
+  {icon:"🧱", title:"Plataforma", scenario:'Se o personagem <b>colidir com a plataforma</b>, ele para de cair.',
+   cond:[["Personagem colide com a Plataforma",true],["Personagem colide com o Espinho",false]],
+   act:[["Personagem para de cair",true],["Sistema reinicia o layout",false]]},
+  {icon:"🔁", title:"Reiniciar manual", scenario:'Se for pressionada a tecla <b>"R"</b>, o sistema reinicia o layout.',
+   cond:[['Teclado: tecla "R" pressionada',true],["Teclado: tecla Espaço pressionada",false]],
+   act:[["Sistema reinicia o layout",true],["Personagem atira",false]]},
+  {icon:"✨", title:"Estrela", scenario:'Se o personagem <b>colidir com a estrela</b>, aumenta 1 na contagem de estrelas.',
+   cond:[["Personagem colide com a Estrela",true],["Personagem colide com a Moeda",false]],
+   act:[["Aumentar 1 na contagem de Estrelas",true],["Aumentar 1 na contagem de Moedas",false]]},
+  {icon:"🌊", title:"Água", scenario:'Se o personagem <b>colidir com a água</b>, o sistema reinicia o layout.',
+   cond:[["Personagem colide com a Água",true],["Personagem colide com a Chegada",false]],
+   act:[["Sistema reinicia o layout",true],["Sistema vai para o layout seguinte",false]]},
+  {icon:"🎬", title:"Início do jogo", scenario:'Se o <b>layout começar</b>, o placar mostra "0 pontos".',
+   cond:[["Sistema: ao iniciar o layout",true],["Personagem colide com a Moeda",false]],
+   act:[['Placar mostra "0 pontos"',true],["Placar soma 10 pontos",false]]}
+];
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+const grid = document.getElementById('grid');
+const blockText = {};
+
+exercises.forEach((ex, idx)=>{
+  const n = idx+1;
+  const condShuffled = shuffle(ex.cond.map((c,i)=>({text:c[0], correct:c[1], id:'c'+n+'_'+i})));
+  const actShuffled = shuffle(ex.act.map((a,i)=>({text:a[0], correct:a[1], id:'a'+n+'_'+i})));
+  const correctCondId = condShuffled.find(c=>c.correct).id;
+  const correctActId = actShuffled.find(a=>a.correct).id;
+
+  const colorClass = ['c0','c1','c2','c3'][idx % 4];
+
+  const section = document.createElement('section');
+  section.className = 'exercise';
+  section.innerHTML = `
+    <div class="num-badge ${colorClass}">${n}</div>
+    <div class="ex-title"><span class="icon">${ex.icon}</span> ${ex.title}</div>
+    <div class="scenario">${ex.scenario}</div>
+    <div class="board" data-exercise="${n}">
+      <div class="col">
+        <div class="col-label cond">SE</div>
+        ${condShuffled.map(c=>`<div class="block" draggable="true" data-id="${c.id}" data-group="cond">${c.text}</div>`).join('')}
+        <div class="col-label act" style="margin-top:10px;">ENTÃO</div>
+        ${actShuffled.map(a=>`<div class="block" draggable="true" data-id="${a.id}" data-group="act">${a.text}</div>`).join('')}
+      </div>
+      <div class="connectors">
+        <div class="conn-row">
+          <div class="slot" data-accepts="cond" data-correct="${correctCondId}">SE...</div>
+          <div class="arrow">➔</div>
+          <div class="slot" data-accepts="act" data-correct="${correctActId}">ENTÃO...</div>
+        </div>
+      </div>
+    </div>
+    <div class="actions-row">
+      <button class="primary" onclick="checkExercise(${n})">✅ Conferir</button>
+      <button class="secondary" onclick="resetExercise(${n})">🔄 Limpar</button>
+      <span class="feedback" id="fb-${n}"></span>
+    </div>
+  `;
+  grid.appendChild(section);
+
+  condShuffled.forEach(c=>blockText[c.id]=c.text);
+  actShuffled.forEach(a=>blockText[a.id]=a.text);
+});
+
+let dragged = null;
+const solved = new Set();
+
+function attachHandlers(){
+  document.querySelectorAll('.block').forEach(block=>{
+    block.addEventListener('dragstart', e=>{
+      if(block.classList.contains('placed')) { e.preventDefault(); return; }
+      dragged = block;
+      block.classList.add('dragging');
+      e.dataTransfer.setData('text/plain', block.dataset.id);
+    });
+    block.addEventListener('dragend', ()=>block.classList.remove('dragging'));
+  });
+
+  document.querySelectorAll('.slot').forEach(slot=>{
+    slot.addEventListener('dragover', e=>{
+      e.preventDefault();
+      if(!dragged) return;
+      if(dragged.dataset.group !== slot.dataset.accepts) return;
+      slot.classList.add('dragover');
+    });
+    slot.addEventListener('dragleave', ()=>slot.classList.remove('dragover'));
+    slot.addEventListener('drop', e=>{
+      e.preventDefault();
+      slot.classList.remove('dragover');
+      if(!dragged) return;
+      if(dragged.dataset.group !== slot.dataset.accepts) return;
+
+      if(slot.dataset.filledId){
+        const prev = document.querySelector('[data-id="'+slot.dataset.filledId+'"]');
+        if(prev) prev.classList.remove('placed');
+      }
+
+      slot.dataset.filledId = dragged.dataset.id;
+      slot.textContent = blockText[dragged.dataset.id];
+      slot.classList.add('filled');
+      slot.classList.remove('correct','wrong');
+      dragged.classList.add('placed');
+      dragged = null;
+    });
+  });
+}
+attachHandlers();
+
+function updateProgress(){
+  const total = exercises.length;
+  const done = solved.size;
+  document.getElementById('progress-bar').style.width = (done/total*100)+'%';
+  document.getElementById('progress-label').textContent = done+' de '+total+' completos';
+}
+
+function checkExercise(n){
+  const board = document.querySelector('.board[data-exercise="'+n+'"]');
+  const slots = board.querySelectorAll('.slot');
+  let allFilled = true;
+  let allCorrect = true;
+
+  slots.forEach(slot=>{
+    if(!slot.dataset.filledId){ allFilled = false; return; }
+    slot.classList.remove('correct','wrong');
+    if(slot.dataset.filledId === slot.dataset.correct){
+      slot.classList.add('correct');
+    } else {
+      slot.classList.add('wrong');
+      allCorrect = false;
+    }
+  });
+
+  const fb = document.getElementById('fb-'+n);
+
+  if(!allFilled){
+    fb.textContent = '👉 Preencha os dois encaixes.';
+    fb.className = 'feedback bad';
+    return;
+  }
+  if(allCorrect){
+    fb.textContent = '🎉 Certinho!';
+    fb.className = 'feedback ok';
+    solved.add(n);
+  } else {
+    fb.textContent = '🤔 Quase! Olhe o vermelho.';
+    fb.className = 'feedback bad';
+    solved.delete(n);
+  }
+  updateProgress();
+}
+
+function resetExercise(n){
+  const board = document.querySelector('.board[data-exercise="'+n+'"]');
+  board.querySelectorAll('.slot').forEach(slot=>{
+    const label = slot.dataset.accepts === 'cond' ? 'SE...' : 'ENTÃO...';
+    slot.textContent = label;
+    slot.classList.remove('filled','correct','wrong');
+    delete slot.dataset.filledId;
+  });
+  board.querySelectorAll('.block').forEach(b=>b.classList.remove('placed'));
+  const fb = document.getElementById('fb-'+n);
+  fb.textContent = '';
+  fb.className = 'feedback';
+  solved.delete(n);
+  updateProgress();
+}
+
+updateProgress();
+</script>
+</body>
+</html>
