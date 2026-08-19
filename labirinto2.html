@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Labirinto 2 — Overcast Realm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#fff8ec;
+    --sky:#5ec9ff;
+    --sky-dark:#2fa8ec;
+    --sun:#ffc93c;
+    --coral:#ff7a6b;
+    --mint:#3ddc97;
+    --grape:#a06bff;
+    --ink:#3a2b52;
+    --ink-soft:#6b5b8a;
+    --card:#ffffff;
+    --card-edge:#f0e4d0;
+    --ok:#2bb673;
+    --ok-bg:#e3fbf0;
+    --bad:#ff5c5c;
+    --bad-bg:#ffecec;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;}
+  body{
+    background:
+      radial-gradient(circle at 8% 6%, #ffe9b8 0%, transparent 40%),
+      radial-gradient(circle at 95% 15%, #bfeaff 0%, transparent 38%),
+      radial-gradient(circle at 90% 95%, #d8f5e6 0%, transparent 40%),
+      var(--bg);
+    color:var(--ink);
+    font-family:'Nunito', sans-serif;
+    height:100dvh;
+    padding:8px 10px;
+    display:flex;
+  }
+  .wrap{max-width:1000px;margin:0 auto;width:100%;height:100%;display:flex;flex-direction:column;min-height:0;}
+
+  .back-home {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'Baloo 2', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--ink-soft);
+    background: var(--card);
+    border: 2px solid var(--card-edge);
+    border-radius: 999px;
+    padding: 5px 12px;
+    text-decoration: none;
+    box-shadow: 0 3px 0 var(--card-edge);
+    flex-shrink:0;
+  }
+  .back-home:hover { color: var(--sky-dark); }
+  .back-row { display:flex; flex-wrap:wrap; gap:8px; margin-bottom: 6px; flex-shrink:0; }
+
+  header{ text-align:center; margin-bottom:4px; flex-shrink:0; }
+  h1{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:clamp(16px,3vh,24px);
+    line-height:1.1;
+    margin:0;
+    color:var(--sky-dark);
+  }
+  .subtitle{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:clamp(11px,1.6vh,14px);
+    color:var(--ink-soft);
+    margin:3px 0 0;
+  }
+
+  .legend{
+    display:flex;
+    justify-content:center;
+    gap:14px;
+    margin:4px 0;
+    flex-wrap:wrap;
+    flex-shrink:0;
+  }
+  .legend .li{ display:flex; align-items:center; gap:4px; font-size:clamp(14px,2.2vh,20px); }
+  .legend .li small{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:10px;
+    color:var(--ink-soft);
+  }
+
+  .levels-strip{
+    display:flex;
+    flex-wrap:nowrap;
+    gap:5px;
+    justify-content:flex-start;
+    margin:6px auto;
+    max-width:100%;
+    overflow-x:auto;
+    padding:2px 4px 6px;
+    flex-shrink:0;
+  }
+  .level-dot{
+    width:26px; height:26px;
+    flex-shrink:0;
+    border-radius:50%;
+    border:2px solid var(--card-edge);
+    background:#fff;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:11px;
+    color:var(--ink-soft);
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .level-dot.active{ border-color:var(--sky-dark); color:var(--sky-dark); background:#e3f4ff; transform:scale(1.12); }
+  .level-dot.done{ background:var(--ok-bg); border-color:var(--ok); color:var(--ok); }
+  .level-dot.locked{ background:#f2f0f7; border-color:#e3ddef; color:#c9c1db; cursor:default; font-size:12px; }
+
+  .game-card{
+    background:var(--card);
+    border:3px solid var(--card-edge);
+    border-radius:20px;
+    box-shadow:0 6px 0 var(--card-edge);
+    padding:10px;
+    flex:1;
+    min-height:0;
+    display:flex;
+    overflow:hidden;
+  }
+
+  .stage{ display:flex; flex-direction:column; gap:8px; align-items:center; justify-content:center; width:100%; min-height:0; }
+  .stage-top{ display:flex; flex-direction:column; align-items:center; min-height:0; flex-shrink:1; }
+
+  #maze{
+    display:grid;
+    gap:2px;
+    background:#bfe9a8;
+    border:3px solid #a8de8a;
+    border-radius:14px;
+    padding:6px;
+  }
+  .cell{
+    width:clamp(22px, 6vmin, 44px);
+    height:clamp(22px, 6vmin, 44px);
+    border-radius:6px;
+    background:#8fcf6a;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:clamp(12px, 3.2vmin, 20px);
+    position:relative;
+  }
+  .cell.path{ background:linear-gradient(180deg,#cdeeff,#a9defc); border-radius:8px; }
+  .cell.goal{ background:linear-gradient(180deg,#fff2c2,#ffe08a); }
+  .cell.char{ background:linear-gradient(180deg,#eaf7ff,#cdeeff); }
+  .cell .robot{ font-size:1.15em; transition:transform .1s; display:inline-block; }
+  .cell.bump .robot{ animation:bump .3s; }
+  @keyframes bump{
+    0%{transform:scale(1);}
+    40%{transform:scale(0.8) rotate(-10deg);}
+    100%{transform:scale(1);}
+  }
+  .cell.win .robot{ animation:win .6s; }
+  @keyframes win{
+    0%{transform:scale(1) rotate(0);}
+    50%{transform:scale(1.5) rotate(20deg);}
+    100%{transform:scale(1) rotate(0);}
+  }
+  .cell.sliding .robot{ animation:slidepulse .12s ease-out; }
+  @keyframes slidepulse{
+    0%{transform:scale(0.75);}
+    100%{transform:scale(1);}
+  }
+
+  .controls{
+    width:100%;
+    max-width:420px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    flex-shrink:0;
+  }
+
+  .palette{
+    display:grid;
+    grid-template-columns:repeat(3, 42px);
+    gap:6px;
+    justify-content:center;
+    background:#f7f3ff;
+    border:2px dashed #e3d9fb;
+    border-radius:14px;
+    padding:6px;
+    flex-shrink:0;
+  }
+  .palette-block{
+    width:42px; height:42px;
+    font-size:19px;
+    border:3px solid var(--sky-dark);
+    background:#fff;
+    border-radius:12px;
+    cursor:grab;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 3px 0 var(--sky-dark);
+    user-select:none;
+  }
+  .palette-block[data-type="repeat"]{ border-color:var(--grape); box-shadow:0 3px 0 var(--grape); }
+  .palette-block.dragging{ opacity:.35; }
+  .palette-block:active{ cursor:grabbing; }
+
+  .program-tray{
+    min-height:40px;
+    max-height:15vh;
+    overflow-y:auto;
+    width:100%;
+    border:3px dashed var(--card-edge);
+    border-radius:12px;
+    background:#fffaf1;
+    padding:6px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:5px;
+    align-content:flex-start;
+    transition:background .12s, border-color .12s;
+    flex-shrink:0;
+  }
+  .program-tray.dragover{ background:#eef7ff; border-color:var(--sky-dark); border-style:solid; }
+  .program-tray .step{
+    width:28px; height:28px;
+    border-radius:8px;
+    background:#fff;
+    border:2px solid var(--sky-dark);
+    display:flex; align-items:center; justify-content:center;
+    font-size:14px;
+    cursor:pointer;
+    position:relative;
+  }
+  .program-tray .step.running{ background:var(--sun); border-color:#e0a800; }
+  .program-tray .step.ok{ background:var(--ok-bg); border-color:var(--ok); }
+  .program-tray .step.fail{ background:var(--bad-bg); border-color:var(--bad); border-width:3px; animation:shake .4s; }
+  .program-tray .step.fail:after{ content:"❌"; position:absolute; top:-10px; right:-7px; font-size:12px; }
+  @keyframes shake{
+    0%,100%{ transform:translateX(0); }
+    20%{ transform:translateX(-4px); }
+    40%{ transform:translateX(4px); }
+    60%{ transform:translateX(-4px); }
+    80%{ transform:translateX(4px); }
+  }
+  .program-tray .empty-hint{ font-size:18px; padding:6px; opacity:.35; }
+
+  .action-buttons{ display:flex; gap:6px; flex-wrap:wrap; justify-content:center; flex-shrink:0; }
+  button.big-btn{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:12px;
+    border:none;
+    border-radius:999px;
+    padding:7px 12px;
+    cursor:pointer;
+    color:#fff;
+    box-shadow:0 3px 0 rgba(0,0,0,0.15);
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+  }
+  .btn-run{ background:var(--mint); }
+  .btn-reset{ background:var(--sky-dark); }
+  .btn-clear{ background:var(--coral); }
+  .btn-next{ background:var(--grape); display:none; }
+  button.big-btn:active{ transform:translateY(2px); box-shadow:none; }
+  button.big-btn:disabled{ opacity:.5; cursor:default; }
+
+  .msg{ font-size:18px; text-align:center; min-height:22px; flex-shrink:0; }
+
+  .win-overlay{
+    position:fixed; inset:0;
+    display:none;
+    align-items:center; justify-content:center;
+    background:rgba(58,43,82,0.55);
+    z-index:999;
+  }
+  .win-overlay.show{ display:flex; }
+  .win-box{
+    background:#fff;
+    border-radius:28px;
+    padding:32px 40px;
+    text-align:center;
+    box-shadow:0 10px 0 var(--card-edge);
+  }
+  .win-box .big-emoji{ font-size:64px; }
+  .win-box button{ margin-top:14px; }
+
+  @media (max-height:600px){
+    h1{font-size:16px;}
+    .subtitle{display:none;}
+    .legend{display:none;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="back-row">
+    <a href="./index.html" class="back-home">← Voltar</a>
+  </div>
+
+  <header>
+    <h1>🤖 → ⭐</h1>
+    <p class="subtitle">Cada seta desliza até parar! Chegue na estrela.</p>
+  </header>
+
+  <div class="legend">
+    <div class="li">⬆️⬇️⬅️➡️ <small>DESLIZAR</small></div>
+    <div class="li">🔁 <small>REPETIR</small></div>
+  </div>
+
+  <div class="levels-strip" id="levels-strip"></div>
+
+  <div class="game-card">
+    <div class="stage">
+      <div class="stage-top">
+        <div id="maze"></div>
+      </div>
+
+      <div class="controls">
+        <div class="palette" id="palette">
+          <div class="palette-block" draggable="true" data-type="move" data-dir="up">⬆️</div>
+          <div class="palette-block" draggable="true" data-type="move" data-dir="left">⬅️</div>
+          <div class="palette-block" draggable="true" data-type="move" data-dir="down">⬇️</div>
+          <div class="palette-block" draggable="true" data-type="move" data-dir="right">➡️</div>
+          <div class="palette-block" draggable="true" data-type="repeat">🔁</div>
+        </div>
+
+        <div class="program-tray" id="tray"></div>
+
+        <div class="action-buttons">
+          <button class="big-btn btn-run" id="btn-run" onclick="runProgram()">▶️ Play</button>
+          <button class="big-btn btn-reset" onclick="reiniciarTentativa()">🔁 Reiniciar</button>
+          <button class="big-btn btn-clear" onclick="clearProgram()">🗑️ Limpar</button>
+          <button class="big-btn btn-next" id="btn-next-inline" onclick="irProximaFase()">➡️ Próximo</button>
+        </div>
+
+        <div class="msg" id="msg"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="win-overlay" id="win-overlay">
+  <div class="win-box">
+    <div class="big-emoji">🎉⭐🎉</div>
+    <button class="big-btn btn-next" style="display:inline-flex;" onclick="closeWinOverlay()" id="win-btn">➡️ Próximo</button>
+  </div>
+</div>
+
+<script>
+// Cada fase é definida por "esquinas" (waypoints). O caminho é a linha reta
+// entre cada par de esquinas seguidas. O robô sempre desliza até a próxima esquina.
+const rawLevels = [
+  {cols:5, rows:1, wp:[[0,0],[4,0]]},
+  {cols:1, rows:5, wp:[[0,0],[0,4]]},
+  {cols:5, rows:1, wp:[[4,0],[0,0]]},
+  {cols:5, rows:3, wp:[[0,0],[4,0],[4,2]]},
+  {cols:5, rows:3, wp:[[0,0],[0,2],[4,2]]},
+
+  {cols:6, rows:4, wp:[[0,0],[5,0],[5,3]]},
+  {cols:6, rows:4, wp:[[0,3],[0,0],[5,0]]},
+  {cols:6, rows:5, wp:[[0,0],[5,0],[5,4],[0,4]]},
+  {cols:6, rows:5, wp:[[0,4],[5,4],[5,0],[0,0]]},
+  {cols:7, rows:5, wp:[[0,0],[6,0],[6,2],[3,2],[3,4]]},
+
+  {cols:7, rows:5, wp:[[0,4],[0,1],[4,1],[4,4],[6,4]]},
+  {cols:7, rows:6, wp:[[0,0],[6,0],[6,3],[2,3],[2,5]]},
+  {cols:7, rows:6, wp:[[0,5],[0,2],[3,2],[3,0],[6,0]]},
+  {cols:8, rows:6, wp:[[0,0],[7,0],[7,3],[3,3],[3,5],[0,5]]},
+  {cols:8, rows:6, wp:[[0,5],[0,0],[4,0],[4,4],[7,4]]},
+
+  {cols:8, rows:7, wp:[[0,0],[7,0],[7,2],[2,2],[2,4],[7,4],[7,6]]},
+  {cols:8, rows:7, wp:[[0,6],[0,3],[5,3],[5,0],[7,0]]},
+  {cols:9, rows:6, wp:[[0,0],[8,0],[8,3],[4,3],[4,5],[0,5]]},
+  {cols:9, rows:7, wp:[[0,0],[8,0],[8,2],[3,2],[3,4],[8,4],[8,6]]},
+  {cols:9, rows:7, wp:[[0,6],[0,4],[5,4],[5,2],[8,2],[8,0]]}
+];
+
+function buildPath(wp){
+  const set = new Set();
+  const add = (x,y) => set.add(x+','+y);
+  for(let i=0;i<wp.length-1;i++){
+    let [x1,y1] = wp[i];
+    const [x2,y2] = wp[i+1];
+    add(x1,y1);
+    while(x1!==x2 || y1!==y2){
+      if(x1<x2) x1++; else if(x1>x2) x1--;
+      if(y1<y2) y1++; else if(y1>y2) y1--;
+      add(x1,y1);
+    }
+  }
+  return set;
+}
+
+const levels = rawLevels.map(l => ({
+  cols:l.cols, rows:l.rows,
+  start:l.wp[0], goal:l.wp[l.wp.length-1],
+  path: buildPath(l.wp)
+}));
+
+const STORAGE_KEY = 'overcast_labirinto2_v1';
+let currentLevel = 0;
+let program = [];
+let pos = [0,0];
+let completed = new Set();
+
+const DIR_ICON = {up:'⬆️', down:'⬇️', left:'⬅️', right:'➡️'};
+const DELTA = { up:[0,-1], down:[0,1], left:[-1,0], right:[1,0] };
+
+function saveProgress(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ completed:[...completed], lastLevel: currentLevel }));
+}
+function loadProgress(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+    const data = JSON.parse(raw);
+    completed = new Set(data.completed || []);
+    if(typeof data.lastLevel === 'number') currentLevel = data.lastLevel;
+  }catch(e){}
+}
+function maxUnlocked(){
+  let n = 0;
+  while(completed.has(n)) n++;
+  return Math.min(n, levels.length - 1);
+}
+
+function buildLevelsStrip(){
+  const strip = document.getElementById('levels-strip');
+  const unlocked = maxUnlocked();
+  strip.innerHTML = levels.map((_, i) => {
+    const isLocked = i > unlocked;
+    return `<div class="level-dot ${isLocked ? 'locked' : ''}" id="dot-${i}" onclick="${isLocked ? '' : `goToLevel(${i})`}">${isLocked ? '🔒' : (i+1)}</div>`;
+  }).join('');
+  updateDots();
+}
+function updateDots(){
+  levels.forEach((_, i) => {
+    const dot = document.getElementById('dot-'+i);
+    if(!dot) return;
+    dot.classList.toggle('active', i === currentLevel);
+    dot.classList.toggle('done', completed.has(i));
+  });
+}
+function goToLevel(i){
+  if(i > maxUnlocked()) return;
+  currentLevel = i;
+  saveProgress();
+  loadLevel();
+}
+function levelData(){ return levels[currentLevel]; }
+function isPath(x,y){ return levelData().path.has(x+','+y); }
+
+function loadLevel(){
+  const lvl = levelData();
+  pos = [...lvl.start];
+  program = [];
+  document.getElementById('msg').textContent = '';
+  document.getElementById('btn-next-inline').style.display = 'none';
+  renderMaze();
+  renderTray();
+  updateDots();
+}
+
+function renderMaze(){
+  const lvl = levelData();
+  const maze = document.getElementById('maze');
+  maze.style.gridTemplateColumns = `repeat(${lvl.cols}, clamp(22px, 6vmin, 44px))`;
+  maze.style.gridTemplateRows = `repeat(${lvl.rows}, clamp(22px, 6vmin, 44px))`;
+
+  let html = '';
+  for(let y=0; y<lvl.rows; y++){
+    for(let x=0; x<lvl.cols; x++){
+      const onPath = isPath(x,y);
+      const isGoal = x===lvl.goal[0] && y===lvl.goal[1];
+      const isChar = x===pos[0] && y===pos[1];
+      let cls = 'cell';
+      if(onPath) cls += ' path';
+      if(isGoal && !isChar) cls += ' goal';
+      if(isChar) cls += ' char';
+      let content = '';
+      if(isChar) content = '<span class="robot" id="robot">🤖</span>';
+      else if(isGoal) content = '⭐';
+      html += `<div class="${cls}" id="cell-${x}-${y}">${content}</div>`;
+    }
+  }
+  maze.innerHTML = html;
+}
+
+function renderTray(){
+  const tray = document.getElementById('tray');
+  if(program.length === 0){
+    tray.innerHTML = '<span class="empty-hint">🖐️</span>';
+    return;
+  }
+  tray.innerHTML = program.map((step, i) => {
+    const icon = step.type === 'move' ? DIR_ICON[step.dir] : '🔁';
+    return `<div class="step" data-type="${step.type}" id="step-${i}" onclick="removeStep(${i})">${icon}</div>`;
+  }).join('');
+}
+
+function addStep(step){
+  if(program.length >= 40) return;
+  if(step.type === 'repeat'){
+    if(program.length === 0) return;
+    program.push({...program[program.length - 1]});
+  } else {
+    program.push(step);
+  }
+  renderTray();
+}
+function removeStep(i){ program.splice(i,1); renderTray(); }
+function clearProgram(){ program = []; renderTray(); reiniciarTentativa(); }
+function reiniciarTentativa(){
+  const lvl = levelData();
+  pos = [...lvl.start];
+  document.getElementById('msg').textContent = '';
+  document.getElementById('btn-next-inline').style.display = 'none';
+  document.querySelectorAll('.program-tray .step').forEach(s=>s.classList.remove('running','ok','fail'));
+  renderMaze();
+}
+
+let draggedStep = null;
+document.querySelectorAll('.palette-block').forEach(block=>{
+  block.addEventListener('dragstart', ()=>{
+    draggedStep = block.dataset.type === 'move'
+      ? { type:'move', dir: block.dataset.dir }
+      : { type:'repeat' };
+    block.classList.add('dragging');
+  });
+  block.addEventListener('dragend', ()=>block.classList.remove('dragging'));
+});
+const trayEl = document.getElementById('tray');
+trayEl.addEventListener('dragover', e=>{ e.preventDefault(); trayEl.classList.add('dragover'); });
+trayEl.addEventListener('dragleave', ()=>trayEl.classList.remove('dragover'));
+trayEl.addEventListener('drop', e=>{
+  e.preventDefault();
+  trayEl.classList.remove('dragover');
+  if(draggedStep) addStep(draggedStep);
+  draggedStep = null;
+});
+
+function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+async function runProgram(){
+  const lvl = levelData();
+  const runBtn = document.getElementById('btn-run');
+  const msg = document.getElementById('msg');
+  msg.textContent = '';
+  runBtn.disabled = true;
+
+  pos = [...lvl.start];
+  renderMaze();
+  await sleep(250);
+
+  for(let i=0; i<program.length; i++){
+    document.querySelectorAll('.program-tray .step').forEach(s=>s.classList.remove('running'));
+    const stepEl = document.getElementById('step-'+i);
+    if(stepEl) stepEl.classList.add('running');
+    const step = program[i];
+
+    const [dx,dy] = DELTA[step.dir];
+    let moved = 0;
+    let nx = pos[0], ny = pos[1];
+    while(isPath(nx+dx, ny+dy)){
+      nx += dx; ny += dy;
+      moved++;
+    }
+
+    if(moved === 0){
+      const cell = document.getElementById(`cell-${pos[0]}-${pos[1]}`);
+      if(cell) cell.classList.add('bump');
+      if(stepEl) stepEl.classList.add('fail');
+      msg.textContent = '❌ Esse bloco não deslizou';
+      runBtn.disabled = false;
+      return;
+    }
+
+    // desliza casa por casa (animado) até a última casa livre nessa direção
+    for(let s=0; s<moved; s++){
+      pos = [pos[0]+dx, pos[1]+dy];
+      renderMaze();
+      const cell = document.getElementById(`cell-${pos[0]}-${pos[1]}`);
+      if(cell) cell.classList.add('sliding');
+      await sleep(85);
+    }
+    if(stepEl) stepEl.classList.add('ok');
+    await sleep(120);
+
+    if(pos[0]===lvl.goal[0] && pos[1]===lvl.goal[1]){
+      const cell = document.getElementById(`cell-${pos[0]}-${pos[1]}`);
+      if(cell) cell.classList.add('win');
+      completed.add(currentLevel);
+      saveProgress();
+      buildLevelsStrip();
+      msg.textContent = '🎉 Você chegou!';
+      document.getElementById('btn-next-inline').style.display = 'inline-flex';
+      await sleep(300);
+      showWinOverlay();
+      runBtn.disabled = false;
+      return;
+    }
+  }
+
+  msg.textContent = '🤔 Quase! Faltou chegar na estrela';
+  runBtn.disabled = false;
+}
+
+function showWinOverlay(){
+  const isLast = currentLevel >= levels.length - 1;
+  document.getElementById('win-btn').innerHTML = isLast ? '🏆 Fim!' : '➡️ Próximo';
+  document.getElementById('win-overlay').classList.add('show');
+}
+function irProximaFase(){ closeWinOverlay(); }
+function closeWinOverlay(){
+  document.getElementById('win-overlay').classList.remove('show');
+  document.getElementById('btn-next-inline').style.display = 'none';
+  if(currentLevel < levels.length - 1){
+    currentLevel++;
+    saveProgress();
+    loadLevel();
+  } else {
+    loadLevel();
+  }
+}
+
+loadProgress();
+if(currentLevel > maxUnlocked()) currentLevel = maxUnlocked();
+buildLevelsStrip();
+loadLevel();
+</script>
+</body>
+</html>
