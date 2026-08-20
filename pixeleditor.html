@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Editor de Pixel Art — Overcast Realm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Baloo+2:wght@500;700;800&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#181229;
+    --bg-panel:#241c3d;
+    --bg-card:#2c2350;
+    --border:#4a3a7c;
+    --pink:#ff5fa2;
+    --cyan:#4be8ff;
+    --yellow:#ffd23f;
+    --green:#4be08f;
+    --purple:#a06bff;
+    --orange:#ff9a3c;
+    --ink:#ffffff;
+    --ink-soft:#c9bfe8;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    background:
+      radial-gradient(circle at 10% 10%, #2e2258 0%, transparent 45%),
+      radial-gradient(circle at 90% 20%, #1e3a52 0%, transparent 40%),
+      radial-gradient(circle at 80% 90%, #35204a 0%, transparent 45%),
+      var(--bg-deep);
+    color:var(--ink);
+    font-family:'Nunito', sans-serif;
+    min-height:100vh;
+    padding:14px;
+  }
+  .wrap{max-width:1150px;margin:0 auto;}
+  h1,h2,h3{ font-family:'Press Start 2P', monospace; }
+
+  header{ text-align:center; margin-bottom:16px; }
+  header h1{
+    font-size:clamp(15px,3vw,24px);
+    color:var(--cyan);
+    text-shadow:3px 3px 0 #000;
+    margin:0 0 6px;
+  }
+  header p{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    color:var(--ink-soft);
+    font-size:14px;
+    margin:0;
+  }
+
+  .panel{
+    background:var(--bg-panel);
+    border:3px solid var(--border);
+    border-radius:22px;
+    box-shadow:0 8px 0 #120c22;
+    padding:22px;
+    margin-bottom:16px;
+  }
+  .panel h2{ font-size:13px; color:var(--yellow); margin:0 0 14px; }
+
+  .btn{
+    font-family:'Press Start 2P', monospace;
+    font-size:10px;
+    color:#fff;
+    border:none;
+    border-radius:12px;
+    padding:10px 14px;
+    cursor:pointer;
+    box-shadow:0 4px 0 rgba(0,0,0,0.3);
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+  }
+  .btn:active{ transform:translateY(3px); box-shadow:none; }
+  .btn.pink{ background:var(--pink); }
+  .btn.cyan{ background:#0891b2; }
+  .btn.green{ background:#0d9b6c; }
+  .btn.purple{ background:var(--purple); }
+  .btn.gray{ background:#4a3a7c; }
+  .btn.big{ font-size:12px; padding:14px 20px; }
+  .btn.selected{ outline:3px solid #fff; }
+
+  /* ---- tela de setup ---- */
+  .choice-row{ display:flex; flex-wrap:wrap; gap:10px; }
+  .choice-card{
+    background:var(--bg-card);
+    border:3px solid var(--border);
+    border-radius:16px;
+    padding:14px;
+    cursor:pointer;
+    min-width:150px;
+    text-align:center;
+    transition:transform .1s;
+  }
+  .choice-card:hover{ transform:translateY(-2px); }
+  .choice-card.selected{ border-color:var(--yellow); box-shadow:0 0 0 3px rgba(255,210,63,0.35); }
+  .choice-card .title{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:15px;
+    margin-bottom:8px;
+  }
+  .mini-swatches{ display:flex; gap:4px; justify-content:center; flex-wrap:wrap; margin-bottom:6px; }
+  .mini-swatch{ width:16px; height:16px; border-radius:4px; }
+  .choice-card .sub{ font-family:'Baloo 2', sans-serif; font-size:11px; color:var(--ink-soft); }
+
+  #setup-screen{ display:block; }
+  #editor-screen{ display:none; }
+
+  .setup-footer{ text-align:center; margin-top:10px; }
+
+  /* ---- editor ---- */
+  .editor-layout{ display:flex; flex-wrap:wrap; gap:20px; justify-content:center; align-items:flex-start; }
+
+  .toolbar{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    background:var(--bg-card);
+    border:3px solid var(--border);
+    border-radius:16px;
+    padding:10px;
+  }
+  .tool-btn{
+    width:46px; height:46px;
+    font-size:20px;
+    border:3px solid var(--border);
+    background:#1c1533;
+    border-radius:12px;
+    cursor:pointer;
+    color:#fff;
+  }
+  .tool-btn.active{ border-color:var(--cyan); background:#0e3f4a; }
+
+  .canvas-col{ display:flex; flex-direction:column; align-items:center; gap:10px; }
+  #canvas-stage{
+    background:repeating-conic-gradient(#3a3358 0% 25%, #2c2646 0% 50%) 0 0/16px 16px;
+    border:4px solid var(--border);
+    border-radius:12px;
+    display:grid;
+    line-height:0;
+    touch-action:none;
+  }
+  .pxcell{ width:100%; height:100%; }
+  #canvas-stage.grid-on .pxcell{ box-shadow: inset 0 0 0 1px rgba(255,255,255,0.22); }
+  .pxcell.hovered{ outline:2px solid #fff; outline-offset:-2px; z-index:2; position:relative; }
+
+  .current-color-row{
+    display:flex; align-items:center; gap:10px;
+    font-family:'Baloo 2', sans-serif; font-weight:700; color:var(--ink-soft); font-size:13px;
+  }
+  #current-color-swatch{ width:26px; height:26px; border-radius:6px; border:2px solid #fff; }
+
+  .palette-row{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; max-width:260px; }
+  .pal-swatch{
+    width:34px; height:34px;
+    border-radius:9px;
+    border:3px solid transparent;
+    cursor:pointer;
+  }
+  .pal-swatch.selected{ border-color:#fff; transform:scale(1.1); }
+
+  .side-col{ display:flex; flex-direction:column; gap:14px; min-width:180px; }
+  .ref-box{
+    background:var(--bg-card);
+    border:3px dashed var(--yellow);
+    border-radius:14px;
+    padding:10px;
+    text-align:center;
+  }
+  .ref-box .label{ font-family:'Press Start 2P', monospace; font-size:9px; color:var(--yellow); margin-bottom:8px; }
+  #ref-canvas{
+    background:repeating-conic-gradient(#3a3358 0% 25%, #2c2646 0% 50%) 0 0/10px 10px;
+    border:2px solid var(--border);
+    border-radius:8px;
+    display:grid;
+    line-height:0;
+    margin:0 auto;
+  }
+  .refcell.zoomcell{ box-shadow: inset 0 0 0 1px rgba(255,255,255,0.28); }
+
+  .zoom-overlay{
+    position:fixed; inset:0;
+    background:rgba(10,6,20,0.85);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:999;
+    padding:16px;
+  }
+  .zoom-overlay.show{ display:flex; }
+  .zoom-box{
+    background:var(--bg-panel);
+    border:4px solid var(--yellow);
+    border-radius:20px;
+    padding:18px;
+    text-align:center;
+    max-width:95vw;
+    max-height:95vh;
+    overflow:auto;
+  }
+  .zoom-box h3{ font-size:12px; color:var(--yellow); margin:0 0 12px; }
+  #ref-canvas-zoom{
+    background:repeating-conic-gradient(#3a3358 0% 25%, #2c2646 0% 50%) 0 0/14px 14px;
+    border:3px solid var(--border);
+    border-radius:8px;
+    display:grid;
+    line-height:0;
+    margin:0 auto 14px;
+  }
+  .refcell{ width:100%; height:100%; }
+
+  .action-list{ display:flex; flex-direction:column; gap:8px; }
+  .action-list .btn{ justify-content:center; }
+
+  @media (max-width:640px){
+    .toolbar{ flex-direction:row; flex-wrap:wrap; justify-content:center; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>🎨 EDITOR DE PIXEL ART</h1>
+    <p>Overcast Realm — Aula de Arte Digital</p>
+  </header>
+
+  <!-- ============== TELA DE CONFIGURAÇÃO ============== -->
+  <div id="setup-screen">
+
+    <div class="panel">
+      <h2>1️⃣ TAMANHO DA TELA</h2>
+      <div class="choice-row" id="size-choices"></div>
+    </div>
+
+    <div class="panel">
+      <h2>2️⃣ ESCOLHA A PALETA</h2>
+      <div class="choice-row" id="palette-choices"></div>
+    </div>
+
+    <div class="panel">
+      <h2>3️⃣ ESCOLHA UM DESAFIO (OU DESENHE LIVRE)</h2>
+      <div class="choice-row" id="challenge-choices"></div>
+    </div>
+
+    <div class="setup-footer">
+      <button class="btn big pink" onclick="startEditor()">▶️ COMEÇAR A DESENHAR</button>
+    </div>
+  </div>
+
+  <!-- ============== TELA DO EDITOR ============== -->
+  <div id="editor-screen">
+    <div class="panel">
+      <div class="editor-layout">
+
+        <div class="toolbar">
+          <button class="tool-btn active" id="tool-pencil" onclick="setTool('pencil')" title="Lápis">✏️</button>
+          <button class="tool-btn" id="tool-eraser" onclick="setTool('eraser')" title="Borracha">🧽</button>
+          <button class="tool-btn" id="tool-bucket" onclick="setTool('bucket')" title="Balde de tinta">🪣</button>
+          <button class="tool-btn" id="tool-eyedrop" onclick="setTool('eyedrop')" title="Conta-gotas">💧</button>
+          <button class="tool-btn" id="tool-square" onclick="setTool('square')" title="Quadrado">⬜</button>
+          <button class="tool-btn" id="tool-circle" onclick="setTool('circle')" title="Círculo">⭕</button>
+          <button class="tool-btn" id="tool-grid" onclick="toggleGrid()" title="Mostrar/ocultar grade">#️⃣</button>
+          <button class="tool-btn" id="tool-undo" onclick="undo()" title="Desfazer (Ctrl+Z)">↩️</button>
+        </div>
+
+        <div class="canvas-col">
+          <div id="canvas-stage"></div>
+          <div class="current-color-row">
+            Cor atual: <span id="current-color-swatch"></span>
+          </div>
+          <div class="palette-row" id="editor-palette"></div>
+        </div>
+
+        <div class="side-col">
+          <div class="ref-box" id="ref-box" style="display:none;">
+            <div class="label">// DESAFIO_DE_REFERÊNCIA</div>
+            <div id="ref-canvas"></div>
+            <div style="margin-top:8px; display:flex; flex-direction:column; gap:6px; align-items:center;">
+              <button class="btn pink" style="font-size:9px;" onclick="openRefZoom()">🔍 Ampliar</button>
+              <label style="font-family:'Baloo 2',sans-serif;font-weight:700;font-size:12px;color:var(--ink-soft);">
+                <input type="checkbox" id="overlay-toggle" onchange="toggleOverlay()"> 👻 Ver por cima do desenho
+              </label>
+            </div>
+          </div>
+
+          <div class="action-list">
+            <button class="btn cyan" onclick="exportPNG()">💾 Exportar PNG</button>
+            <button class="btn gray" onclick="clearCanvas()">🧹 Limpar Tudo</button>
+            <button class="btn purple" onclick="backToSetup()">⚙️ Trocar Configurações</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="zoom-overlay" id="zoom-overlay" onclick="if(event.target===this) closeRefZoom()">
+    <div class="zoom-box">
+      <h3>// DESAFIO_DE_REFERÊNCIA — AMPLIADO (COM GRID)</h3>
+      <div id="ref-canvas-zoom"></div>
+      <button class="btn pink" onclick="closeRefZoom()">✕ Fechar</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ======================================================
+   PALETAS PRÉ-DEFINIDAS
+====================================================== */
+const PALETTES = {
+  retro:  { name:'🕹️ Retrô Arcade', colors:['#000000','#ffffff','#ff5fa2','#4be8ff','#ffd23f','#4be08f','#a06bff','#ff9a3c'] },
+  doces:  { name:'🍬 Doces (Pastel)', colors:['#ffd1e8','#c9f2ff','#fff3b0','#d4f7dc','#e6d4ff','#ffe0c2','#ffffff','#5a4a6a'] },
+  natureza: { name:'🌿 Natureza', colors:['#2e5d32','#6b8f3c','#a3d977','#8b5a2b','#c9a876','#4a90c4','#f4e3c1','#3a2f28'] },
+  neon: { name:'🌃 Neon Noturno', colors:['#0d0221','#ff0abe','#00f0ff','#faff00','#7b2ff7','#ff5e00','#00ff87','#ffffff'] }
+};
+
+/* ======================================================
+   DESAFIOS — formas geradas por fórmula (funcionam em qualquer tamanho)
+====================================================== */
+function pointInPolygon(x,y,poly){
+  let inside=false;
+  for(let i=0,j=poly.length-1;i<poly.length;j=i++){
+    const xi=poly[i][0], yi=poly[i][1], xj=poly[j][0], yj=poly[j][1];
+    const intersect = ((yi>y)!==(yj>y)) && (x < (xj-xi)*(y-yi)/(yj-yi)+xi);
+    if(intersect) inside=!inside;
+  }
+  return inside;
+}
+function makeStarPolygon(outerR, innerR, points){
+  const verts=[];
+  for(let i=0;i<points*2;i++){
+    const r = (i%2===0)?outerR:innerR;
+    const angle = -Math.PI/2 + i*Math.PI/points;
+    verts.push([r*Math.cos(angle), r*Math.sin(angle)]);
+  }
+  return verts;
+}
+const STAR_POLY = makeStarPolygon(0.95, 0.4, 5);
+
+const CHALLENGES = {
+  none: { name:'🎨 Livre (sem desafio)' },
+  heart: { name:'❤️ Coração', fn:(nx,ny) => {
+    const x=nx*1.25, y=ny*1.3+0.05;
+    const f = Math.pow(x*x+y*y-1,3) - x*x*Math.pow(y,3);
+    return f<=0 ? '#ff5fa2' : null;
+  }},
+  star: { name:'⭐ Estrela', fn:(nx,ny) => pointInPolygon(nx,ny,STAR_POLY) ? '#ffd23f' : null },
+  smiley: { name:'😊 Carinha Feliz', fn:(nx,ny) => {
+    const faceR = Math.sqrt(nx*nx+ny*ny);
+    if(faceR > 0.92) return null;
+    const leftEye = Math.sqrt((nx+0.32)**2+(ny-0.25)**2) < 0.13;
+    const rightEye = Math.sqrt((nx-0.32)**2+(ny-0.25)**2) < 0.13;
+    if(leftEye || rightEye) return '#241c3d';
+    const mouth = (nx*nx)/(0.55*0.55) + ((ny+0.35)*(ny+0.35))/(0.28*0.28) <= 1 && ny < -0.15;
+    if(mouth) return '#241c3d';
+    return '#ffd23f';
+  }},
+  mushroom: { name:'🍄 Cogumelo', fn:(nx,ny) => {
+    const inCap = (ny>0.05) && ((nx*nx)/(0.85*0.85) + ((ny-0.35)*(ny-0.35))/(0.5*0.5) <= 1);
+    if(inCap){
+      const spots = [[-0.35,0.5],[0.3,0.55],[0,0.25],[-0.15,0.15]];
+      for(const [sx,sy] of spots){
+        if(Math.sqrt((nx-sx)**2+(ny-sy)**2) < 0.13) return '#ffffff';
+      }
+      return '#e74c3c';
+    }
+    if(nx>-0.28 && nx<0.28 && ny>-0.9 && ny<0.05) return '#f4e3c1';
+    return null;
+  }},
+  tree: { name:'🌳 Árvore', fn:(nx,ny) => {
+    if(nx>-0.15 && nx<0.15 && ny>-0.9 && ny<-0.05) return '#8b5a2b';
+    if(Math.sqrt(nx*nx+(ny-0.35)**2) < 0.58) return '#2e5d32';
+    return null;
+  }}
+};
+
+/* ======================================================
+   ESTADO GLOBAL
+====================================================== */
+let gridSize = 16;
+let selectedPaletteKey = 'retro';
+let selectedChallengeKey = 'none';
+let currentColor = '#000000';
+let currentTool = 'pencil';
+let showGrid = true;
+let showOverlay = false;
+let pixels = [];
+let isPainting = false;
+
+/* ======================================================
+   TELA DE SETUP
+====================================================== */
+function buildSetupScreen(){
+  const sizeEl = document.getElementById('size-choices');
+  sizeEl.innerHTML = [8,16,32,64].map(n => `
+    <div class="choice-card ${n===gridSize?'selected':''}" data-size="${n}" onclick="pickSize(${n})">
+      <div class="title">${n}×${n}</div>
+      <div class="sub">${n<=8?'bem simples':n<=16?'equilibrado':n<=32?'mais detalhe':'avançado'}</div>
+    </div>
+  `).join('');
+
+  const palEl = document.getElementById('palette-choices');
+  palEl.innerHTML = Object.entries(PALETTES).map(([key,p]) => `
+    <div class="choice-card ${key===selectedPaletteKey?'selected':''}" data-pal="${key}" onclick="pickPalette('${key}')">
+      <div class="mini-swatches">${p.colors.map(c=>`<div class="mini-swatch" style="background:${c}"></div>`).join('')}</div>
+      <div class="sub">${p.name}</div>
+    </div>
+  `).join('');
+
+  const chEl = document.getElementById('challenge-choices');
+  chEl.innerHTML = Object.entries(CHALLENGES).map(([key,c]) => `
+    <div class="choice-card ${key===selectedChallengeKey?'selected':''}" data-ch="${key}" onclick="pickChallenge('${key}')">
+      <div class="title" style="font-size:26px;">${c.name.split(' ')[0]}</div>
+      <div class="sub">${c.name.split(' ').slice(1).join(' ')}</div>
+    </div>
+  `).join('');
+}
+function pickSize(n){
+  gridSize = n;
+  document.querySelectorAll('#size-choices .choice-card').forEach(el => el.classList.toggle('selected', parseInt(el.dataset.size,10)===n));
+}
+function pickPalette(key){
+  selectedPaletteKey = key;
+  document.querySelectorAll('#palette-choices .choice-card').forEach(el => el.classList.toggle('selected', el.dataset.pal===key));
+}
+function pickChallenge(key){
+  selectedChallengeKey = key;
+  document.querySelectorAll('#challenge-choices .choice-card').forEach(el => el.classList.toggle('selected', el.dataset.ch===key));
+}
+function backToSetup(){
+  document.getElementById('editor-screen').style.display = 'none';
+  document.getElementById('setup-screen').style.display = 'block';
+}
+
+/* ======================================================
+   INICIAR EDITOR
+====================================================== */
+function startEditor(){
+  pixels = new Array(gridSize*gridSize).fill(null);
+  currentColor = PALETTES[selectedPaletteKey].colors[0];
+  showOverlay = false;
+  document.getElementById('overlay-toggle').checked = false;
+  undoStack = [];
+  shapeAnchor = null;
+  previewIndices = [];
+  lastHoverIdx = -1;
+  setTool('pencil');
+
+  buildEditorPalette();
+  buildCanvasStage();
+  buildReferenceBox();
+  updateCurrentColorSwatch();
+
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('editor-screen').style.display = 'block';
+}
+
+function buildEditorPalette(){
+  const el = document.getElementById('editor-palette');
+  el.innerHTML = PALETTES[selectedPaletteKey].colors.map((c,i) => `
+    <div class="pal-swatch ${c===currentColor?'selected':''}" style="background:${c}" data-color="${c}" onclick="pickColor('${c}')"></div>
+  `).join('');
+}
+function pickColor(c){
+  currentColor = c;
+  document.querySelectorAll('.pal-swatch').forEach(s => s.classList.toggle('selected', s.dataset.color===c));
+  updateCurrentColorSwatch();
+  if(currentTool==='eraser') setTool('pencil');
+}
+function updateCurrentColorSwatch(){
+  document.getElementById('current-color-swatch').style.background = currentColor;
+}
+
+/* ======================================================
+   GRADE DE DESENHO
+====================================================== */
+function cellSizePx(){
+  return Math.max(4, Math.min(28, Math.floor(480/gridSize)));
+}
+function buildCanvasStage(){
+  const stage = document.getElementById('canvas-stage');
+  const px = cellSizePx();
+  stage.style.gridTemplateColumns = `repeat(${gridSize}, ${px}px)`;
+  stage.style.gridTemplateRows = `repeat(${gridSize}, ${px}px)`;
+  stage.classList.toggle('grid-on', showGrid);
+
+  let html = '';
+  for(let i=0;i<gridSize*gridSize;i++){
+    html += `<div class="pxcell" id="px-${i}"></div>`;
+  }
+  stage.innerHTML = html;
+  paintAllCells();
+
+  stage.onmousedown = e => { const idx = indexFromEl(e.target); if(idx>=0) onCellDown(idx); };
+  stage.onmouseover = e => { const idx = indexFromEl(e.target); if(idx>=0) onCellHover(idx); };
+  stage.onmouseleave = () => clearHoverHighlight();
+  window.onmouseup = () => onCellUp();
+
+  stage.ontouchstart = e => { const idx = touchIndex(e); if(idx>=0) onCellDown(idx); e.preventDefault(); };
+  stage.ontouchmove = e => { const idx = touchIndex(e); if(idx>=0) onCellHover(idx); e.preventDefault(); };
+  stage.ontouchend = () => onCellUp();
+}
+function touchIndex(e){
+  const t = e.touches[0];
+  if(!t) return -1;
+  return indexFromEl(document.elementFromPoint(t.clientX, t.clientY));
+}
+function paintAllCells(){
+  for(let i=0;i<pixels.length;i++) paintCell(i);
+}
+function paintCell(i){
+  const el = document.getElementById('px-'+i);
+  if(!el) return;
+  el.style.background = pixels[i] || 'transparent';
+}
+function indexFromEl(el){
+  if(!el || !el.id || !el.id.startsWith('px-')) return -1;
+  return parseInt(el.id.slice(3),10);
+}
+
+/* ---- pré-visualização do pixel sob o mouse ---- */
+let lastHoverIdx = -1;
+function clearHoverHighlight(){
+  if(lastHoverIdx>=0){
+    const el = document.getElementById('px-'+lastHoverIdx);
+    if(el) el.classList.remove('hovered');
+  }
+  lastHoverIdx = -1;
+}
+function updateHoverHighlight(idx){
+  if(idx === lastHoverIdx) return;
+  clearHoverHighlight();
+  const el = document.getElementById('px-'+idx);
+  if(el) el.classList.add('hovered');
+  lastHoverIdx = idx;
+}
+
+/* ---- ferramentas de forma (quadrado / círculo) ---- */
+const SHAPE_TOOLS = ['square','circle'];
+let shapeAnchor = null;
+let previewIndices = [];
+
+function cellsInRect(x0,y0,x1,y1){
+  const minX=Math.min(x0,x1), maxX=Math.max(x0,x1);
+  const minY=Math.min(y0,y1), maxY=Math.max(y0,y1);
+  const out=[];
+  for(let y=minY;y<=maxY;y++) for(let x=minX;x<=maxX;x++) out.push(y*gridSize+x);
+  return out;
+}
+function cellsInEllipse(x0,y0,x1,y1){
+  const minX=Math.min(x0,x1), maxX=Math.max(x0,x1);
+  const minY=Math.min(y0,y1), maxY=Math.max(y0,y1);
+  const cx=(minX+maxX+1)/2, cy=(minY+maxY+1)/2;
+  const rx=(maxX-minX+1)/2, ry=(maxY-minY+1)/2;
+  const out=[];
+  for(let y=minY;y<=maxY;y++){
+    for(let x=minX;x<=maxX;x++){
+      const nx=(x+0.5-cx)/rx, ny=(y+0.5-cy)/ry;
+      if(nx*nx+ny*ny<=1) out.push(y*gridSize+x);
+    }
+  }
+  return out;
+}
+function clearPreview(){
+  previewIndices.forEach(i=>{
+    const el=document.getElementById('px-'+i);
+    if(el) el.style.boxShadow='';
+  });
+  previewIndices=[];
+}
+function showPreview(indices){
+  clearPreview();
+  indices.forEach(i=>{
+    const el=document.getElementById('px-'+i);
+    if(el) el.style.boxShadow=`inset 0 0 0 2px ${currentColor}`;
+  });
+  previewIndices=indices;
+}
+
+/* ---- interações de clique/arrastar ---- */
+function onCellDown(idx){
+  isPainting = true;
+  if(SHAPE_TOOLS.includes(currentTool)){
+    saveUndoState();
+    shapeAnchor = {x: idx%gridSize, y: Math.floor(idx/gridSize)};
+    showPreview([idx]);
+  } else if(currentTool==='pencil' || currentTool==='eraser'){
+    saveUndoState();
+    applyTool(idx);
+  } else {
+    // balde e conta-gotas: ação única, não continua no arraste
+    saveUndoState();
+    applyTool(idx);
+    isPainting = false;
+  }
+}
+function onCellHover(idx){
+  updateHoverHighlight(idx);
+  if(!isPainting) return;
+  if(SHAPE_TOOLS.includes(currentTool) && shapeAnchor){
+    const x = idx%gridSize, y = Math.floor(idx/gridSize);
+    const indices = currentTool==='circle'
+      ? cellsInEllipse(shapeAnchor.x, shapeAnchor.y, x, y)
+      : cellsInRect(shapeAnchor.x, shapeAnchor.y, x, y);
+    showPreview(indices);
+  } else if(currentTool==='pencil' || currentTool==='eraser'){
+    applyTool(idx);
+  }
+}
+function onCellUp(){
+  if(SHAPE_TOOLS.includes(currentTool) && shapeAnchor){
+    previewIndices.forEach(i=>{ pixels[i] = currentColor; });
+    clearPreview();
+    paintAllCells();
+    shapeAnchor = null;
+  }
+  isPainting = false;
+}
+
+function setTool(tool){
+  currentTool = tool;
+  shapeAnchor = null;
+  clearPreview();
+  document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+  const map = {pencil:'tool-pencil', eraser:'tool-eraser', bucket:'tool-bucket', eyedrop:'tool-eyedrop', square:'tool-square', circle:'tool-circle'};
+  if(map[tool]) document.getElementById(map[tool]).classList.add('active');
+}
+function toggleGrid(){
+  showGrid = !showGrid;
+  document.getElementById('canvas-stage').classList.toggle('grid-on', showGrid);
+}
+
+function applyTool(idx){
+  if(currentTool === 'pencil'){
+    pixels[idx] = currentColor;
+    paintCell(idx);
+  } else if(currentTool === 'eraser'){
+    pixels[idx] = null;
+    paintCell(idx);
+  } else if(currentTool === 'eyedrop'){
+    if(pixels[idx]){ pickColor(pixels[idx]); }
+    setTool('pencil');
+  } else if(currentTool === 'bucket'){
+    bucketFill(idx);
+  }
+}
+function bucketFill(startIdx){
+  const target = pixels[startIdx];
+  const fill = currentColor;
+  if(target === fill) return;
+  const stack = [startIdx];
+  const visited = new Set();
+  while(stack.length){
+    const i = stack.pop();
+    if(visited.has(i)) continue;
+    if(pixels[i] !== target) continue;
+    visited.add(i);
+    pixels[i] = fill;
+    paintCell(i);
+    const x = i % gridSize, y = Math.floor(i/gridSize);
+    if(x>0) stack.push(i-1);
+    if(x<gridSize-1) stack.push(i+1);
+    if(y>0) stack.push(i-gridSize);
+    if(y<gridSize-1) stack.push(i+gridSize);
+  }
+}
+
+/* ---- desfazer (Ctrl+Z) ---- */
+let undoStack = [];
+const MAX_UNDO = 30;
+function saveUndoState(){
+  undoStack.push(pixels.slice());
+  if(undoStack.length > MAX_UNDO) undoStack.shift();
+}
+function undo(){
+  if(!undoStack.length) return;
+  pixels = undoStack.pop();
+  paintAllCells();
+}
+document.addEventListener('keydown', e => {
+  if((e.ctrlKey || e.metaKey) && e.key.toLowerCase()==='z'){
+    e.preventDefault();
+    undo();
+  }
+});
+
+function clearCanvas(){
+  if(!confirm('Apagar tudo e recomeçar do zero?')) return;
+  saveUndoState();
+  pixels = new Array(gridSize*gridSize).fill(null);
+  paintAllCells();
+}
+
+/* ======================================================
+   PAINEL DE REFERÊNCIA (DESAFIO)
+====================================================== */
+function renderChallengeGrid(container, cellPx, withGridLines){
+  const challenge = CHALLENGES[selectedChallengeKey];
+  container.style.gridTemplateColumns = `repeat(${gridSize}, ${cellPx}px)`;
+  container.style.gridTemplateRows = `repeat(${gridSize}, ${cellPx}px)`;
+  let html = '';
+  for(let j=0;j<gridSize;j++){
+    for(let i=0;i<gridSize;i++){
+      const nx = (i+0.5)/gridSize*2-1;
+      const ny = 1-(j+0.5)/gridSize*2;
+      const color = challenge.fn(nx,ny);
+      html += `<div class="refcell${withGridLines?' zoomcell':''}" style="background:${color||'transparent'}"></div>`;
+    }
+  }
+  container.innerHTML = html;
+}
+function buildReferenceBox(){
+  const box = document.getElementById('ref-box');
+  const challenge = CHALLENGES[selectedChallengeKey];
+  if(selectedChallengeKey === 'none' || !challenge.fn){
+    box.style.display = 'none';
+    return;
+  }
+  box.style.display = 'block';
+  const refCanvas = document.getElementById('ref-canvas');
+  const refPx = Math.max(3, Math.min(14, Math.floor(200/gridSize)));
+  renderChallengeGrid(refCanvas, refPx, false);
+}
+function openRefZoom(){
+  const challenge = CHALLENGES[selectedChallengeKey];
+  if(selectedChallengeKey === 'none' || !challenge.fn) return;
+  const zoomCanvas = document.getElementById('ref-canvas-zoom');
+  const available = Math.min(window.innerWidth, window.innerHeight) * 0.7;
+  const zoomPx = Math.max(6, Math.min(50, Math.floor(available/gridSize)));
+  renderChallengeGrid(zoomCanvas, zoomPx, true);
+  document.getElementById('zoom-overlay').classList.add('show');
+}
+function closeRefZoom(){
+  document.getElementById('zoom-overlay').classList.remove('show');
+}
+function toggleOverlay(){
+  showOverlay = document.getElementById('overlay-toggle').checked;
+  const stage = document.getElementById('canvas-stage');
+  const challenge = CHALLENGES[selectedChallengeKey];
+  if(showOverlay && challenge.fn){
+    stage.style.position = 'relative';
+    let overlayEl = document.getElementById('canvas-overlay');
+    if(!overlayEl){
+      overlayEl = document.createElement('div');
+      overlayEl.id = 'canvas-overlay';
+      overlayEl.style.position = 'absolute';
+      overlayEl.style.inset = '0';
+      overlayEl.style.display = 'grid';
+      overlayEl.style.pointerEvents = 'none';
+      overlayEl.style.opacity = '0.35';
+      stage.appendChild(overlayEl);
+    }
+    const px = cellSizePx();
+    overlayEl.style.gridTemplateColumns = `repeat(${gridSize}, ${px}px)`;
+    overlayEl.style.gridTemplateRows = `repeat(${gridSize}, ${px}px)`;
+    let html = '';
+    for(let j=0;j<gridSize;j++){
+      for(let i=0;i<gridSize;i++){
+        const nx = (i+0.5)/gridSize*2-1;
+        const ny = 1-(j+0.5)/gridSize*2;
+        const color = challenge.fn(nx,ny);
+        html += `<div style="background:${color||'transparent'}"></div>`;
+      }
+    }
+    overlayEl.innerHTML = html;
+    overlayEl.style.display = 'grid';
+  } else {
+    const overlayEl = document.getElementById('canvas-overlay');
+    if(overlayEl) overlayEl.style.display = 'none';
+  }
+}
+
+/* ======================================================
+   EXPORTAR PNG
+====================================================== */
+function exportPNG(){
+  const scale = 12;
+  const canvas = document.createElement('canvas');
+  canvas.width = gridSize*scale;
+  canvas.height = gridSize*scale;
+  const ctx = canvas.getContext('2d');
+  for(let j=0;j<gridSize;j++){
+    for(let i=0;i<gridSize;i++){
+      const c = pixels[j*gridSize+i];
+      if(c){
+        ctx.fillStyle = c;
+        ctx.fillRect(i*scale, j*scale, scale, scale);
+      }
+    }
+  }
+  const link = document.createElement('a');
+  link.download = 'meu-pixel-art.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+/* ======================================================
+   INIT
+====================================================== */
+buildSetupScreen();
+</script>
+</body>
+</html>
