@@ -150,6 +150,32 @@
   #canvas-stage.grid-on .pxcell{ box-shadow: inset 0 0 0 1px rgba(255,255,255,0.22); }
   .pxcell.hovered{ outline:2px solid #fff; outline-offset:-2px; z-index:2; position:relative; }
 
+  /* ---- réguas de linha/coluna (coordenadas) ---- */
+  .axis-wrap{ display:flex; flex-direction:column; }
+  .axis-x-row{ display:flex; }
+  .axis-grid-row{ display:flex; }
+  .axis-y-col{ display:flex; flex-direction:column; }
+  .axis-label{
+    font-family:'Press Start 2P', monospace;
+    font-size:8px;
+    color:var(--ink-soft);
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .axis-corner{ flex-shrink:0; }
+
+  .hover-coord{
+    font-family:'Press Start 2P', monospace;
+    font-size:11px;
+    color:var(--yellow);
+    background:var(--bg-card);
+    border:2px solid var(--border);
+    border-radius:8px;
+    padding:6px 12px;
+    min-width:140px;
+    text-align:center;
+  }
+
   .current-color-row{
     display:flex; align-items:center; gap:10px;
     font-family:'Baloo 2', sans-serif; font-weight:700; color:var(--ink-soft); font-size:13px;
@@ -253,6 +279,7 @@
     margin:0 auto;
   }
   .refcell.zoomcell{ box-shadow: inset 0 0 0 1px rgba(255,255,255,0.28); }
+  .refcell.hovered{ outline:2px solid #fff; outline-offset:-2px; z-index:2; position:relative; }
 
   .zoom-overlay{
     position:fixed; inset:0;
@@ -340,7 +367,14 @@
         </div>
 
         <div class="canvas-col">
-          <div id="canvas-stage"></div>
+          <div class="axis-wrap" id="axis-wrap">
+            <div class="axis-x-row" id="canvas-xaxis"></div>
+            <div class="axis-grid-row">
+              <div class="axis-y-col" id="canvas-yaxis"></div>
+              <div id="canvas-stage"></div>
+            </div>
+          </div>
+          <div class="hover-coord" id="hover-coord">X: – &nbsp; Y: –</div>
           <div class="current-color-row">
             Cor atual: <span id="current-color-swatch"></span>
           </div>
@@ -449,8 +483,15 @@
 
   <div class="zoom-overlay" id="zoom-overlay" onclick="if(event.target===this) closeRefZoom()">
     <div class="zoom-box">
-      <h3>// DESAFIO_DE_REFERÊNCIA — AMPLIADO (COM GRID)</h3>
-      <div id="ref-canvas-zoom"></div>
+      <h3>// TRACE A LINHA E A COLUNA PRA ACHAR A COORDENADA</h3>
+      <div class="axis-wrap" style="display:inline-flex;">
+        <div class="axis-x-row" id="zoom-xaxis"></div>
+        <div class="axis-grid-row">
+          <div class="axis-y-col" id="zoom-yaxis"></div>
+          <div id="ref-canvas-zoom"></div>
+        </div>
+      </div>
+      <div class="hover-coord" id="zoom-hover-coord" style="margin:12px auto;">X: – &nbsp; Y: –</div>
       <button class="btn pink" onclick="closeRefZoom()">✕ Fechar</button>
     </div>
   </div>
@@ -670,12 +711,25 @@ function updateCurrentColorSwatch(){
 function cellSizePx(){
   return Math.max(4, Math.min(28, Math.floor(480/gridSize)));
 }
+function buildAxisRulers(xEl, yEl, size, cellPx){
+  let xHtml = `<div class="axis-label axis-corner" style="width:${cellPx}px;height:${cellPx}px;"></div>`;
+  for(let x=0;x<size;x++){
+    xHtml += `<div class="axis-label" style="width:${cellPx}px;height:${cellPx}px;">${x}</div>`;
+  }
+  xEl.innerHTML = xHtml;
+  let yHtml = '';
+  for(let y=0;y<size;y++){
+    yHtml += `<div class="axis-label" style="width:${cellPx}px;height:${cellPx}px;">${y}</div>`;
+  }
+  yEl.innerHTML = yHtml;
+}
 function buildCanvasStage(){
   const stage = document.getElementById('canvas-stage');
   const px = cellSizePx();
   stage.style.gridTemplateColumns = `repeat(${gridSize}, ${px}px)`;
   stage.style.gridTemplateRows = `repeat(${gridSize}, ${px}px)`;
   stage.classList.toggle('grid-on', showGrid);
+  buildAxisRulers(document.getElementById('canvas-xaxis'), document.getElementById('canvas-yaxis'), gridSize, Math.max(px,14));
 
   let html = '';
   for(let i=0;i<gridSize*gridSize;i++){
@@ -719,6 +773,8 @@ function clearHoverHighlight(){
     if(el) el.classList.remove('hovered');
   }
   lastHoverIdx = -1;
+  const coordEl = document.getElementById('hover-coord');
+  if(coordEl) coordEl.innerHTML = 'X: – &nbsp; Y: –';
 }
 function updateHoverHighlight(idx){
   if(idx === lastHoverIdx) return;
@@ -726,6 +782,9 @@ function updateHoverHighlight(idx){
   const el = document.getElementById('px-'+idx);
   if(el) el.classList.add('hovered');
   lastHoverIdx = idx;
+  const x = idx % gridSize, y = Math.floor(idx/gridSize);
+  const coordEl = document.getElementById('hover-coord');
+  if(coordEl) coordEl.textContent = `X: ${x}   Y: ${y}`;
 }
 
 /* ---- ferramentas de forma (quadrado / círculo) ---- */
@@ -900,7 +959,8 @@ function renderChallengeGrid(container, cellPx, withGridLines){
       const nx = (i+0.5)/gridSize*2-1;
       const ny = 1-(j+0.5)/gridSize*2;
       const color = challenge.fn(nx,ny);
-      html += `<div class="refcell${withGridLines?' zoomcell':''}" style="background:${color||'transparent'}"></div>`;
+      const idx = j*gridSize+i;
+      html += `<div class="refcell${withGridLines?' zoomcell':''}" data-idx="${idx}" style="background:${color||'transparent'}"></div>`;
     }
   }
   container.innerHTML = html;
@@ -917,17 +977,49 @@ function buildReferenceBox(){
   const refPx = Math.max(3, Math.min(14, Math.floor(200/gridSize)));
   renderChallengeGrid(refCanvas, refPx, false);
 }
+
+let lastZoomHoverIdx = -1;
+function clearZoomHover(){
+  if(lastZoomHoverIdx>=0){
+    const cells = document.querySelectorAll(`#ref-canvas-zoom [data-idx="${lastZoomHoverIdx}"]`);
+    cells.forEach(c => c.classList.remove('hovered'));
+  }
+  lastZoomHoverIdx = -1;
+  const coordEl = document.getElementById('zoom-hover-coord');
+  if(coordEl) coordEl.innerHTML = 'X: – &nbsp; Y: –';
+}
+function updateZoomHover(idx){
+  if(idx === lastZoomHoverIdx) return;
+  clearZoomHover();
+  const cell = document.querySelector(`#ref-canvas-zoom [data-idx="${idx}"]`);
+  if(cell) cell.classList.add('hovered');
+  lastZoomHoverIdx = idx;
+  const x = idx % gridSize, y = Math.floor(idx/gridSize);
+  const coordEl = document.getElementById('zoom-hover-coord');
+  if(coordEl) coordEl.textContent = `X: ${x}   Y: ${y}`;
+}
+
 function openRefZoom(){
   const challenge = CHALLENGES[selectedChallengeKey];
   if(selectedChallengeKey === 'none' || !challenge.fn) return;
   const zoomCanvas = document.getElementById('ref-canvas-zoom');
-  const available = Math.min(window.innerWidth, window.innerHeight) * 0.7;
+  const available = Math.min(window.innerWidth, window.innerHeight) * 0.6;
   const zoomPx = Math.max(6, Math.min(50, Math.floor(available/gridSize)));
   renderChallengeGrid(zoomCanvas, zoomPx, true);
+  buildAxisRulers(document.getElementById('zoom-xaxis'), document.getElementById('zoom-yaxis'), gridSize, Math.max(zoomPx,14));
+
+  lastZoomHoverIdx = -1;
+  zoomCanvas.onmouseover = e => {
+    const cell = e.target.closest('[data-idx]');
+    if(cell) updateZoomHover(parseInt(cell.dataset.idx,10));
+  };
+  zoomCanvas.onmouseleave = () => clearZoomHover();
+
   document.getElementById('zoom-overlay').classList.add('show');
 }
 function closeRefZoom(){
   document.getElementById('zoom-overlay').classList.remove('show');
+  clearZoomHover();
 }
 function toggleOverlay(){
   showOverlay = document.getElementById('overlay-toggle').checked;
