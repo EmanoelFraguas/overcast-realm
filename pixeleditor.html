@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Editor de Pixel Art — Overcast Realm</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Baloo+2:wght@500;700;800&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -384,6 +385,7 @@
             <button class="btn purple" onclick="exportGIF()">🎞️ Exportar GIF Animado</button>
             <button class="btn cyan" onclick="exportSpriteSheet()">🖼️ Exportar Sprite Sheet</button>
             <button class="btn cyan" onclick="exportPNG()">💾 Exportar Quadro Atual (PNG)</button>
+            <button class="btn green" onclick="openSaveStudentModal(false)">📁 Salvar na Pasta do Aluno</button>
             <div id="export-status"></div>
             <button class="btn gray" onclick="clearCanvas()">🧹 Limpar Quadro Atual</button>
             <button class="btn gray" onclick="backToSetup()">⚙️ Trocar Configurações</button>
@@ -391,6 +393,57 @@
         </div>
 
       </div>
+    </div>
+  </div>
+
+  <!-- ============== MODAL: confirmar antes de voltar ============== -->
+  <div class="zoom-overlay" id="back-confirm-modal">
+    <div class="zoom-box" style="max-width:380px;">
+      <h3>💾 SALVAR ANTES DE VOLTAR?</h3>
+      <p style="font-family:'Baloo 2',sans-serif;font-weight:700;color:var(--ink-soft);font-size:13px;margin-bottom:14px;">
+        Se voltar sem salvar, o desenho atual será perdido.
+      </p>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button class="btn purple" style="justify-content:center;" onclick="openSaveChoiceModal(true)">💾 Salvar antes de voltar</button>
+        <button class="btn gray" style="justify-content:center;" onclick="confirmBackNoSave()">➡️ Voltar sem salvar</button>
+        <button class="btn cyan" style="justify-content:center;" onclick="closeBackConfirm()">✕ Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== MODAL: escolher como salvar ============== -->
+  <div class="zoom-overlay" id="save-choice-modal">
+    <div class="zoom-box" style="max-width:360px;">
+      <h3>💾 COMO SALVAR?</h3>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button class="btn cyan" style="justify-content:center;" onclick="quickDownload()">⬇️ Baixar no Computador</button>
+        <button class="btn purple" style="justify-content:center;" onclick="openSaveStudentModal(true)">📁 Salvar na Pasta do Aluno</button>
+        <button class="btn gray" style="justify-content:center;" onclick="closeSaveChoiceModal()">✕ Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== MODAL: salvar na pasta do aluno ============== -->
+  <div class="zoom-overlay" id="save-student-modal">
+    <div class="zoom-box" style="max-width:420px;">
+      <h3>📁 SALVAR NA PASTA DO ALUNO</h3>
+
+      <div id="save-step-turma">
+        <p style="font-family:'Baloo 2',sans-serif;font-weight:700;color:var(--ink-soft);font-size:13px;">Código da turma:</p>
+        <input type="text" id="save-turma-code" placeholder="ex: israelita5" style="width:100%;padding:10px;border-radius:8px;border:2px solid var(--border);background:#1c1533;color:#fff;font-family:'Baloo 2',sans-serif;margin-bottom:8px;">
+        <button class="btn cyan" style="width:100%;justify-content:center;" onclick="lookupTurmaForSave()">🔎 Buscar Turma</button>
+        <div id="save-turma-error" style="font-family:'Baloo 2',sans-serif;color:var(--pink);font-size:12px;margin-top:8px;"></div>
+      </div>
+
+      <div id="save-step-aluno" style="display:none;">
+        <p style="font-family:'Baloo 2',sans-serif;font-weight:800;color:var(--yellow);font-size:14px;">Turma: <span id="save-turma-name"></span></p>
+        <p style="font-family:'Baloo 2',sans-serif;font-weight:700;color:var(--ink-soft);font-size:12px;">Clique no seu nome:</p>
+        <div id="save-aluno-list" style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;"></div>
+        <button class="btn gray" style="width:100%;justify-content:center;margin-top:10px;" onclick="backToTurmaStep()">← Trocar turma</button>
+      </div>
+
+      <div id="save-status" style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:13px;margin-top:10px;min-height:18px;"></div>
+      <button class="btn gray" style="width:100%;justify-content:center;margin-top:8px;" onclick="closeSaveStudentModal()">✕ Fechar</button>
     </div>
   </div>
 
@@ -412,7 +465,13 @@ const PALETTES = {
   retro:  { name:'🕹️ Retrô Arcade', colors:['#000000','#ffffff','#ff5fa2','#4be8ff','#ffd23f','#4be08f','#a06bff','#ff9a3c'] },
   doces:  { name:'🍬 Doces (Pastel)', colors:['#ffd1e8','#c9f2ff','#fff3b0','#d4f7dc','#e6d4ff','#ffe0c2','#ffffff','#5a4a6a'] },
   natureza: { name:'🌿 Natureza', colors:['#2e5d32','#6b8f3c','#a3d977','#8b5a2b','#c9a876','#4a90c4','#f4e3c1','#3a2f28'] },
-  neon: { name:'🌃 Neon Noturno', colors:['#0d0221','#ff0abe','#00f0ff','#faff00','#7b2ff7','#ff5e00','#00ff87','#ffffff'] }
+  neon: { name:'🌃 Neon Noturno', colors:['#0d0221','#ff0abe','#00f0ff','#faff00','#7b2ff7','#ff5e00','#00ff87','#ffffff'] },
+  // ---- paletas clássicas do estilo Lospec (indexador de paletas de pixel art) ----
+  pico8: { name:'🎮 PICO-8 (Lospec)', colors:['#000000','#1D2B53','#7E2553','#008751','#AB5236','#5F574F','#C2C3C7','#FFF1E8','#FF004D','#FFA300','#FFEC27','#00E436','#29ADFF','#83769C','#FF77A8','#FFCCAA'] },
+  sweetie16: { name:'🍭 Sweetie 16 (Lospec)', colors:['#1a1c2c','#5d275d','#b13e53','#ef7d57','#ffcd75','#a7f070','#38b764','#257179','#29366f','#3b5dc9','#41a6f6','#73eff7','#f4f4f4','#94b0c2','#566c86','#333c57'] },
+  icecream: { name:'🍦 Ice Cream GB (Lospec)', colors:['#7c3f58','#eb6b6f','#f9a875','#fff6d3'] },
+  demichrome: { name:'🌑 2-Bit Demichrome (Lospec)', colors:['#211e20','#555568','#a0a08b','#e9efec'] },
+  nyx8: { name:'🌙 Nyx8 (Lospec)', colors:['#08141e','#0f2a3f','#20394f','#f6d6bd','#c3a38a','#997577','#816271','#4e495f'] }
 };
 
 /* ======================================================
@@ -476,6 +535,15 @@ const CHALLENGES = {
 };
 
 /* ======================================================
+   BARRAMENTO SUPABASE (turmas/alunos/arquivos) — mesmo backend do site
+====================================================== */
+const SUPABASE_URL = "https://kezlmecrxhjahhoekybs.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlemxtZWNyeGhqYWhob2VreWJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5MDkwNjAsImV4cCI6MjEwMjQ4NTA2MH0.-TcsKrFxRMeiqKrzXk57E8-60eobk3fJ0Crn7ci0MW8";
+const sb = (SUPABASE_URL.startsWith("http") && window.supabase)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+
+/* ======================================================
    ESTADO GLOBAL
 ====================================================== */
 let gridSize = 16;
@@ -490,6 +558,8 @@ let pixels = [];
 let frames = [];
 let currentFrameIndex = 0;
 let isPainting = false;
+let returnToSetupAfterSave = false;
+let saveTurmaData = null;
 
 function setPixels(newArr){
   pixels = newArr;
@@ -537,6 +607,14 @@ function pickChallenge(key){
   document.querySelectorAll('#challenge-choices .choice-card').forEach(el => el.classList.toggle('selected', el.dataset.ch===key));
 }
 function backToSetup(){
+  document.getElementById('back-confirm-modal').classList.add('show');
+}
+function closeBackConfirm(){
+  document.getElementById('back-confirm-modal').classList.remove('show');
+}
+function confirmBackNoSave(){
+  closeBackConfirm();
+  stopPreviewPlay();
   document.getElementById('editor-screen').style.display = 'none';
   document.getElementById('setup-screen').style.display = 'block';
 }
@@ -1226,6 +1304,19 @@ function buildScaledIndices(frame, scale, colorIndexMap){
   }
   return arr;
 }
+function buildGIFBytes(){
+  const paletteColors = PALETTES[selectedPaletteKey].colors;
+  const gifPalette = ['#ffffff', ...paletteColors]; // índice 0 = transparente
+  const colorIndexMap = new Map();
+  paletteColors.forEach((c,i) => colorIndexMap.set(c, i+1));
+
+  const scale = exportScale();
+  const frameIndices = frames.map(f => buildScaledIndices(f, scale, colorIndexMap));
+  const fps = parseInt(document.getElementById('fps-input').value,10) || 6;
+  const delayCs = Math.max(2, Math.round(100/fps));
+
+  return encodeGIF(gridSize*scale, gridSize*scale, gifPalette, frameIndices, delayCs, 0);
+}
 function exportGIF(){
   if(frames.length < 2){
     alert('Crie pelo menos 2 quadros pra virar uma animação! (use "🆕 Novo Quadro" ou "➕ Duplicar")');
@@ -1234,17 +1325,7 @@ function exportGIF(){
   const status = document.getElementById('export-status');
   status.textContent = '⏳ Gerando GIF...';
   setTimeout(() => {
-    const paletteColors = PALETTES[selectedPaletteKey].colors;
-    const gifPalette = ['#ffffff', ...paletteColors]; // índice 0 = transparente
-    const colorIndexMap = new Map();
-    paletteColors.forEach((c,i) => colorIndexMap.set(c, i+1));
-
-    const scale = exportScale();
-    const frameIndices = frames.map(f => buildScaledIndices(f, scale, colorIndexMap));
-    const fps = parseInt(document.getElementById('fps-input').value,10) || 6;
-    const delayCs = Math.max(2, Math.round(100/fps));
-
-    const bytes = encodeGIF(gridSize*scale, gridSize*scale, gifPalette, frameIndices, delayCs, 0);
+    const bytes = buildGIFBytes();
     const blob = new Blob([bytes], {type:'image/gif'});
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -1255,6 +1336,117 @@ function exportGIF(){
     status.textContent = '✅ GIF baixado!';
     setTimeout(() => { status.textContent=''; }, 2500);
   }, 30);
+}
+
+/* ======================================================
+   SALVAR: baixar no computador OU enviar pra pasta do aluno (Supabase)
+====================================================== */
+function openSaveChoiceModal(fromBackFlow){
+  returnToSetupAfterSave = !!fromBackFlow;
+  if(fromBackFlow) closeBackConfirm();
+  document.getElementById('save-choice-modal').classList.add('show');
+}
+function closeSaveChoiceModal(){
+  document.getElementById('save-choice-modal').classList.remove('show');
+}
+function quickDownload(){
+  closeSaveChoiceModal();
+  if(frames.length > 1) exportGIF();
+  else exportPNG();
+  if(returnToSetupAfterSave){
+    returnToSetupAfterSave = false;
+    setTimeout(confirmBackNoSave, 300);
+  }
+}
+
+function openSaveStudentModal(fromChoiceFlow){
+  if(!sb){
+    alert('Não foi possível conectar ao Supabase. Verifique a configuração no topo do arquivo.');
+    return;
+  }
+  if(fromChoiceFlow) closeSaveChoiceModal();
+  document.getElementById('save-step-turma').style.display = 'block';
+  document.getElementById('save-step-aluno').style.display = 'none';
+  document.getElementById('save-turma-error').textContent = '';
+  document.getElementById('save-status').textContent = '';
+  document.getElementById('save-student-modal').classList.add('show');
+}
+function closeSaveStudentModal(){
+  document.getElementById('save-student-modal').classList.remove('show');
+  if(returnToSetupAfterSave){
+    returnToSetupAfterSave = false;
+    setTimeout(confirmBackNoSave, 150);
+  }
+}
+function backToTurmaStep(){
+  document.getElementById('save-step-turma').style.display = 'block';
+  document.getElementById('save-step-aluno').style.display = 'none';
+}
+
+async function lookupTurmaForSave(){
+  const code = document.getElementById('save-turma-code').value.trim().toLowerCase();
+  const errEl = document.getElementById('save-turma-error');
+  if(!code){ errEl.textContent = '👉 Digite o código da turma.'; return; }
+  errEl.textContent = '⏳ Buscando...';
+
+  const { data: turma, error } = await sb.from('turmas').select('*').eq('codigo_acesso', code).maybeSingle();
+  if(error || !turma){
+    errEl.textContent = '❌ Turma não encontrada. Confira o código.';
+    return;
+  }
+  errEl.textContent = '';
+
+  const { data: alunos } = await sb.from('alunos').select('*').eq('turma_id', turma.id).order('nome');
+  saveTurmaData = { turma, alunos: alunos || [] };
+
+  document.getElementById('save-turma-name').textContent = turma.nome;
+  const listEl = document.getElementById('save-aluno-list');
+  if(!alunos || alunos.length === 0){
+    listEl.innerHTML = '<p style="font-family:\'Baloo 2\',sans-serif;color:var(--ink-soft);font-size:12px;">Nenhum aluno cadastrado nessa turma ainda.</p>';
+  } else {
+    listEl.innerHTML = alunos.map((a,i) => `<button class="btn purple" style="justify-content:center;" onclick="saveToAlunoIndex(${i})">${a.nome}</button>`).join('');
+  }
+
+  document.getElementById('save-step-turma').style.display = 'none';
+  document.getElementById('save-step-aluno').style.display = 'block';
+}
+
+async function saveToAlunoIndex(i){
+  if(!saveTurmaData) return;
+  const aluno = saveTurmaData.alunos[i];
+  if(!aluno) return;
+  await saveToAluno(aluno);
+}
+
+async function uploadToStudent(aluno, blob, filename, mimeType){
+  const path = `envios/${aluno.codigo}/${Date.now()}_${filename}`;
+  const { error: upErr } = await sb.storage.from('submissoes').upload(path, blob, { upsert:true, contentType:mimeType });
+  if(upErr) throw new Error(upErr.message);
+  const { error: rpcErr } = await sb.rpc('registrar_envio', {
+    p_codigo: aluno.codigo, p_nome_arquivo: filename, p_storage_path: path,
+    p_tipo: 'envio', p_tamanho_bytes: blob.size
+  });
+  if(rpcErr) throw new Error(rpcErr.message);
+}
+
+async function saveToAluno(aluno){
+  const status = document.getElementById('save-status');
+  status.textContent = '⏳ Enviando pra pasta de ' + aluno.nome + '...';
+  try{
+    if(frames.length > 1){
+      const bytes = buildGIFBytes();
+      const blob = new Blob([bytes], {type:'image/gif'});
+      await uploadToStudent(aluno, blob, 'pixel-art.gif', 'image/gif');
+    } else {
+      const canvas = drawFrameOffscreen(pixels, exportScale());
+      const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+      await uploadToStudent(aluno, blob, 'pixel-art.png', 'image/png');
+    }
+    status.textContent = '✅ Salvo na pasta de ' + aluno.nome + '!';
+    setTimeout(closeSaveStudentModal, 1600);
+  } catch(e){
+    status.textContent = '❌ Erro: ' + e.message;
+  }
 }
 
 /* ======================================================
