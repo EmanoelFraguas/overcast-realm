@@ -21,9 +21,23 @@
     --orange:#ff9a3c;
     --ink:#ffffff;
     --ink-soft:#c9bfe8;
+    --tool-bg:#1c1533;
+    --checker-a:#3a3358;
+    --checker-b:#2c2646;
+  }
+  body.theme-light{
+    --bg-deep:#f3f0fa;
+    --bg-panel:#ffffff;
+    --bg-card:#f0ecfa;
+    --border:#d9d0f0;
+    --ink:#2a2145;
+    --ink-soft:#6c5f96;
+    --tool-bg:#f5f2fc;
+    --checker-a:#e9e4fa;
+    --checker-b:#dcd5f4;
   }
   *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;height:100%;}
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;}
   body{
     background:
       radial-gradient(circle at 10% 10%, #2e2258 0%, transparent 45%),
@@ -32,25 +46,37 @@
       var(--bg-deep);
     color:var(--ink);
     font-family:'Nunito', sans-serif;
-    min-height:100vh;
-    padding:14px;
+    height:100dvh;
+    padding:10px;
+    display:flex;
   }
-  .wrap{max-width:1150px;margin:0 auto;}
+  body.theme-light{ background: var(--bg-deep); }
+  .wrap{max-width:1400px;margin:0 auto;width:100%;height:100%;display:flex;flex-direction:column;min-height:0;}
   h1,h2,h3{ font-family:'Press Start 2P', monospace; }
 
-  header{ text-align:center; margin-bottom:16px; }
+  header{ text-align:center; margin-bottom:8px; flex-shrink:0; position:relative; }
   header h1{
-    font-size:clamp(15px,3vw,24px);
+    font-size:clamp(14px,2.4vh,22px);
     color:var(--cyan);
     text-shadow:3px 3px 0 #000;
-    margin:0 0 6px;
+    margin:0 0 4px;
   }
+  body.theme-light header h1{ text-shadow:none; }
   header p{
     font-family:'Baloo 2', sans-serif;
     font-weight:700;
     color:var(--ink-soft);
-    font-size:14px;
+    font-size:12px;
     margin:0;
+  }
+  .theme-toggle-btn{
+    position:absolute; top:0; right:0;
+    font-size:20px;
+    background:var(--bg-card);
+    border:2px solid var(--border);
+    border-radius:10px;
+    cursor:pointer;
+    padding:6px 10px;
   }
 
   .panel{
@@ -58,10 +84,12 @@
     border:3px solid var(--border);
     border-radius:22px;
     box-shadow:0 8px 0 #120c22;
-    padding:22px;
-    margin-bottom:16px;
+    padding:16px;
+    margin-bottom:10px;
+    flex-shrink:0;
   }
-  .panel h2{ font-size:13px; color:var(--yellow); margin:0 0 14px; }
+  body.theme-light .panel{ box-shadow:0 8px 0 var(--border); }
+  .panel h2{ font-size:12px; color:var(--yellow); margin:0 0 10px; }
 
   .btn{
     font-family:'Press Start 2P', monospace;
@@ -82,10 +110,13 @@
   .btn.green{ background:#0d9b6c; }
   .btn.purple{ background:var(--purple); }
   .btn.gray{ background:#4a3a7c; }
+  .btn.orange{ background:#c76a12; }
   .btn.big{ font-size:12px; padding:14px 20px; }
   .btn.selected{ outline:3px solid #fff; }
+  .btn.small{ font-size:8px; padding:6px 8px; }
 
   /* ---- tela de setup ---- */
+  .setup-scroll{ overflow-y:auto; min-height:0; flex:1; }
   .choice-row{ display:flex; flex-wrap:wrap; gap:10px; }
   .choice-card{
     background:var(--bg-card);
@@ -105,17 +136,27 @@
     font-size:15px;
     margin-bottom:8px;
   }
-  .mini-swatches{ display:flex; gap:4px; justify-content:center; flex-wrap:wrap; margin-bottom:6px; }
-  .mini-swatch{ width:16px; height:16px; border-radius:4px; }
+  .mini-swatches{ display:flex; gap:4px; justify-content:center; flex-wrap:wrap; margin-bottom:6px; max-width:150px; }
+  .mini-swatch{ width:12px; height:12px; border-radius:3px; }
   .choice-card .sub{ font-family:'Baloo 2', sans-serif; font-size:11px; color:var(--ink-soft); }
 
-  #setup-screen{ display:block; }
-  #editor-screen{ display:none; }
+  #setup-screen{ display:flex; flex-direction:column; min-height:0; flex:1; }
+  #editor-screen{ display:none; min-height:0; flex:1; flex-direction:column; }
 
-  .setup-footer{ text-align:center; margin-top:10px; }
+  .setup-footer{ text-align:center; margin-top:10px; flex-shrink:0; }
 
-  /* ---- editor ---- */
-  .editor-layout{ display:flex; flex-wrap:wrap; gap:20px; justify-content:center; align-items:flex-start; }
+  /* ---- editor: layout em colunas laterais, sem rolar a página ---- */
+  .editor-layout{
+    display:flex;
+    flex-wrap:nowrap;
+    gap:12px;
+    align-items:stretch;
+    flex:1;
+    min-height:0;
+    overflow-x:auto;
+  }
+  .col{ display:flex; flex-direction:column; gap:8px; min-height:0; }
+  .col-scroll{ overflow-y:auto; min-height:0; }
 
   .toolbar{
     display:flex;
@@ -125,12 +166,13 @@
     border:3px solid var(--border);
     border-radius:16px;
     padding:10px;
+    flex-shrink:0;
   }
   .tool-btn{
-    width:46px; height:46px;
+    width:44px; height:44px;
     font-size:20px;
     border:3px solid var(--border);
-    background:#1c1533;
+    background:var(--tool-bg);
     border-radius:12px;
     cursor:pointer;
     color:#fff;
@@ -139,7 +181,7 @@
 
   .canvas-col{ display:flex; flex-direction:column; align-items:center; gap:10px; }
   #canvas-stage{
-    background:repeating-conic-gradient(#3a3358 0% 25%, #2c2646 0% 50%) 0 0/16px 16px;
+    background:repeating-conic-gradient(var(--checker-a) 0% 25%, var(--checker-b) 0% 50%) 0 0/16px 16px;
     border:4px solid var(--border);
     border-radius:12px;
     display:grid;
@@ -208,7 +250,7 @@
     border:3px solid var(--border);
     border-radius:8px;
     cursor:pointer;
-    background:repeating-conic-gradient(#3a3358 0% 25%, #2c2646 0% 50%) 0 0/8px 8px;
+    background:repeating-conic-gradient(var(--checker-a) 0% 25%, var(--checker-b) 0% 50%) 0 0/8px 8px;
     overflow:hidden;
   }
   .frame-thumb-item.active{ border-color:var(--cyan); }
@@ -232,6 +274,19 @@
     cursor:pointer;
     line-height:1;
   }
+  .thumb-move{
+    position:absolute; bottom:-2px;
+    width:16px; height:16px;
+    border-radius:4px;
+    border:none;
+    background:rgba(0,0,0,0.7);
+    color:#fff;
+    font-size:8px;
+    cursor:pointer;
+    line-height:1;
+  }
+  .thumb-move-left{ left:-2px; }
+  .thumb-move-right{ right:-2px; }
   .frame-actions{ display:flex; gap:6px; }
   .frame-actions .btn{ font-size:9px; padding:8px 10px; flex:1; justify-content:center; }
 
@@ -244,7 +299,7 @@
     text-align:center;
   }
   #preview-canvas{
-    background:repeating-conic-gradient(#3a3358 0% 25%, #2c2646 0% 50%) 0 0/12px 12px;
+    background:repeating-conic-gradient(var(--checker-a) 0% 25%, var(--checker-b) 0% 50%) 0 0/12px 12px;
     border:2px solid var(--border);
     border-radius:8px;
     image-rendering:pixelated;
@@ -271,7 +326,7 @@
   }
   .ref-box .label{ font-family:'Press Start 2P', monospace; font-size:9px; color:var(--yellow); margin-bottom:8px; }
   #ref-canvas{
-    background:repeating-conic-gradient(#3a3358 0% 25%, #2c2646 0% 50%) 0 0/10px 10px;
+    background:repeating-conic-gradient(var(--checker-a) 0% 25%, var(--checker-b) 0% 50%) 0 0/10px 10px;
     border:2px solid var(--border);
     border-radius:8px;
     display:grid;
@@ -303,7 +358,7 @@
   }
   .zoom-box h3{ font-size:12px; color:var(--yellow); margin:0 0 12px; }
   #ref-canvas-zoom{
-    background:repeating-conic-gradient(#3a3358 0% 25%, #2c2646 0% 50%) 0 0/14px 14px;
+    background:repeating-conic-gradient(var(--checker-a) 0% 25%, var(--checker-b) 0% 50%) 0 0/14px 14px;
     border:3px solid var(--border);
     border-radius:8px;
     display:grid;
@@ -323,13 +378,25 @@
 <div class="wrap">
 
   <header>
+    <button class="theme-toggle-btn" id="theme-toggle-btn" onclick="toggleTheme()" title="Alternar fundo claro/escuro">🌙</button>
     <h1>🎨 EDITOR DE PIXEL ART</h1>
     <p>Overcast Realm — Aula de Arte Digital</p>
   </header>
 
+  <!-- ============== BANNER: recuperar desenho salvo automaticamente ============== -->
+  <div class="panel" id="autosave-banner" style="display:none; text-align:center;">
+    <p style="font-family:'Baloo 2',sans-serif;font-weight:800;color:var(--yellow);font-size:14px;margin:0 0 10px;">
+      💾 Encontramos um desenho salvo automaticamente!
+    </p>
+    <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+      <button class="btn green" onclick="restoreAutosave()">▶️ Continuar de onde parei</button>
+      <button class="btn gray" onclick="discardAutosave()">🗑️ Começar do zero</button>
+    </div>
+  </div>
+
   <!-- ============== TELA DE CONFIGURAÇÃO ============== -->
   <div id="setup-screen">
-
+   <div class="setup-scroll">
     <div class="panel">
       <h2>1️⃣ TAMANHO DA TELA</h2>
       <div class="choice-row" id="size-choices"></div>
@@ -344,6 +411,7 @@
       <h2>3️⃣ ESCOLHA UM DESAFIO (OU DESENHE LIVRE)</h2>
       <div class="choice-row" id="challenge-choices"></div>
     </div>
+   </div>
 
     <div class="setup-footer">
       <button class="btn big pink" onclick="startEditor()">▶️ COMEÇAR A DESENHAR</button>
@@ -352,21 +420,23 @@
 
   <!-- ============== TELA DO EDITOR ============== -->
   <div id="editor-screen">
-    <div class="panel">
+    <div class="panel" style="flex:1; min-height:0; display:flex;">
       <div class="editor-layout">
 
-        <div class="toolbar">
-          <button class="tool-btn active" id="tool-pencil" onclick="setTool('pencil')" title="Lápis">✏️</button>
-          <button class="tool-btn" id="tool-eraser" onclick="setTool('eraser')" title="Borracha">🧽</button>
-          <button class="tool-btn" id="tool-bucket" onclick="setTool('bucket')" title="Balde de tinta">🪣</button>
-          <button class="tool-btn" id="tool-eyedrop" onclick="setTool('eyedrop')" title="Conta-gotas">💧</button>
-          <button class="tool-btn" id="tool-square" onclick="setTool('square')" title="Quadrado">⬜</button>
-          <button class="tool-btn" id="tool-circle" onclick="setTool('circle')" title="Círculo">⭕</button>
-          <button class="tool-btn" id="tool-grid" onclick="toggleGrid()" title="Mostrar/ocultar grade">#️⃣</button>
-          <button class="tool-btn" id="tool-undo" onclick="undo()" title="Desfazer (Ctrl+Z)">↩️</button>
+        <div class="col" style="flex-shrink:0;">
+          <div class="toolbar">
+            <button class="tool-btn active" id="tool-pencil" onclick="setTool('pencil')" title="Lápis">✏️</button>
+            <button class="tool-btn" id="tool-eraser" onclick="setTool('eraser')" title="Borracha">🧽</button>
+            <button class="tool-btn" id="tool-bucket" onclick="setTool('bucket')" title="Balde de tinta">🪣</button>
+            <button class="tool-btn" id="tool-eyedrop" onclick="setTool('eyedrop')" title="Conta-gotas">💧</button>
+            <button class="tool-btn" id="tool-square" onclick="setTool('square')" title="Quadrado">⬜</button>
+            <button class="tool-btn" id="tool-circle" onclick="setTool('circle')" title="Círculo">⭕</button>
+            <button class="tool-btn" id="tool-grid" onclick="toggleGrid()" title="Mostrar/ocultar grade">#️⃣</button>
+            <button class="tool-btn" id="tool-undo" onclick="undo()" title="Desfazer (Ctrl+Z)">↩️</button>
+          </div>
         </div>
 
-        <div class="canvas-col">
+        <div class="col" style="flex:1; align-items:center; justify-content:center; min-width:220px;">
           <div class="axis-wrap" id="axis-wrap">
             <div class="axis-x-row" id="canvas-xaxis"></div>
             <div class="axis-grid-row">
@@ -378,22 +448,14 @@
           <div class="current-color-row">
             Cor atual: <span id="current-color-swatch"></span>
           </div>
-          <div class="palette-row" id="editor-palette"></div>
-
-          <div class="frames-panel">
-            <div class="label">// QUADROS_DA_ANIMAÇÃO</div>
-            <div class="frame-strip" id="frame-strip"></div>
-            <div class="frame-actions">
-              <button class="btn green" onclick="addFrame(true)">➕ Duplicar</button>
-              <button class="btn cyan" onclick="addFrame(false)">🆕 Novo Quadro</button>
-            </div>
-            <label style="display:flex;align-items:center;gap:6px;margin-top:8px;font-family:'Baloo 2',sans-serif;font-weight:700;font-size:12px;color:var(--ink-soft);">
-              <input type="checkbox" id="onion-toggle" onchange="toggleOnionSkin()"> 🧅 Ver quadro anterior (fantasma)
-            </label>
-          </div>
         </div>
 
-        <div class="side-col">
+        <div class="col col-scroll" style="width:230px; flex-shrink:0;">
+          <div class="frames-panel">
+            <div class="label">// PALETA</div>
+            <div class="palette-row" id="editor-palette"></div>
+          </div>
+
           <div class="ref-box" id="ref-box" style="display:none;">
             <div class="label">// DESAFIO_DE_REFERÊNCIA</div>
             <div id="ref-canvas"></div>
@@ -405,10 +467,35 @@
             </div>
           </div>
 
+          <div class="frames-panel">
+            <div class="label">// IMPORTAR</div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <button class="btn orange" style="font-size:9px;justify-content:center;" onclick="document.getElementById('import-image-input').click()">🖼️ Importar Imagem</button>
+              <button class="btn orange" style="font-size:9px;justify-content:center;" onclick="document.getElementById('import-gif-input').click()">🎞️ Importar Animação (GIF)</button>
+              <input type="file" id="import-image-input" accept="image/png,image/*" style="display:none;" onchange="handleImportImage(event)">
+              <input type="file" id="import-gif-input" accept="image/gif" style="display:none;" onchange="handleImportGIF(event)">
+              <p style="font-family:'Baloo 2',sans-serif;font-size:10px;color:var(--ink-soft);margin:2px 0 0;">As cores são ajustadas pra paleta escolhida agora.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="col col-scroll" style="width:230px; flex-shrink:0;">
+          <div class="frames-panel">
+            <div class="label">// QUADROS_DA_ANIMAÇÃO</div>
+            <div class="frame-strip" id="frame-strip"></div>
+            <div class="frame-actions">
+              <button class="btn green" onclick="addFrame(true)">➕ Duplicar</button>
+              <button class="btn cyan" onclick="addFrame(false)">🆕 Novo</button>
+            </div>
+            <label style="display:flex;align-items:center;gap:6px;margin-top:8px;font-family:'Baloo 2',sans-serif;font-weight:700;font-size:11px;color:var(--ink-soft);">
+              <input type="checkbox" id="onion-toggle" onchange="toggleOnionSkin()"> 🧅 Ver quadro anterior
+            </label>
+          </div>
+
           <div class="preview-panel">
             <div class="label" style="font-family:'Press Start 2P', monospace; font-size:9px; color:var(--ink-soft); margin-bottom:8px;">// PRÉVIA_DA_ANIMAÇÃO</div>
-            <canvas id="preview-canvas" width="120" height="120"></canvas>
-            <button class="btn green" id="preview-play-btn" style="width:100%;" onclick="togglePreviewPlay()">▶️ Reproduzir</button>
+            <canvas id="preview-canvas" width="110" height="110"></canvas>
+            <button class="btn green" id="preview-play-btn" style="width:100%;justify-content:center;" onclick="togglePreviewPlay()">▶️ Reproduzir</button>
             <div class="fps-row">
               🐢 <input type="range" id="fps-input" min="1" max="18" value="6"> 🐇
               <span id="fps-label">6 fps</span>
@@ -416,13 +503,13 @@
           </div>
 
           <div class="action-list">
-            <button class="btn purple" onclick="exportGIF()">🎞️ Exportar GIF Animado</button>
+            <button class="btn purple" onclick="exportGIF()">🎞️ Exportar GIF</button>
             <button class="btn cyan" onclick="exportSpriteSheet()">🖼️ Exportar Sprite Sheet</button>
-            <button class="btn cyan" onclick="exportPNG()">💾 Exportar Quadro Atual (PNG)</button>
+            <button class="btn cyan" onclick="exportPNG()">💾 Exportar PNG</button>
             <button class="btn green" onclick="openSaveStudentModal(false)">📁 Salvar na Pasta do Aluno</button>
             <div id="export-status"></div>
-            <button class="btn gray" onclick="clearCanvas()">🧹 Limpar Quadro Atual</button>
-            <button class="btn gray" onclick="backToSetup()">⚙️ Trocar Configurações</button>
+            <button class="btn gray" onclick="clearCanvas()">🧹 Limpar Quadro</button>
+            <button class="btn gray" onclick="backToSetup()">⚙️ Configurações</button>
           </div>
         </div>
 
@@ -464,7 +551,7 @@
 
       <div id="save-step-turma">
         <p style="font-family:'Baloo 2',sans-serif;font-weight:700;color:var(--ink-soft);font-size:13px;">Código da turma:</p>
-        <input type="text" id="save-turma-code" placeholder="ex: israelita5" style="width:100%;padding:10px;border-radius:8px;border:2px solid var(--border);background:#1c1533;color:#fff;font-family:'Baloo 2',sans-serif;margin-bottom:8px;">
+        <input type="text" id="save-turma-code" placeholder="ex: israelita5" style="width:100%;padding:10px;border-radius:8px;border:2px solid var(--border);background:var(--tool-bg);color:#fff;font-family:'Baloo 2',sans-serif;margin-bottom:8px;">
         <button class="btn cyan" style="width:100%;justify-content:center;" onclick="lookupTurmaForSave()">🔎 Buscar Turma</button>
         <div id="save-turma-error" style="font-family:'Baloo 2',sans-serif;color:var(--pink);font-size:12px;margin-top:8px;"></div>
       </div>
@@ -514,6 +601,24 @@ const PALETTES = {
   demichrome: { name:'🌑 2-Bit Demichrome (Lospec)', colors:['#211e20','#555568','#a0a08b','#e9efec'] },
   nyx8: { name:'🌙 Nyx8 (Lospec)', colors:['#08141e','#0f2a3f','#20394f','#f6d6bd','#c3a38a','#997577','#816271','#4e495f'] }
 };
+
+/* ---- paleta ampla, gerada por HSL (roda de cores + cinzas) — pra quem quer bastante opção ---- */
+function hslToHex(h,s,l){
+  s/=100; l/=100;
+  const k = n => (n + h/30) % 12;
+  const a = s * Math.min(l, 1-l);
+  const f = n => l - a*Math.max(-1, Math.min(k(n)-3, Math.min(9-k(n),1)));
+  const toHex = x => Math.round(255*x).toString(16).padStart(2,'0');
+  return '#'+toHex(f(0))+toHex(f(8))+toHex(f(4));
+}
+function buildBigPalette(){
+  const colors = [];
+  for(let i=0;i<8;i++) colors.push(hslToHex(0,0,Math.round(i*100/7)));
+  for(let h=0; h<360; h+=30) colors.push(hslToHex(h,75,55));
+  for(let h=0; h<360; h+=30) colors.push(hslToHex(h,60,80));
+  return colors;
+}
+PALETTES.ampla = { name: '🌈 Paleta Ampla (32 cores)', colors: buildBigPalette() };
 
 /* ======================================================
    DESAFIOS — formas geradas por fórmula (funcionam em qualquer tamanho)
@@ -656,18 +761,22 @@ function closeBackConfirm(){
 function confirmBackNoSave(){
   closeBackConfirm();
   stopPreviewPlay();
+  stopAutosaveTimer();
+  clearAutosave();
   document.getElementById('editor-screen').style.display = 'none';
-  document.getElementById('setup-screen').style.display = 'block';
+  document.getElementById('setup-screen').style.display = 'flex';
 }
 
 /* ======================================================
    INICIAR EDITOR
 ====================================================== */
-function startEditor(){
-  frames = [ new Array(gridSize*gridSize).fill(null) ];
-  currentFrameIndex = 0;
-  pixels = frames[0];
-  currentColor = PALETTES[selectedPaletteKey].colors[0];
+function startEditor(fromRestore){
+  if(!fromRestore){
+    frames = [ new Array(gridSize*gridSize).fill(null) ];
+    currentFrameIndex = 0;
+  }
+  pixels = frames[currentFrameIndex];
+  if(!fromRestore) currentColor = PALETTES[selectedPaletteKey].colors[0];
   showOverlay = false;
   showOnionSkin = false;
   document.getElementById('overlay-toggle').checked = false;
@@ -686,7 +795,10 @@ function startEditor(){
   renderFrameStrip();
 
   document.getElementById('setup-screen').style.display = 'none';
-  document.getElementById('editor-screen').style.display = 'block';
+  document.getElementById('editor-screen').style.display = 'flex';
+  document.getElementById('autosave-banner').style.display = 'none';
+
+  startAutosaveTimer();
 }
 
 function buildEditorPalette(){
@@ -1127,9 +1239,35 @@ function renderFrameStrip(){
       del.title = 'Apagar este quadro';
       del.onclick = (e) => { e.stopPropagation(); deleteFrame(i); };
       item.appendChild(del);
+
+      if(i > 0){
+        const moveLeft = document.createElement('button');
+        moveLeft.className = 'thumb-move thumb-move-left';
+        moveLeft.textContent = '◀';
+        moveLeft.title = 'Mover pra esquerda';
+        moveLeft.onclick = (e) => { e.stopPropagation(); moveFrame(i, i-1); };
+        item.appendChild(moveLeft);
+      }
+      if(i < frames.length-1){
+        const moveRight = document.createElement('button');
+        moveRight.className = 'thumb-move thumb-move-right';
+        moveRight.textContent = '▶';
+        moveRight.title = 'Mover pra direita';
+        moveRight.onclick = (e) => { e.stopPropagation(); moveFrame(i, i+1); };
+        item.appendChild(moveRight);
+      }
     }
     strip.appendChild(item);
   });
+}
+function moveFrame(from, to){
+  const [moved] = frames.splice(from,1);
+  frames.splice(to,0,moved);
+  if(currentFrameIndex===from) currentFrameIndex = to;
+  else if(currentFrameIndex===to) currentFrameIndex = from;
+  pixels = frames[currentFrameIndex];
+  renderFrameStrip();
+  if(showOnionSkin) updateOnionSkin();
 }
 function switchFrame(idx){
   if(idx===currentFrameIndex) return;
@@ -1542,9 +1680,362 @@ async function saveToAluno(aluno){
 }
 
 /* ======================================================
+   TEMA CLARO/ESCURO
+====================================================== */
+const THEME_KEY = 'overcast_pixelart_theme';
+function toggleTheme(){
+  const isLight = document.body.classList.toggle('theme-light');
+  document.getElementById('theme-toggle-btn').textContent = isLight ? '☀️' : '🌙';
+  localStorage.setItem(THEME_KEY, isLight ? 'light' : 'dark');
+}
+function initTheme(){
+  const saved = localStorage.getItem(THEME_KEY);
+  if(saved === 'light'){
+    document.body.classList.add('theme-light');
+    document.getElementById('theme-toggle-btn').textContent = '☀️';
+  }
+}
+
+/* ======================================================
+   SALVAMENTO AUTOMÁTICO (localStorage) — evita perder o desenho
+====================================================== */
+const AUTOSAVE_KEY = 'overcast_pixelart_autosave_v1';
+const AUTOSAVE_INTERVAL_MS = 15000; // a cada 15 segundos
+let autosaveTimer = null;
+
+function autosaveNow(){
+  try{
+    const payload = {
+      gridSize, selectedPaletteKey, selectedChallengeKey,
+      frames, currentFrameIndex,
+      savedAt: Date.now()
+    };
+    localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(payload));
+  }catch(e){ /* localStorage cheio ou indisponível — ignora silenciosamente */ }
+}
+function startAutosaveTimer(){
+  stopAutosaveTimer();
+  autosaveTimer = setInterval(autosaveNow, AUTOSAVE_INTERVAL_MS);
+}
+function stopAutosaveTimer(){
+  if(autosaveTimer){ clearInterval(autosaveTimer); autosaveTimer=null; }
+}
+function clearAutosave(){
+  localStorage.removeItem(AUTOSAVE_KEY);
+}
+function checkAutosaveOnLoad(){
+  try{
+    const raw = localStorage.getItem(AUTOSAVE_KEY);
+    if(!raw) return;
+    const data = JSON.parse(raw);
+    if(!data || !data.frames || !data.frames.length) return;
+    document.getElementById('autosave-banner').style.display = 'block';
+    window._pendingAutosave = data;
+  }catch(e){}
+}
+function restoreAutosave(){
+  const data = window._pendingAutosave;
+  if(!data) return;
+  gridSize = data.gridSize;
+  selectedPaletteKey = data.selectedPaletteKey;
+  selectedChallengeKey = data.selectedChallengeKey;
+  frames = data.frames;
+  currentFrameIndex = Math.min(data.currentFrameIndex||0, frames.length-1);
+  startEditor(true);
+}
+function discardAutosave(){
+  clearAutosave();
+  document.getElementById('autosave-banner').style.display = 'none';
+  window._pendingAutosave = null;
+}
+
+/* ======================================================
+   IMPORTAR IMAGEM (PNG) — remapeia as cores pra paleta atual
+====================================================== */
+function nearestPaletteColor(r,g,b,a,paletteRgb){
+  if(a < 40) return null; // quase transparente -> vira transparente
+  let best = 0, bestDist = Infinity;
+  for(let i=0;i<paletteRgb.length;i++){
+    const [pr,pg,pb] = paletteRgb[i];
+    const d = (r-pr)**2 + (g-pg)**2 + (b-pb)**2;
+    if(d < bestDist){ bestDist = d; best = i; }
+  }
+  return PALETTES[selectedPaletteKey].colors[best];
+}
+function hexToRgb(hex){
+  return [parseInt(hex.slice(1,3),16), parseInt(hex.slice(3,5),16), parseInt(hex.slice(5,7),16)];
+}
+function imageDataToFrame(imgData, srcW, srcH){
+  // a imagem precisa ter exatamente o tamanho da grade atual (8/16/32/64)
+  const paletteRgb = PALETTES[selectedPaletteKey].colors.map(hexToRgb);
+  const frame = new Array(gridSize*gridSize).fill(null);
+  for(let y=0; y<gridSize; y++){
+    for(let x=0; x<gridSize; x++){
+      const sx = Math.min(srcW-1, Math.floor(x*srcW/gridSize));
+      const sy = Math.min(srcH-1, Math.floor(y*srcH/gridSize));
+      const off = (sy*srcW+sx)*4;
+      const r=imgData[off], g=imgData[off+1], b=imgData[off+2], a=imgData[off+3];
+      frame[y*gridSize+x] = nearestPaletteColor(r,g,b,a,paletteRgb);
+    }
+  }
+  return frame;
+}
+function handleImportImage(event){
+  const file = event.target.files[0];
+  event.target.value = '';
+  if(!file) return;
+  const img = new Image();
+  img.onload = () => {
+    const allowedSizes = [8,16,32,64];
+    if(!allowedSizes.includes(img.width) || !allowedSizes.includes(img.height)){
+      alert(`Essa imagem é ${img.width}×${img.height}. Pra importar, o tamanho precisa ser 8×8, 16×16, 32×32 ou 64×64.`);
+      return;
+    }
+    if(img.width !== gridSize){
+      if(!confirm(`Essa imagem é ${img.width}×${img.width}, mas a tela atual é ${gridSize}×${gridSize}. Trocar a tela pra ${img.width}×${img.width} e importar?`)) return;
+      gridSize = img.width;
+    }
+    const off = document.createElement('canvas');
+    off.width = img.width; off.height = img.height;
+    const ctx = off.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    const data = ctx.getImageData(0,0,img.width,img.height).data;
+    const frame = imageDataToFrame(data, img.width, img.height);
+
+    saveUndoState();
+    frames = [frame];
+    currentFrameIndex = 0;
+    buildCanvasStage();
+    buildEditorPalette();
+    setPixels(frame);
+    paintAllCells();
+    renderFrameStrip();
+    URL.revokeObjectURL(img.src);
+  };
+  img.onerror = () => alert('Não consegui abrir essa imagem.');
+  img.src = URL.createObjectURL(file);
+}
+
+/* ======================================================
+   IMPORTAR ANIMAÇÃO (GIF) — decodificador GIF89a/87a em JS puro
+====================================================== */
+function decodeGIF(bytes){
+  let pos = 0;
+  function u8(){ return bytes[pos++]; }
+  function u16(){ const v = bytes[pos] | (bytes[pos+1]<<8); pos+=2; return v; }
+  function readN(n){ const out = bytes.slice(pos,pos+n); pos+=n; return out; }
+
+  const sig = String.fromCharCode(...readN(6));
+  if(sig !== 'GIF89a' && sig !== 'GIF87a') throw new Error('Não é um GIF válido.');
+
+  const width = u16();
+  const height = u16();
+  const packed = u8();
+  const gctFlag = (packed & 0x80) !== 0;
+  const gctSize = gctFlag ? (2 << (packed & 0x07)) : 0;
+  u8(); u8();
+
+  let globalColorTable = null;
+  if(gctFlag){
+    globalColorTable = [];
+    for(let i=0;i<gctSize;i++) globalColorTable.push([u8(),u8(),u8()]);
+  }
+
+  const frames = [];
+  let canvas = new Uint8ClampedArray(width*height*4);
+  let disposalMethod = 0, transparentIndex = -1, delayCs = 10;
+
+  function readSubBlocks(){
+    const chunks = [];
+    while(true){
+      const len = u8();
+      if(len === 0) break;
+      chunks.push(readN(len));
+    }
+    let total = 0; chunks.forEach(c=>total+=c.length);
+    const out = new Uint8Array(total);
+    let off=0; chunks.forEach(c=>{ out.set(c, off); off+=c.length; });
+    return out;
+  }
+
+  function lzwDecode(data, minCodeSize){
+    const CLEAR = 1 << minCodeSize;
+    const END = CLEAR + 1;
+    let dict, codeSize, nextCode;
+    function resetDict(){
+      dict = [];
+      for(let i=0;i<CLEAR;i++) dict[i] = [i];
+      dict[CLEAR] = null; dict[END] = null;
+      nextCode = END+1; codeSize = minCodeSize+1;
+    }
+    resetDict();
+    let bitBuffer=0, bitCount=0, bytePos=0;
+    function readCode(){
+      while(bitCount < codeSize){
+        if(bytePos >= data.length) return -1;
+        bitBuffer |= data[bytePos++] << bitCount;
+        bitCount += 8;
+      }
+      const code = bitBuffer & ((1<<codeSize)-1);
+      bitBuffer >>= codeSize; bitCount -= codeSize;
+      return code;
+    }
+    const output = [];
+    let prev = null;
+    while(true){
+      const code = readCode();
+      if(code === -1 || code === END) break;
+      if(code === CLEAR){ resetDict(); prev=null; continue; }
+      let entry;
+      if(code < dict.length && dict[code]) entry = dict[code];
+      else if(code === nextCode && prev) entry = prev.concat([prev[0]]);
+      else throw new Error('Código LZW inválido no GIF.');
+      output.push(...entry);
+      if(prev){
+        if(nextCode < 4096){
+          dict[nextCode] = prev.concat([entry[0]]);
+          nextCode++;
+          if(nextCode >= (1<<codeSize) && codeSize < 12) codeSize++;
+        }
+      }
+      prev = entry;
+    }
+    return output;
+  }
+
+  function deinterlace(indices, w, h){
+    const out = new Array(w*h);
+    const passes = [[0,8],[4,8],[2,4],[1,2]];
+    let srcRow = 0;
+    for(const [start, step] of passes){
+      for(let row=start; row<h; row+=step){
+        for(let col=0; col<w; col++) out[row*w+col] = indices[srcRow*w+col];
+        srcRow++;
+      }
+    }
+    return out;
+  }
+
+  while(pos < bytes.length){
+    const blockType = u8();
+    if(blockType === 0x3B) break;
+
+    if(blockType === 0x21){
+      const label = u8();
+      if(label === 0xF9){
+        u8();
+        const p = u8();
+        disposalMethod = (p >> 2) & 0x07;
+        const transpFlag = (p & 0x01) !== 0;
+        delayCs = u16();
+        const ti = u8();
+        transparentIndex = transpFlag ? ti : -1;
+        u8();
+      } else {
+        readSubBlocks();
+      }
+      continue;
+    }
+
+    if(blockType === 0x2C){
+      const left = u16(), top = u16();
+      const w = u16(), h = u16();
+      const p = u8();
+      const lctFlag = (p & 0x80) !== 0;
+      const interlace = (p & 0x40) !== 0;
+      const lctSize = lctFlag ? (2 << (p & 0x07)) : 0;
+      let colorTable = globalColorTable;
+      if(lctFlag){
+        colorTable = [];
+        for(let i=0;i<lctSize;i++) colorTable.push([u8(),u8(),u8()]);
+      }
+      const minCodeSize = u8();
+      const data = readSubBlocks();
+      let indices = lzwDecode(data, minCodeSize);
+      if(interlace) indices = deinterlace(indices, w, h);
+
+      const prevSnapshot = disposalMethod===3 ? canvas.slice() : null;
+
+      for(let row=0; row<h; row++){
+        for(let col=0; col<w; col++){
+          const idx = indices[row*w+col];
+          const gx = left+col, gy = top+row;
+          if(gx>=width || gy>=height) continue;
+          const off = (gy*width+gx)*4;
+          if(transparentIndex>=0 && idx===transparentIndex) continue;
+          const rgb = (colorTable && colorTable[idx]) || [0,0,0];
+          canvas[off]=rgb[0]; canvas[off+1]=rgb[1]; canvas[off+2]=rgb[2]; canvas[off+3]=255;
+        }
+      }
+      frames.push({ delayCs, rgba: canvas.slice() });
+
+      if(disposalMethod === 2){
+        for(let row=0; row<h; row++){
+          for(let col=0; col<w; col++){
+            const gx=left+col, gy=top+row;
+            if(gx>=width||gy>=height) continue;
+            const off=(gy*width+gx)*4;
+            canvas[off]=0;canvas[off+1]=0;canvas[off+2]=0;canvas[off+3]=0;
+          }
+        }
+      } else if(disposalMethod === 3 && prevSnapshot){
+        canvas = prevSnapshot;
+      }
+      disposalMethod = 0; transparentIndex = -1;
+      continue;
+    }
+    throw new Error('Bloco GIF desconhecido.');
+  }
+  return { width, height, frames };
+}
+
+function handleImportGIF(event){
+  const file = event.target.files[0];
+  event.target.value = '';
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const bytes = new Uint8Array(reader.result);
+      const result = decodeGIF(bytes);
+      const allowedSizes = [8,16,32,64];
+      if(!allowedSizes.includes(result.width) || !allowedSizes.includes(result.height)){
+        alert(`Esse GIF é ${result.width}×${result.height}. Pra importar, o tamanho precisa ser 8×8, 16×16, 32×32 ou 64×64.`);
+        return;
+      }
+      if(result.width !== gridSize){
+        if(!confirm(`Esse GIF é ${result.width}×${result.width}, mas a tela atual é ${gridSize}×${gridSize}. Trocar a tela e importar?`)) return;
+        gridSize = result.width;
+      }
+
+      const newFrames = result.frames.map(f => imageDataToFrame(f.rgba, result.width, result.height));
+
+      saveUndoState();
+      frames = newFrames;
+      currentFrameIndex = 0;
+      buildCanvasStage();
+      buildEditorPalette();
+      setPixels(frames[0]);
+      paintAllCells();
+      renderFrameStrip();
+
+      alert(`✅ Importado! ${newFrames.length} quadro(s) — as cores foram ajustadas pra paleta atual.`);
+    }catch(e){
+      alert('❌ Não consegui ler esse GIF: ' + e.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+/* ======================================================
    INIT
 ====================================================== */
+initTheme();
 buildSetupScreen();
+checkAutosaveOnLoad();
+window.addEventListener('beforeunload', () => {
+  if(document.getElementById('editor-screen').style.display === 'flex') autosaveNow();
+});
 </script>
 </body>
 </html>
