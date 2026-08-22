@@ -260,6 +260,23 @@
     cursor:pointer;
   }
   .pal-swatch.selected{ border-color:#fff; transform:scale(1.1); }
+  .pal-swatch{ position:relative; }
+  .pal-x{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(0,0,0,0.35);
+    color:#fff; font-size:14px; font-weight:800;
+    opacity:0;
+    transition:opacity .1s;
+  }
+  .pal-swatch:hover .pal-x{ opacity:1; }
+  .pal-add{
+    display:flex; align-items:center; justify-content:center;
+    background:var(--tool-bg);
+    border:3px dashed var(--border) !important;
+    font-size:16px;
+  }
+  #palette-edit-btn.active{ background:var(--pink); }
 
   .side-col{ display:flex; flex-direction:column; gap:14px; min-width:180px; }
 
@@ -345,6 +362,29 @@
   }
 
   .action-list{ display:flex; flex-direction:column; gap:8px; }
+  .link-badge{
+    display:flex; align-items:center; gap:6px; flex-wrap:wrap;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:11px;
+    color:var(--green);
+    background:var(--bg-card);
+    border:2px solid var(--green);
+    border-radius:10px;
+    padding:8px 10px;
+    margin-bottom:8px;
+  }
+  .link-unlink{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:10px;
+    color:var(--ink-soft);
+    background:none;
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:2px 8px;
+    cursor:pointer;
+  }
   .ref-box{
     background:var(--bg-card);
     border:3px dashed var(--yellow);
@@ -425,6 +465,15 @@
   <!-- ============== TELA DE CONFIGURAÇÃO ============== -->
   <div id="setup-screen">
    <div class="setup-scroll">
+    <div class="panel" style="text-align:center;">
+      <h2>🔗 SALVAR AUTOMATICAMENTE?</h2>
+      <p style="font-family:'Baloo 2',sans-serif;font-weight:700;color:var(--ink-soft);font-size:13px;margin:0 0 10px;">
+        Vincule seu nome pra eu ir salvando seu desenho sozinho na sua pasta, sem precisar clicar em nada. (Opcional)
+      </p>
+      <div class="link-badge" style="display:none;justify-content:center;"></div>
+      <button class="btn green" onclick="openSaveStudentModal(false, true)">👤 Vincular meu nome</button>
+    </div>
+
     <div class="panel">
       <h2>1️⃣ TAMANHO DA TELA</h2>
       <div class="choice-row" id="size-choices"></div>
@@ -490,8 +539,13 @@
 
         <div class="col col-scroll" style="width:230px; flex-shrink:0;">
           <div class="frames-panel">
-            <div class="label">// PALETA</div>
+            <div class="label" style="display:flex;justify-content:space-between;align-items:center;">
+              <span>// PALETA</span>
+              <button class="btn small gray" id="palette-edit-btn" style="font-size:8px;" onclick="togglePaletteEditMode()">✏️ Editar</button>
+            </div>
             <div class="palette-row" id="editor-palette"></div>
+            <input type="color" id="color-picker-hidden" style="position:absolute;opacity:0;width:0;height:0;pointer-events:none;">
+            <p id="palette-edit-hint" style="display:none;font-family:'Baloo 2',sans-serif;font-size:10px;color:var(--ink-soft);margin:6px 0 0;">Toque numa cor pra apagar, ou no ➕ pra adicionar uma nova.</p>
           </div>
 
           <div class="ref-box" id="ref-box" style="display:none;">
@@ -540,6 +594,7 @@
             </div>
           </div>
 
+          <div class="link-badge" style="display:none;"></div>
           <div class="action-list">
             <button class="btn purple" onclick="exportGIF()">🎞️ Exportar GIF</button>
             <button class="btn cyan" onclick="exportSpriteSheet()">🖼️ Exportar Sprite Sheet</button>
@@ -585,11 +640,11 @@
   <!-- ============== MODAL: salvar na pasta do aluno ============== -->
   <div class="zoom-overlay" id="save-student-modal">
     <div class="zoom-box" style="max-width:420px;">
-      <h3>📁 SALVAR NA PASTA DO ALUNO</h3>
+      <h3 id="save-student-modal-title">📁 SALVAR NA PASTA DO ALUNO</h3>
 
       <div id="save-step-turma">
         <p style="font-family:'Baloo 2',sans-serif;font-weight:700;color:var(--ink-soft);font-size:13px;">Código da turma:</p>
-        <input type="text" id="save-turma-code" placeholder="ex: israelita5" style="width:100%;padding:10px;border-radius:8px;border:2px solid var(--border);background:var(--tool-bg);color:#fff;font-family:'Baloo 2',sans-serif;margin-bottom:8px;">
+        <input type="text" id="save-turma-code" placeholder="Código da turma" style="width:100%;padding:10px;border-radius:8px;border:2px solid var(--border);background:var(--tool-bg);color:#fff;font-family:'Baloo 2',sans-serif;margin-bottom:8px;">
         <button class="btn cyan" style="width:100%;justify-content:center;" onclick="lookupTurmaForSave()">🔎 Buscar Turma</button>
         <div id="save-turma-error" style="font-family:'Baloo 2',sans-serif;color:var(--pink);font-size:12px;margin-top:8px;"></div>
       </div>
@@ -657,6 +712,17 @@ function buildBigPalette(){
   return colors;
 }
 PALETTES.ampla = { name: '🌈 Paleta Ampla (32 cores)', colors: buildBigPalette() };
+
+/* ---- "Minha Paleta": editável pelo aluno, inspirada no Lospec, salva no navegador ---- */
+const CUSTOM_PALETTE_KEY = 'overcast_pixelart_custom_palette';
+function loadCustomPalette(){
+  try{
+    const raw = localStorage.getItem(CUSTOM_PALETTE_KEY);
+    if(raw){ const arr = JSON.parse(raw); if(Array.isArray(arr) && arr.length) return arr; }
+  }catch(e){}
+  return ['#1a1c2c','#ff5fa2','#4be8ff','#ffd23f','#4be08f','#ffffff'];
+}
+PALETTES.custom = { name: '🎨 Minha Paleta (editável)', colors: loadCustomPalette(), editable:true };
 
 /* ======================================================
    DESAFIOS — formas geradas por fórmula (funcionam em qualquer tamanho)
@@ -732,6 +798,12 @@ const sb = (SUPABASE_URL.startsWith("http") && window.supabase)
 ====================================================== */
 let gridSize = 16;
 let selectedPaletteKey = 'retro';
+let sessionPaletteColors = [];
+let paletteEditMode = false;
+let linkedAluno = null;
+let linkedTurmaCode = null;
+let cloudSessionId = null;
+let cloudRegisteredPaths = new Set();
 let selectedChallengeKey = 'none';
 let currentColor = '#000000';
 let currentTool = 'pencil';
@@ -802,8 +874,12 @@ function confirmBackNoSave(){
   stopPreviewPlay();
   stopAutosaveTimer();
   clearAutosave();
+  // nova sessão de desenho: mantém o aluno vinculado, mas o próximo desenho vira um arquivo novo
+  cloudSessionId = null;
+  cloudRegisteredPaths = new Set();
   document.getElementById('editor-screen').style.display = 'none';
   document.getElementById('setup-screen').style.display = 'flex';
+  buildSetupScreen();
 }
 
 /* ======================================================
@@ -815,7 +891,8 @@ function startEditor(fromRestore){
     currentFrameIndex = 0;
   }
   pixels = frames[currentFrameIndex];
-  if(!fromRestore) currentColor = PALETTES[selectedPaletteKey].colors[0];
+  if(!fromRestore) sessionPaletteColors = PALETTES[selectedPaletteKey].colors.slice();
+  if(!fromRestore) currentColor = sessionPaletteColors[0];
   showOverlay = false;
   showOnionSkin = false;
   document.getElementById('overlay-toggle').checked = false;
@@ -832,6 +909,7 @@ function startEditor(fromRestore){
   buildReferenceBox();
   updateCurrentColorSwatch();
   renderFrameStrip();
+  updateLinkBadge();
 
   document.getElementById('setup-screen').style.display = 'none';
   document.getElementById('editor-screen').style.display = 'flex';
@@ -842,15 +920,48 @@ function startEditor(fromRestore){
 
 function buildEditorPalette(){
   const el = document.getElementById('editor-palette');
-  el.innerHTML = PALETTES[selectedPaletteKey].colors.map((c,i) => `
-    <div class="pal-swatch ${c===currentColor?'selected':''}" style="background:${c}" data-color="${c}" onclick="pickColor('${c}')"></div>
-  `).join('');
+  el.innerHTML = sessionPaletteColors.map((c,i) => `
+    <div class="pal-swatch ${c===currentColor?'selected':''}" style="background:${c}" data-color="${c}" onclick="${paletteEditMode?`removeSessionColor(${i})`:`pickColor('${c}')`}">${paletteEditMode?'<span class="pal-x">✕</span>':''}</div>
+  `).join('') + (paletteEditMode ? `<div class="pal-swatch pal-add" onclick="addSessionColor()">➕</div>` : '');
 }
 function pickColor(c){
   currentColor = c;
   document.querySelectorAll('.pal-swatch').forEach(s => s.classList.toggle('selected', s.dataset.color===c));
   updateCurrentColorSwatch();
   if(currentTool==='eraser') setTool('pencil');
+}
+function togglePaletteEditMode(){
+  paletteEditMode = !paletteEditMode;
+  document.getElementById('palette-edit-btn').classList.toggle('active', paletteEditMode);
+  document.getElementById('palette-edit-hint').style.display = paletteEditMode ? 'block' : 'none';
+  buildEditorPalette();
+}
+function addSessionColor(){
+  const picker = document.getElementById('color-picker-hidden');
+  picker.value = currentColor && currentColor.startsWith('#') ? currentColor : '#ff5fa2';
+  picker.onchange = () => {
+    if(sessionPaletteColors.length >= 64){ alert('Essa paleta já tem 64 cores — o máximo!'); return; }
+    sessionPaletteColors.push(picker.value);
+    persistCustomPaletteIfActive();
+    buildEditorPalette();
+  };
+  picker.click();
+}
+function removeSessionColor(i){
+  if(sessionPaletteColors.length <= 1){ alert('Precisa ficar com pelo menos 1 cor na paleta.'); return; }
+  const removedColor = sessionPaletteColors[i];
+  sessionPaletteColors.splice(i,1);
+  if(currentColor === removedColor) currentColor = sessionPaletteColors[0];
+  persistCustomPaletteIfActive();
+  buildEditorPalette();
+  updateCurrentColorSwatch();
+}
+function persistCustomPaletteIfActive(){
+  // se a paleta ativa é a "Minha Paleta", qualquer edição já salva sozinha
+  if(selectedPaletteKey === 'custom'){
+    localStorage.setItem(CUSTOM_PALETTE_KEY, JSON.stringify(sessionPaletteColors));
+    PALETTES.custom.colors = sessionPaletteColors;
+  }
 }
 function updateCurrentColorSwatch(){
   document.getElementById('current-color-swatch').style.background = currentColor;
@@ -1610,7 +1721,7 @@ function buildScaledIndices(frame, scale, colorIndexMap){
   return arr;
 }
 function buildGIFBytes(){
-  const paletteColors = PALETTES[selectedPaletteKey].colors;
+  const paletteColors = sessionPaletteColors;
   const gifPalette = ['#ffffff', ...paletteColors]; // índice 0 = transparente
   const colorIndexMap = new Map();
   paletteColors.forEach((c,i) => colorIndexMap.set(c, i+1));
@@ -1664,12 +1775,16 @@ function quickDownload(){
   }
 }
 
-function openSaveStudentModal(fromChoiceFlow){
+function openSaveStudentModal(fromChoiceFlow, linkMode){
   if(!sb){
     alert('Não foi possível conectar ao Supabase. Verifique a configuração no topo do arquivo.');
     return;
   }
   if(fromChoiceFlow) closeSaveChoiceModal();
+  window._saveModalLinkMode = !!linkMode;
+  document.getElementById('save-student-modal-title').textContent = linkMode
+    ? '🔗 VINCULAR MEU NOME'
+    : '📁 SALVAR NA PASTA DO ALUNO';
   document.getElementById('save-step-turma').style.display = 'block';
   document.getElementById('save-step-aluno').style.display = 'none';
   document.getElementById('save-turma-error').textContent = '';
@@ -1702,7 +1817,7 @@ async function lookupTurmaForSave(){
   errEl.textContent = '';
 
   const { data: alunos } = await sb.from('alunos').select('*').eq('turma_id', turma.id).order('nome');
-  saveTurmaData = { turma, alunos: alunos || [] };
+  saveTurmaData = { turma, alunos: alunos || [], codigoTurma: code };
 
   document.getElementById('save-turma-name').textContent = turma.nome;
   const listEl = document.getElementById('save-aluno-list');
@@ -1720,18 +1835,37 @@ async function saveToAlunoIndex(i){
   if(!saveTurmaData) return;
   const aluno = saveTurmaData.alunos[i];
   if(!aluno) return;
+  if(window._saveModalLinkMode){
+    linkedAluno = aluno;
+    linkedTurmaCode = saveTurmaData.codigoTurma;
+    updateLinkBadge();
+    const status = document.getElementById('save-status');
+    status.textContent = '✅ Vinculado! Vou salvar automaticamente pra ' + aluno.nome + '.';
+    autosaveNow();
+    setTimeout(closeSaveStudentModal, 1400);
+    return;
+  }
   await saveToAluno(aluno);
 }
 
-async function uploadToStudent(aluno, blob, filename, mimeType){
-  const path = `envios/${aluno.codigo}/${Date.now()}_${filename}`;
+function ensureCloudSessionId(){
+  if(!cloudSessionId) cloudSessionId = Date.now();
+  return cloudSessionId;
+}
+async function uploadToStudent(aluno, blob, baseFilename, mimeType){
+  ensureCloudSessionId();
+  const filename = `${cloudSessionId}_${baseFilename}`;
+  const path = `envios/${aluno.codigo}/${filename}`;
   const { error: upErr } = await sb.storage.from('submissoes').upload(path, blob, { upsert:true, contentType:mimeType });
   if(upErr) throw new Error(upErr.message);
-  const { error: rpcErr } = await sb.rpc('registrar_envio', {
-    p_codigo: aluno.codigo, p_nome_arquivo: filename, p_storage_path: path,
-    p_tipo: 'envio', p_tamanho_bytes: blob.size
-  });
-  if(rpcErr) throw new Error(rpcErr.message);
+  if(!cloudRegisteredPaths.has(path)){
+    const { error: rpcErr } = await sb.rpc('registrar_envio', {
+      p_codigo: aluno.codigo, p_nome_arquivo: filename, p_storage_path: path,
+      p_tipo: 'envio', p_tamanho_bytes: blob.size
+    });
+    if(rpcErr) throw new Error(rpcErr.message);
+    cloudRegisteredPaths.add(path);
+  }
 }
 
 async function saveToAluno(aluno){
@@ -1752,6 +1886,47 @@ async function saveToAluno(aluno){
   } catch(e){
     status.textContent = '❌ Erro: ' + e.message;
   }
+}
+
+/* ---- vínculo automático: salva sozinho a cada autosave, sobrescrevendo o mesmo arquivo ---- */
+let cloudSaveInProgress = false;
+async function cloudSaveNow(){
+  if(!linkedAluno || !sb || cloudSaveInProgress) return;
+  cloudSaveInProgress = true;
+  try{
+    if(frames.length > 1){
+      const bytes = buildGIFBytes();
+      const blob = new Blob([bytes], {type:'image/gif'});
+      await uploadToStudent(linkedAluno, blob, 'pixel-art.gif', 'image/gif');
+    } else {
+      const canvas = drawFrameOffscreen(pixels, exportScale());
+      const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+      await uploadToStudent(linkedAluno, blob, 'pixel-art.png', 'image/png');
+    }
+    updateLinkBadge('✅ salvo às ' + new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}));
+  } catch(e){
+    updateLinkBadge('⚠️ falhou: ' + e.message);
+  } finally {
+    cloudSaveInProgress = false;
+  }
+}
+function updateLinkBadge(extra){
+  const badges = document.querySelectorAll('.link-badge');
+  badges.forEach(el => {
+    if(linkedAluno){
+      el.innerHTML = `👤 Salvando como <b>${linkedAluno.nome}</b>${extra ? ' — '+extra : ''} <button class="link-unlink" onclick="unlinkAluno()">trocar</button>`;
+      el.style.display = 'flex';
+    } else {
+      el.style.display = 'none';
+    }
+  });
+}
+function unlinkAluno(){
+  linkedAluno = null;
+  linkedTurmaCode = null;
+  cloudRegisteredPaths = new Set();
+  updateLinkBadge();
+  autosaveNow();
 }
 
 /* ======================================================
@@ -1782,11 +1957,13 @@ function autosaveNow(){
   try{
     const payload = {
       gridSize, selectedPaletteKey, selectedChallengeKey,
-      frames, currentFrameIndex,
+      sessionPaletteColors, frames, currentFrameIndex,
+      linkedAluno, linkedTurmaCode, cloudSessionId, cloudRegisteredPaths: [...cloudRegisteredPaths],
       savedAt: Date.now()
     };
     localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(payload));
   }catch(e){ /* localStorage cheio ou indisponível — ignora silenciosamente */ }
+  if(linkedAluno) cloudSaveNow();
 }
 function startAutosaveTimer(){
   stopAutosaveTimer();
@@ -1814,9 +1991,16 @@ function restoreAutosave(){
   gridSize = data.gridSize;
   selectedPaletteKey = data.selectedPaletteKey;
   selectedChallengeKey = data.selectedChallengeKey;
+  sessionPaletteColors = data.sessionPaletteColors || PALETTES[data.selectedPaletteKey].colors.slice();
   frames = data.frames;
   currentFrameIndex = Math.min(data.currentFrameIndex||0, frames.length-1);
+  currentColor = sessionPaletteColors[0];
+  linkedAluno = data.linkedAluno || null;
+  linkedTurmaCode = data.linkedTurmaCode || null;
+  cloudSessionId = data.cloudSessionId || null;
+  cloudRegisteredPaths = new Set(data.cloudRegisteredPaths || []);
   startEditor(true);
+  updateLinkBadge();
 }
 function discardAutosave(){
   clearAutosave();
@@ -1835,14 +2019,14 @@ function nearestPaletteColor(r,g,b,a,paletteRgb){
     const d = (r-pr)**2 + (g-pg)**2 + (b-pb)**2;
     if(d < bestDist){ bestDist = d; best = i; }
   }
-  return PALETTES[selectedPaletteKey].colors[best];
+  return sessionPaletteColors[best];
 }
 function hexToRgb(hex){
   return [parseInt(hex.slice(1,3),16), parseInt(hex.slice(3,5),16), parseInt(hex.slice(5,7),16)];
 }
 function imageDataToFrame(imgData, srcW, srcH){
   // a imagem precisa ter exatamente o tamanho da grade atual (8/16/32/64)
-  const paletteRgb = PALETTES[selectedPaletteKey].colors.map(hexToRgb);
+  const paletteRgb = sessionPaletteColors.map(hexToRgb);
   const frame = new Array(gridSize*gridSize).fill(null);
   for(let y=0; y<gridSize; y++){
     for(let x=0; x<gridSize; x++){
