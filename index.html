@@ -120,6 +120,50 @@
       box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35);
     }
 
+    /* ---- menu lateral por categorias ---- */
+    .sidebar-overlay{
+      position: fixed; inset: 0;
+      background: rgba(10,7,20,0.6);
+      z-index: 90;
+      display: none;
+    }
+    .sidebar-overlay.show{ display: block; }
+    .sidebar{
+      position: fixed; top: 0; left: 0; bottom: 0;
+      width: 260px;
+      background: #1e1a2e;
+      border-right: 1px solid #322c47;
+      z-index: 95;
+      transform: translateX(-100%);
+      transition: transform 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+    .sidebar.show{ transform: translateX(0); }
+    .sidebar-top{
+      display:flex; align-items:center; justify-content:space-between;
+      padding: 16px; border-bottom: 1px solid #322c47; flex-shrink:0;
+    }
+    .sidebar-group{ padding: 14px 12px 4px; }
+    .sidebar-group-title{
+      font-family: 'Baloo 2', sans-serif;
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 0 8px 8px;
+    }
+    .sidebar-group .nav-tab{
+      display: flex;
+      width: 100%;
+      text-align: left;
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 2px;
+    }
+
     .section { display: none; }
     .section.active { display: block; }
 
@@ -314,25 +358,52 @@
   </div>
 </div>
 
-<header class="border-b border-[#322c47] bg-[#1e1a2e]/90 backdrop-blur sticky top-0 z-50">
-  <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3">
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-top">
     <div class="flex items-center gap-2.5">
-      <span class="w-9 h-9 rounded-2xl bg-gradient-to-br from-[#7c3aed] to-[#38bdf8] flex items-center justify-center text-base shrink-0">🚀</span>
-      <span class="font-display text-base tracking-tight text-white">Overcast Realm</span>
+      <span class="w-8 h-8 rounded-2xl bg-gradient-to-br from-[#7c3aed] to-[#38bdf8] flex items-center justify-center text-sm shrink-0">🚀</span>
+      <span class="font-display text-sm tracking-tight text-white">Overcast Realm</span>
     </div>
-    <nav class="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0" id="main-nav">
+    <button onclick="closeSidebar()" class="text-gray-400 hover:text-white text-lg leading-none">✕</button>
+  </div>
+  <nav id="main-nav">
+    <div class="sidebar-group">
+      <p class="sidebar-group-title">🏫 Sala de Aula</p>
       <button class="nav-tab active" onclick="switchTab('home', this)">🏠 Home</button>
       <button class="nav-tab" onclick="switchTab('jogos', this)">🎮 Jogos</button>
       <button class="nav-tab" onclick="switchTab('tutoriais', this)">🎬 Tutoriais</button>
       <button class="nav-tab" onclick="switchTab('links', this)">🔗 Links</button>
+    </div>
+    <div class="sidebar-group">
+      <p class="sidebar-group-title">🙋 Minha Conta</p>
       <button class="nav-tab" onclick="switchTab('aluno', this)">🧑‍💻 Área_Dev</button>
       <button class="nav-tab" onclick="switchTab('turma', this)">👥 Turma</button>
+    </div>
+    <div class="sidebar-group">
+      <p class="sidebar-group-title">🕹️ Atividades Extras</p>
       <a href="./puzzle.html" class="nav-tab">🧩 Puzzle</a>
       <a href="./puzzle2.html" class="nav-tab">🧠 Puzzle 2</a>
       <a href="./labirinto.html" class="nav-tab">🤖 Labirinto</a>
       <a href="./labirinto2.html" class="nav-tab">🛼 Labirinto 2</a>
+    </div>
+    <div class="sidebar-group" style="padding-bottom:14px;">
+      <p class="sidebar-group-title">🛠️ Ferramentas</p>
       <a href="./pixeleditor.html" class="nav-tab">🎨 Pixel Art</a>
-    </nav>
+    </div>
+  </nav>
+</aside>
+
+<header class="border-b border-[#322c47] bg-[#1e1a2e]/90 backdrop-blur sticky top-0 z-50">
+  <div class="max-w-6xl mx-auto px-4 flex items-center justify-between py-3">
+    <button onclick="openSidebar()" class="flex items-center gap-2 text-white">
+      <span class="text-lg leading-none">☰</span>
+      <span class="font-display text-sm">Menu</span>
+    </button>
+    <div class="flex items-center gap-2.5">
+      <span class="w-9 h-9 rounded-2xl bg-gradient-to-br from-[#7c3aed] to-[#38bdf8] flex items-center justify-center text-base shrink-0">🚀</span>
+      <span class="font-display text-base tracking-tight text-white">Overcast Realm</span>
+    </div>
   </div>
 </header>
 
@@ -619,6 +690,19 @@ function switchTab(tabName, btn) {
   document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
   document.getElementById('section-' + tabName).classList.add('active');
   if (btn) btn.classList.add('active');
+  closeSidebar();
+}
+
+function openSidebar(){
+  document.getElementById('sidebar').classList.add('show');
+  document.getElementById('sidebar-overlay').classList.add('show');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('show');
+  document.getElementById('sidebar-overlay').classList.remove('show');
+}
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.contains('show') ? closeSidebar() : openSidebar();
 }
 
 function switchTabByName(tabName) {
