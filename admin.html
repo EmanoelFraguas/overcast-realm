@@ -11,16 +11,16 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <style>
     :root {
-      --bg-base: #0a0a0c;
-      --bg-card: #121216;
-      --bg-input: #000000;
+      --bg-base: #f1f0f7;
+      --bg-card: #ffffff;
+      --bg-input: #ffffff;
       --accent-storm: #4f46e5;
-      --accent-glow: #a5b4fc;
-      --accent-red: #ef4444;
-      --accent-green: #10b981;
-      --text-primary: #f3f4f6;
-      --text-muted: #6b7280;
-      --border-brutal: #2e2e3a;
+      --accent-glow: #4338ca;
+      --accent-red: #dc2626;
+      --accent-green: #059669;
+      --text-primary: #1e1b2e;
+      --text-muted: #6b6478;
+      --border-brutal: #d8d5e6;
     }
 
     * { 
@@ -35,8 +35,8 @@
       margin: 0;
       min-height: 100vh;
       background-image: 
-        linear-gradient(rgba(46, 46, 58, 0.1) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(46, 46, 58, 0.1) 1px, transparent 1px);
+        linear-gradient(rgba(79, 70, 229, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(79, 70, 229, 0.05) 1px, transparent 1px);
       background-size: 30px 30px;
     }
 
@@ -48,7 +48,7 @@
     .card {
       background: var(--bg-card);
       border: 2px solid var(--border-brutal);
-      box-shadow: 4px 4px 0px #000000;
+      box-shadow: 4px 4px 0px var(--border-brutal);
     }
 
     .input-field {
@@ -65,7 +65,7 @@
     }
 
     .select-field {
-      background: #1c1c24;
+      background: #f5f4fb;
       border: 2px solid var(--border-brutal);
       color: var(--text-primary);
       padding: 8px;
@@ -79,15 +79,15 @@
       padding: 8px 12px;
       cursor: pointer;
       border: 2px solid transparent;
-      box-shadow: 2px 2px 0px #000000;
+      box-shadow: 2px 2px 0px var(--border-brutal);
     }
     
     .btn-add { background: var(--accent-storm); color: #fff; }
     .btn-add:hover { background: #3730a3; }
     .btn-del { background: transparent; border-color: var(--accent-red); color: var(--accent-red); }
     .btn-del:hover { background: var(--accent-red); color: #fff; }
-    .btn-edit { background: transparent; border-color: #eab308; color: #eab308; }
-    .btn-edit:hover { background: #eab308; color: #000; }
+    .btn-edit { background: transparent; border-color: #b45309; color: #b45309; }
+    .btn-edit:hover { background: #b45309; color: #fff; }
 
     .nav-tab {
       font-family: 'Press Start 2P', monospace;
@@ -176,7 +176,7 @@
     .turma-card-new:hover { color: white; border-color: var(--accent-glow); }
 
     .auth-input {
-      background: #000000;
+      background: #f5f4fb;
       border: 3px solid var(--border-brutal);
       color: var(--text-primary);
       padding: 12px;
@@ -257,10 +257,10 @@
 </head>
 <body class="p-4 md:p-8">
 
-<div id="admin-auth-screen" class="fixed inset-0 bg-[#0a0a0c] z-[99999] flex items-center justify-center p-4">
-  <div class="card p-6 w-full max-w-sm bg-[#121216] text-center">
+<div id="admin-auth-screen" class="fixed inset-0 bg-[#241f38] z-[99999] flex items-center justify-center p-4">
+  <div class="card p-6 w-full max-w-sm bg-white text-center">
     <p class="font-pixel text-[9px] text-red-400 mb-3">// TERMINAL_RAIZ_RESTRITO</p>
-    <h2 class="font-pixel text-[11px] text-white mb-5">Autenticação do Administrador</h2>
+    <h2 class="font-pixel text-[11px] text-gray-900 mb-5">Autenticação do Administrador</h2>
     <input
       type="password"
       id="admin-password-input"
@@ -294,15 +294,15 @@
 
   <aside class="admin-sidebar">
     <div class="sidebar-brand">
-      <p class="font-pixel text-[9px] text-white">OVERCAST</p>
+      <p class="font-pixel text-[9px] text-gray-900">OVERCAST</p>
       <p class="font-pixel text-[7px] text-gray-500 mt-1">TERMINAL_MASTER</p>
     </div>
     <button class="sidebar-nav-item active" id="nav-turmas" onclick="switchPanel('turmas')">🏫 TURMAS</button>
     <button class="sidebar-nav-item" id="nav-conteudo" onclick="switchPanel('conteudo')">🎮 CONTEÚDO</button>
     <div class="sidebar-bottom pb-5 space-y-2">
       <button class="btn-action bg-gray-800 text-white w-full" onclick="exportData()">EXPORTAR_JSON</button>
-      <button class="btn-action bg-red-950 text-red-400 w-full" onclick="resetStorage()">RESET_FACTORY</button>
-      <button class="btn-action bg-zinc-900 text-zinc-400 border border-zinc-700 w-full" onclick="logoutAdmin()">LOGOUT_</button>
+      <button class="btn-action bg-red-50 text-red-700 border border-red-200 w-full" onclick="resetStorage()">RESET_FACTORY</button>
+      <button class="btn-action bg-gray-200 text-gray-700 border border-gray-300 w-full" onclick="logoutAdmin()">LOGOUT_</button>
     </div>
   </aside>
 
@@ -312,18 +312,18 @@
     <section id="panel-turmas">
       <header class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
-          <h1 class="font-pixel text-sm text-white">[⚒ TURMAS]</h1>
+          <h1 class="font-pixel text-sm text-gray-900">[⚒ TURMAS]</h1>
           <p id="sync-status" class="text-xs font-mono mt-2 text-gray-500">Iniciando barramento...</p>
         </div>
         <span id="turmas-sync-status" class="text-[10px] font-mono text-gray-500">—</span>
       </header>
 
-      <div class="mb-6 p-3 border border-[#22222c] bg-[#0c0c10] max-w-md">
+      <div class="mb-6 p-3 border border-[#d8d5e6] bg-[#f5f4fb] max-w-md">
         <div class="flex items-center justify-between mb-1.5">
           <span class="font-pixel text-[8px] text-gray-500">ARMAZENAMENTO_SUPABASE</span>
-          <span id="storage-usage-text" class="text-[10px] font-mono text-gray-400">calculando...</span>
+          <span id="storage-usage-text" class="text-[10px] font-mono text-gray-600">calculando...</span>
         </div>
-        <div class="w-full h-1.5 bg-[#1a1a22] overflow-hidden">
+        <div class="w-full h-1.5 bg-[#e4e1f0] overflow-hidden">
           <div id="storage-usage-bar" class="h-full bg-emerald-500" style="width:0%"></div>
         </div>
       </div>
@@ -349,11 +349,11 @@
             </div>
             <div>
               <label class="block mb-1 text-gray-500">CÓDIGO DE ACESSO (OS ALUNOS USAM ESSE CÓDIGO NA ABA TURMA)</label>
-              <input type="text" id="turma-codigo-acesso" class="input-field" placeholder="EX: israelita5" />
+              <input type="text" id="turma-codigo-acesso" class="input-field" placeholder="código de acesso da turma" />
             </div>
             <div class="flex gap-2">
               <button class="btn-action btn-add flex-1" onclick="criarTurma()">CRIAR_TURMA</button>
-              <button class="btn-action bg-zinc-800 text-zinc-400" onclick="fecharFormNovaTurma()">CANCELAR</button>
+              <button class="btn-action bg-gray-200 text-gray-700" onclick="fecharFormNovaTurma()">CANCELAR</button>
             </div>
           </div>
         </div>
@@ -361,7 +361,7 @@
 
       <!-- Detalhe de uma turma (alunos, uploads) -->
       <div id="turmas-detail-view" class="hidden">
-        <button class="btn-action bg-zinc-900 text-zinc-400 border border-zinc-700 mb-4" onclick="voltarParaGridTurmas()">← VOLTAR</button>
+        <button class="btn-action bg-gray-200 text-gray-700 border border-gray-300 mb-4" onclick="voltarParaGridTurmas()">← VOLTAR</button>
 
         <div class="card p-5 mb-6 max-w-md">
           <h2 class="font-pixel text-[10px] text-indigo-400 mb-4">// ADICIONAR_ALUNOS_EM_LOTE</h2>
@@ -381,14 +381,14 @@
     <!-- ================= PAINEL: CONTEÚDO ================= -->
     <section id="panel-conteudo" class="hidden">
       <header class="mb-6">
-        <h1 class="font-pixel text-sm text-white">[⚒ CONTEÚDO_DO_SITE]</h1>
+        <h1 class="font-pixel text-sm text-gray-900">[⚒ CONTEÚDO_DO_SITE]</h1>
         <p class="text-xs font-mono mt-2 text-gray-500">Jogos, tutoriais e links (sincronizado via GitHub)</p>
       </header>
 
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div class="lg:col-span-5">
           <div class="card p-4">
-            <div class="flex border-b border-[#2e2e3a] mb-4">
+            <div class="flex border-b border-[#d8d5e6] mb-4">
               <button class="nav-tab active" id="tab-video" onclick="switchFormTab('video')">VÍDEOS</button>
               <button class="nav-tab" id="tab-link" onclick="switchFormTab('link')">LINKS</button>
               <button class="nav-tab" id="tab-jogo" onclick="switchFormTab('jogo')">JOGOS</button>
@@ -398,7 +398,7 @@
               <input type="hidden" id="edit-video-index" value="" />
               <input type="text" id="video-titulo" placeholder="TÍTULO DA AULA" class="input-field" />
               <input type="text" id="video-url" placeholder="URL EMBED DO YOUTUBE" class="input-field" />
-              <select id="video-categoria" class="input-field bg-black">
+              <select id="video-categoria" class="input-field">
                 <option value="Básico">Básico</option>
                 <option value="Lógica">Lógica</option>
                 <option value="Arte">Arte</option>
@@ -779,10 +779,10 @@ function renderTurmaAtiva() {
   if (!turma) { container.innerHTML = '<p class="text-gray-600 font-pixel text-[8px] p-4">TURMA NÃO ENCONTRADA — talvez tenha sido removida.</p>'; return; }
 
   container.innerHTML = `
-    <div class="border border-[#22222c] bg-[#0c0c10]">
-      <div class="flex items-center justify-between p-3 border-b border-[#22222c]">
+    <div class="border border-[#d8d5e6] bg-[#f5f4fb]">
+      <div class="flex items-center justify-between p-3 border-b border-[#d8d5e6]">
         <div>
-          <p class="font-pixel text-[9px] text-white">${turma.nome}</p>
+          <p class="font-pixel text-[9px] text-gray-900">${turma.nome}</p>
           <p class="text-[10px] text-gray-500 font-mono">código de acesso: <span class="text-emerald-400">${turma.codigo_acesso}</span> · ${turma.alunos.length} aluno(s)</p>
         </div>
         <div class="flex items-center gap-2">
@@ -790,13 +790,13 @@ function renderTurmaAtiva() {
           <button class="btn-action btn-del" onclick="removerTurma('${turma.id}', '${turma.nome.replace(/'/g, "\\'")}')">DEL_TURMA</button>
         </div>
       </div>
-      <div class="divide-y divide-[#181822]">
+      <div class="divide-y divide-[#e4e1f0]">
         ${turma.alunos.map(aluno => `
           <div class="p-3">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <span class="text-indigo-400 font-mono text-xs font-bold">${aluno.codigo}</span>
-                <span class="text-white text-xs ml-2">${aluno.nome}</span>
+                <span class="text-gray-900 text-xs ml-2">${aluno.nome}</span>
               </div>
               <div class="flex items-center gap-2">
                 <select class="select-field" onchange="atualizarEtapaAluno('${aluno.id}', this.value)">
@@ -1077,21 +1077,21 @@ function renderRecursos() {
   let html = '';
 
   data.videos.forEach((v, i) => {
-    html += `<div class="p-2 border border-blue-900 bg-[#0c0c10] flex justify-between items-center">
+    html += `<div class="p-2 border border-blue-200 bg-blue-50 flex justify-between items-center">
       <div><span class="text-blue-400">[VÍDEO]</span> ${v.titulo} (${v.categoria})</div>
       <div class="space-x-1"><button class="btn-action btn-edit" onclick="editVideo(${i})">EDIT</button><button class="btn-action btn-del" onclick="deleteRecurso('videos', ${i})">X</button></div>
     </div>`;
   });
 
   data.links.forEach((l, i) => {
-    html += `<div class="p-2 border border-purple-900 bg-[#0c0c10] flex justify-between items-center">
+    html += `<div class="p-2 border border-purple-200 bg-purple-50 flex justify-between items-center">
       <div><span class="text-purple-400">[LINK]</span> ${l.titulo} [${l.tag}]</div>
       <div class="space-x-1"><button class="btn-action btn-edit" onclick="editLink(${i})">EDIT</button><button class="btn-action btn-del" onclick="deleteRecurso('links', ${i})">X</button></div>
     </div>`;
   });
 
   data.jogos.forEach((j, i) => {
-    html += `<div class="p-2 border border-yellow-900 bg-[#0c0c10] flex justify-between items-center">
+    html += `<div class="p-2 border border-yellow-200 bg-yellow-50 flex justify-between items-center">
       <div><span class="text-yellow-500">[JOGO]</span> ${j.titulo} (Por: ${j.autor})</div>
       <div class="space-x-1"><button class="btn-action btn-edit" onclick="editJogo(${i})">EDIT</button><button class="btn-action btn-del" onclick="deleteRecurso('jogos', ${i})">X</button></div>
     </div>`;
