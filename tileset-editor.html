@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Editor de Tileset — Overcast Realm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Baloo+2:wght@500;700;800&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#181229;
+    --bg-panel:#241c3d;
+    --bg-card:#2c2350;
+    --border:#4a3a7c;
+    --pink:#ff5fa2;
+    --cyan:#4be8ff;
+    --yellow:#ffd23f;
+    --green:#4be08f;
+    --purple:#a06bff;
+    --orange:#ff9a3c;
+    --ink:#ffffff;
+    --ink-soft:#c9bfe8;
+    --tool-bg:#1c1533;
+    --checker-a:#3a3358;
+    --checker-b:#2c2646;
+  }
+  body.theme-light{
+    --bg-deep:#f3f0fa;
+    --bg-panel:#ffffff;
+    --bg-card:#f0ecfa;
+    --border:#d9d0f0;
+    --ink:#2a2145;
+    --ink-soft:#6c5f96;
+    --tool-bg:#f5f2fc;
+    --checker-a:#e9e4fa;
+    --checker-b:#dcd5f4;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;}
+  body{
+    background:
+      radial-gradient(circle at 10% 10%, #2e2258 0%, transparent 45%),
+      radial-gradient(circle at 90% 20%, #1e3a52 0%, transparent 40%),
+      radial-gradient(circle at 80% 90%, #35204a 0%, transparent 45%),
+      var(--bg-deep);
+    color:var(--ink);
+    font-family:'Nunito', sans-serif;
+    height:100dvh;
+    padding:10px;
+    display:flex;
+  }
+  .wrap{max-width:1400px;margin:0 auto;width:100%;height:100%;display:flex;flex-direction:column;min-height:0;}
+  h1,h2,h3{ font-family:'Press Start 2P', monospace; }
+
+  header{ text-align:center; margin-bottom:8px; flex-shrink:0; position:relative; }
+  header h1{ font-size:clamp(14px,2.4vh,22px); color:var(--cyan); text-shadow:3px 3px 0 #000; margin:0 0 4px; }
+  body.theme-light header h1{ text-shadow:none; }
+  header p{ font-family:'Baloo 2', sans-serif; font-weight:700; color:var(--ink-soft); font-size:12px; margin:0; }
+  .theme-toggle-btn{
+    position:absolute; top:0; right:0; font-size:20px;
+    background:var(--bg-card); border:2px solid var(--border); border-radius:10px;
+    cursor:pointer; padding:6px 10px;
+  }
+  .back-home{
+    position:absolute; top:0; left:0;
+    display:inline-flex; align-items:center; gap:5px;
+    font-family:'Baloo 2', sans-serif; font-weight:700; font-size:12px;
+    color:var(--ink-soft); background:var(--bg-card); border:2px solid var(--border);
+    border-radius:999px; padding:8px 14px; text-decoration:none;
+  }
+
+  .panel{
+    background:var(--bg-panel); border:3px solid var(--border); border-radius:22px;
+    box-shadow:0 8px 0 #120c22; padding:16px; margin-bottom:10px; flex-shrink:0;
+  }
+  body.theme-light .panel{ box-shadow:0 8px 0 var(--border); }
+  .panel h2{ font-size:12px; color:var(--yellow); margin:0 0 10px; }
+
+  .btn{
+    font-family:'Press Start 2P', monospace; font-size:10px; color:#fff; border:none;
+    border-radius:12px; padding:10px 14px; cursor:pointer; box-shadow:0 4px 0 rgba(0,0,0,0.3);
+    display:inline-flex; align-items:center; gap:6px;
+  }
+  .btn:active{ transform:translateY(3px); box-shadow:none; }
+  .btn.pink{ background:var(--pink); }
+  .btn.cyan{ background:#0891b2; }
+  .btn.green{ background:#0d9b6c; }
+  .btn.purple{ background:var(--purple); }
+  .btn.gray{ background:#4a3a7c; }
+  .btn.orange{ background:#c76a12; }
+  .btn.big{ font-size:12px; padding:14px 20px; }
+  .btn.selected{ outline:3px solid #fff; }
+  .btn.small{ font-size:8px; padding:6px 8px; }
+
+  .setup-scroll{ overflow-y:auto; min-height:0; flex:1; }
+  .choice-row{ display:flex; flex-wrap:wrap; gap:10px; }
+  .choice-card{
+    background:var(--bg-card); border:3px solid var(--border); border-radius:16px;
+    padding:14px; cursor:pointer; min-width:130px; text-align:center; transition:transform .1s;
+  }
+  .choice-card:hover{ transform:translateY(-2px); }
+  .choice-card.selected{ border-color:var(--yellow); box-shadow:0 0 0 3px rgba(255,210,63,0.35); }
+  .choice-card .title{ font-family:'Baloo 2', sans-serif; font-weight:800; font-size:15px; margin-bottom:8px; }
+  .mini-swatches{ display:flex; gap:4px; justify-content:center; flex-wrap:wrap; margin-bottom:6px; max-width:150px; }
+  .mini-swatch{ width:12px; height:12px; border-radius:3px; }
+  .choice-card .sub{ font-family:'Baloo 2', sans-serif; font-size:11px; color:var(--ink-soft); }
+
+  #setup-screen{ display:flex; flex-direction:column; min-height:0; flex:1; }
+  #editor-screen{ display:none; min-height:0; flex:1; flex-direction:column; }
+  .setup-footer{ text-align:center; margin-top:10px; flex-shrink:0; }
+
+  .tabs{ display:flex; gap:8px; justify-content:center; margin-bottom:10px; flex-shrink:0; }
+  .tab-btn{
+    font-family:'Press Start 2P', monospace; font-size:11px; color:var(--ink-soft);
+    background:var(--bg-card); border:3px solid var(--border); border-radius:14px;
+    padding:10px 16px; cursor:pointer;
+  }
+  .tab-btn.active{ color:#fff; background:linear-gradient(160deg,var(--purple),#6a3fd6); border-color:var(--purple); }
+  .tab-content{ display:none; flex:1; min-height:0; }
+  .tab-content.active{ display:flex; }
+
+  .editor-layout{ display:flex; flex-wrap:nowrap; gap:12px; align-items:stretch; flex:1; min-height:0; overflow-x:auto; width:100%; }
+  .col{ display:flex; flex-direction:column; gap:8px; min-height:0; }
+  .col-scroll{ overflow-y:auto; min-height:0; }
+
+  .toolbar{ display:flex; flex-direction:column; gap:8px; background:var(--bg-card); border:3px solid var(--border); border-radius:16px; padding:10px; flex-shrink:0; }
+  .tool-btn{ width:44px; height:44px; font-size:20px; border:3px solid var(--border); background:var(--tool-bg); border-radius:12px; cursor:pointer; color:#fff; }
+  .tool-btn.active{ border-color:var(--cyan); background:#0e3f4a; }
+
+  .canvas-holder{
+    background:repeating-conic-gradient(var(--checker-a) 0% 25%, var(--checker-b) 0% 50%) 0 0/16px 16px;
+    border:4px solid var(--border); border-radius:12px; display:inline-block; line-height:0;
+  }
+  #tile-grid{ display:grid; line-height:0; }
+  .tcell{ width:100%; height:100%; }
+  #tile-grid.grid-on .tcell{ box-shadow: inset 0 0 0 1px rgba(255,255,255,0.22); }
+  .tcell.hovered{ outline:2px solid #fff; outline-offset:-2px; position:relative; z-index:2; }
+
+  .current-color-row{ display:flex; align-items:center; gap:10px; font-family:'Baloo 2', sans-serif; font-weight:700; color:var(--ink-soft); font-size:13px; }
+  #current-color-swatch{ width:26px; height:26px; border-radius:6px; border:2px solid #fff; }
+
+  .palette-row{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; max-width:230px; }
+  .pal-swatch{ width:30px; height:30px; border-radius:8px; border:3px solid transparent; cursor:pointer; position:relative; }
+  .pal-swatch.selected{ border-color:#fff; transform:scale(1.1); }
+
+  .frames-panel{ background:var(--bg-card); border:3px solid var(--border); border-radius:14px; padding:10px; }
+  .label{ font-family:'Press Start 2P', monospace; font-size:9px; color:var(--ink-soft); margin-bottom:8px; }
+
+  .tile-strip{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+  .tile-thumb-item{
+    position:relative; width:48px; height:48px; border:3px solid var(--border); border-radius:8px;
+    cursor:pointer; background:repeating-conic-gradient(var(--checker-a) 0% 25%, var(--checker-b) 0% 50%) 0 0/8px 8px;
+    overflow:hidden;
+  }
+  .tile-thumb-item.active{ border-color:var(--cyan); }
+  .tile-thumb-item.stamp-active{ border-color:var(--yellow); box-shadow:0 0 0 3px rgba(255,210,63,0.35); }
+  .tile-thumb-item canvas{ width:100%; height:100%; display:block; image-rendering:pixelated; }
+  .tile-thumb-item .tname{
+    position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,0.65);
+    font-family:'Baloo 2', sans-serif; font-size:8px; color:#fff; text-align:center; padding:1px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .tile-del{
+    position:absolute; top:-6px; right:-6px; width:16px; height:16px; border-radius:50%;
+    border:none; background:var(--pink); color:#fff; font-size:9px; cursor:pointer; line-height:1;
+  }
+  .tile-add{
+    width:48px; height:48px; border:3px dashed var(--border); border-radius:8px;
+    background:var(--tool-bg); color:var(--ink-soft); font-size:18px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .tile-name-input{
+    width:100%; padding:8px; border-radius:8px; border:2px solid var(--border);
+    background:var(--tool-bg); color:var(--ink); font-family:'Baloo 2',sans-serif; font-weight:700; font-size:13px;
+  }
+
+  #map-canvas{ image-rendering:pixelated; border:4px solid var(--border); border-radius:12px; display:block; cursor:crosshair; }
+  .map-canvas-holder{ background:repeating-conic-gradient(var(--checker-a) 0% 25%, var(--checker-b) 0% 50%) 0 0/16px 16px; border-radius:12px; display:inline-block; }
+
+  .hover-coord{
+    font-family:'Press Start 2P', monospace; font-size:11px; color:var(--yellow);
+    background:var(--bg-card); border:2px solid var(--border); border-radius:8px;
+    padding:6px 12px; min-width:140px; text-align:center;
+  }
+
+  .action-list{ display:flex; flex-direction:column; gap:8px; }
+  .action-list .btn{ justify-content:center; }
+
+  .zoom-overlay{ position:fixed; inset:0; background:rgba(58,43,82,0.55); display:none; align-items:center; justify-content:center; z-index:999; }
+  .zoom-overlay.show{ display:flex; }
+  .zoom-box{ background:var(--bg-panel); border:4px solid var(--yellow); border-radius:20px; padding:22px; text-align:center; max-width:95vw; max-height:95vh; overflow:auto; }
+  .zoom-box h3{ font-size:12px; color:var(--yellow); margin:0 0 12px; }
+
+  @media (max-width:640px){ .toolbar{ flex-direction:row; flex-wrap:wrap; justify-content:center; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <a href="./index.html" class="back-home">← Voltar</a>
+    <button class="theme-toggle-btn" id="theme-toggle-btn" onclick="toggleTheme()" title="Alternar fundo claro/escuro">🌙</button>
+    <h1>🧱 EDITOR DE TILESET</h1>
+    <p>Overcast Realm — desenhe peças e monte um mapa</p>
+  </header>
+
+  <div class="panel" id="autosave-banner" style="display:none; text-align:center;">
+    <p style="font-family:'Baloo 2',sans-serif;font-weight:800;color:var(--yellow);font-size:14px;margin:0 0 10px;">💾 Encontramos um projeto salvo automaticamente!</p>
+    <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+      <button class="btn green" onclick="restoreAutosave()">▶️ Continuar de onde parei</button>
+      <button class="btn gray" onclick="discardAutosave()">🗑️ Começar do zero</button>
+    </div>
+  </div>
+
+  <!-- ============== SETUP ============== -->
+  <div id="setup-screen">
+   <div class="setup-scroll">
+    <div class="panel">
+      <h2>1️⃣ TAMANHO DE CADA TILE</h2>
+      <div class="choice-row" id="tilesize-choices"></div>
+    </div>
+    <div class="panel">
+      <h2>2️⃣ TAMANHO DO MAPA</h2>
+      <div class="choice-row" id="mapsize-choices"></div>
+    </div>
+    <div class="panel">
+      <h2>3️⃣ ESCOLHA A PALETA</h2>
+      <div class="choice-row" id="palette-choices"></div>
+    </div>
+   </div>
+    <div class="setup-footer">
+      <button class="btn big pink" onclick="startEditor()">▶️ COMEÇAR</button>
+    </div>
+  </div>
+
+  <!-- ============== EDITOR ============== -->
+  <div id="editor-screen">
+    <div class="tabs">
+      <button class="tab-btn active" id="tabbtn-tiles" onclick="goToTab('tiles')">✏️ Desenhar Tiles</button>
+      <button class="tab-btn" id="tabbtn-map" onclick="goToTab('map')">🗺️ Montar Mapa</button>
+    </div>
+
+    <!-- ===== ABA: DESENHAR TILES ===== -->
+    <div class="tab-content active" id="tab-tiles">
+      <div class="panel" style="flex:1; min-height:0; display:flex;">
+        <div class="editor-layout">
+
+          <div class="col" style="flex-shrink:0;">
+            <div class="toolbar">
+              <button class="tool-btn active" id="tt-pencil" onclick="setTileTool('pencil')" title="Lápis">✏️</button>
+              <button class="tool-btn" id="tt-eraser" onclick="setTileTool('eraser')" title="Borracha">🧽</button>
+              <button class="tool-btn" id="tt-bucket" onclick="setTileTool('bucket')" title="Balde">🪣</button>
+              <button class="tool-btn" id="tt-eyedrop" onclick="setTileTool('eyedrop')" title="Conta-gotas">💧</button>
+              <button class="tool-btn" id="tt-grid" onclick="toggleTileGrid()" title="Grade">#️⃣</button>
+              <button class="tool-btn" id="tt-undo" onclick="undoTile()" title="Desfazer (Ctrl+Z)">↩️</button>
+            </div>
+          </div>
+
+          <div class="col" style="flex:1; align-items:center; justify-content:center; min-width:180px;">
+            <div class="canvas-holder"><div id="tile-grid"></div></div>
+            <div class="hover-coord" id="tile-hover-coord" style="margin-top:8px;">X: – &nbsp; Y: –</div>
+            <div class="current-color-row" style="margin-top:6px;">Cor atual: <span id="current-color-swatch"></span></div>
+          </div>
+
+          <div class="col col-scroll" style="width:220px; flex-shrink:0;">
+            <div class="frames-panel">
+              <div class="label">// PALETA</div>
+              <div class="palette-row" id="editor-palette"></div>
+            </div>
+          </div>
+
+          <div class="col col-scroll" style="width:250px; flex-shrink:0;">
+            <div class="frames-panel">
+              <div class="label">// SEUS_TILES (clique pra editar)</div>
+              <div class="tile-strip" id="tile-strip"></div>
+              <input type="text" id="tile-name-input" class="tile-name-input" placeholder="Nome do tile (ex: Grama)" oninput="renameCurrentTile(this.value)">
+            </div>
+            <div class="action-list">
+              <button class="btn gray" onclick="clearTileCanvas()">🧹 Limpar Este Tile</button>
+              <button class="btn cyan" onclick="goToTab('map')">🗺️ Ir Montar o Mapa ➡️</button>
+              <button class="btn gray" onclick="backToSetup()">⚙️ Configurações</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ABA: MONTAR MAPA ===== -->
+    <div class="tab-content" id="tab-map">
+      <div class="panel" style="flex:1; min-height:0; display:flex;">
+        <div class="editor-layout">
+
+          <div class="col" style="flex-shrink:0;">
+            <div class="toolbar">
+              <button class="tool-btn active" id="mt-stamp" onclick="setMapTool('stamp')" title="Carimbar">🖌️</button>
+              <button class="tool-btn" id="mt-eraser" onclick="setMapTool('eraser')" title="Apagar célula">🧽</button>
+              <button class="tool-btn" id="mt-bucket" onclick="setMapTool('bucket')" title="Balde (preenche área)">🪣</button>
+              <button class="tool-btn" id="mt-undo" onclick="undoMap()" title="Desfazer (Ctrl+Z)">↩️</button>
+            </div>
+          </div>
+
+          <div class="col" style="flex:1; align-items:center; justify-content:center; min-width:220px;">
+            <div class="map-canvas-holder"><canvas id="map-canvas"></canvas></div>
+            <div class="hover-coord" id="map-hover-coord" style="margin-top:8px;">X: – &nbsp; Y: –</div>
+          </div>
+
+          <div class="col col-scroll" style="width:250px; flex-shrink:0;">
+            <div class="frames-panel">
+              <div class="label">// TILE_PRA_CARIMBAR</div>
+              <div class="tile-strip" id="stamp-strip"></div>
+            </div>
+            <div class="action-list">
+              <button class="btn purple" onclick="exportMapPNG()">🖼️ Exportar Mapa (PNG)</button>
+              <button class="btn purple" onclick="exportMapJSON()">📄 Exportar Dados (JSON)</button>
+              <button class="btn green" onclick="openSaveStudentModal()">📁 Salvar na Pasta do Aluno</button>
+              <div id="export-status"></div>
+              <button class="btn gray" onclick="clearMapCanvas()">🧹 Limpar Mapa</button>
+              <button class="btn gray" onclick="backToSetup()">⚙️ Configurações</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== MODAL: confirmar antes de voltar ============== -->
+  <div class="zoom-overlay" id="back-confirm-modal">
+    <div class="zoom-box" style="max-width:380px;">
+      <h3>💾 SALVAR ANTES DE VOLTAR?</h3>
+      <p style="font-family:'Baloo 2',sans-serif;font-weight:700;color:var(--ink-soft);font-size:13px;margin-bottom:14px;">Se voltar sem salvar, o projeto atual será perdido.</p>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button class="btn purple" style="justify-content:center;" onclick="closeBackConfirm();openSaveStudentModal();">💾 Salvar na pasta do aluno</button>
+        <button class="btn gray" style="justify-content:center;" onclick="confirmBackNoSave()">➡️ Voltar sem salvar</button>
+        <button class="btn cyan" style="justify-content:center;" onclick="closeBackConfirm()">✕ Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== MODAL: salvar na pasta do aluno ============== -->
+  <div class="zoom-overlay" id="save-student-modal">
+    <div class="zoom-box" style="max-width:420px;">
+      <h3>📁 SALVAR NA PASTA DO ALUNO</h3>
+      <div id="save-step-turma">
+        <p style="font-family:'Baloo 2',sans-serif;font-weight:700;color:var(--ink-soft);font-size:13px;">Código da turma:</p>
+        <input type="text" id="save-turma-code" placeholder="Código da turma" style="width:100%;padding:10px;border-radius:8px;border:2px solid var(--border);background:var(--tool-bg);color:var(--ink);font-family:'Baloo 2',sans-serif;margin-bottom:8px;">
+        <button class="btn cyan" style="width:100%;justify-content:center;" onclick="lookupTurmaForSave()">🔎 Buscar Turma</button>
+        <div id="save-turma-error" style="font-family:'Baloo 2',sans-serif;color:var(--pink);font-size:12px;margin-top:8px;"></div>
+      </div>
+      <div id="save-step-aluno" style="display:none;">
+        <p style="font-family:'Baloo 2',sans-serif;font-weight:800;color:var(--yellow);font-size:14px;">Turma: <span id="save-turma-name"></span></p>
+        <p style="font-family:'Baloo 2',sans-serif;font-weight:700;color:var(--ink-soft);font-size:12px;">Clique no seu nome:</p>
+        <div id="save-aluno-list" style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;"></div>
+        <button class="btn gray" style="width:100%;justify-content:center;margin-top:10px;" onclick="backToTurmaStep()">← Trocar turma</button>
+      </div>
+      <div id="save-status" style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:13px;margin-top:10px;min-height:18px;"></div>
+      <button class="btn gray" style="width:100%;justify-content:center;margin-top:8px;" onclick="closeSaveStudentModal()">✕ Fechar</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ======================================================
+   PALETAS (mesmas do editor de pixel art)
+====================================================== */
+const PALETTES = {
+  retro:  { name:'🕹️ Retrô Arcade', colors:['#000000','#ffffff','#ff5fa2','#4be8ff','#ffd23f','#4be08f','#a06bff','#ff9a3c'] },
+  doces:  { name:'🍬 Doces (Pastel)', colors:['#ffd1e8','#c9f2ff','#fff3b0','#d4f7dc','#e6d4ff','#ffe0c2','#ffffff','#5a4a6a'] },
+  natureza: { name:'🌿 Natureza', colors:['#2e5d32','#6b8f3c','#a3d977','#8b5a2b','#c9a876','#4a90c4','#f4e3c1','#3a2f28'] },
+  neon: { name:'🌃 Neon Noturno', colors:['#0d0221','#ff0abe','#00f0ff','#faff00','#7b2ff7','#ff5e00','#00ff87','#ffffff'] },
+  pico8: { name:'🎮 PICO-8 (Lospec)', colors:['#000000','#1D2B53','#7E2553','#008751','#AB5236','#5F574F','#C2C3C7','#FFF1E8','#FF004D','#FFA300','#FFEC27','#00E436','#29ADFF','#83769C','#FF77A8','#FFCCAA'] },
+  sweetie16: { name:'🍭 Sweetie 16 (Lospec)', colors:['#1a1c2c','#5d275d','#b13e53','#ef7d57','#ffcd75','#a7f070','#38b764','#257179','#29366f','#3b5dc9','#41a6f6','#73eff7','#f4f4f4','#94b0c2','#566c86','#333c57'] },
+  nyx8: { name:'🌙 Nyx8 (Lospec)', colors:['#08141e','#0f2a3f','#20394f','#f6d6bd','#c3a38a','#997577','#816271','#4e495f'] }
+};
+function hslToHex(h,s,l){
+  s/=100; l/=100;
+  const k = n => (n + h/30) % 12;
+  const a = s * Math.min(l, 1-l);
+  const f = n => l - a*Math.max(-1, Math.min(k(n)-3, Math.min(9-k(n),1)));
+  const toHex = x => Math.round(255*x).toString(16).padStart(2,'0');
+  return '#'+toHex(f(0))+toHex(f(8))+toHex(f(4));
+}
+function buildBigPalette(){
+  const colors = [];
+  for(let i=0;i<8;i++) colors.push(hslToHex(0,0,Math.round(i*100/7)));
+  for(let h=0; h<360; h+=30) colors.push(hslToHex(h,75,55));
+  return colors;
+}
+PALETTES.ampla = { name: '🌈 Paleta Ampla (20 cores)', colors: buildBigPalette() };
+
+/* ======================================================
+   ESTADO GLOBAL
+====================================================== */
+let tileSize = 8;
+let mapCols = 12, mapRows = 8;
+let selectedPaletteKey = 'retro';
+let sessionPaletteColors = [];
+let currentColor = '#000000';
+
+let tiles = [];            // [{id, name, pixels:[tileSize*tileSize]}]
+let currentTileId = null;  // tile sendo editado na aba "Desenhar Tiles"
+let stampTileId = null;    // tile selecionado pra carimbar no mapa
+let mapGrid = [];          // tileId por célula (null = vazio)
+
+let currentTileTool = 'pencil';
+let showTileGrid = true;
+let isPainting = false;
+let tileUndoStack = [];
+let mapUndoStack = [];
+let nextTileNumId = 1;
+
+/* ======================================================
+   SETUP
+====================================================== */
+const MAP_PRESETS = [
+  {cols:8, rows:6, label:'8×6'},
+  {cols:12, rows:8, label:'12×8'},
+  {cols:16, rows:10, label:'16×10'},
+  {cols:20, rows:12, label:'20×12'}
+];
+function buildSetupScreen(){
+  document.getElementById('tilesize-choices').innerHTML = [8,16].map(n => `
+    <div class="choice-card ${n===tileSize?'selected':''}" data-ts="${n}" onclick="pickTileSize(${n})">
+      <div class="title">${n}×${n}</div>
+      <div class="sub">${n===8?'simples':'mais detalhe'}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('mapsize-choices').innerHTML = MAP_PRESETS.map(p => `
+    <div class="choice-card ${p.cols===mapCols&&p.rows===mapRows?'selected':''}" data-mc="${p.cols}" data-mr="${p.rows}" onclick="pickMapSize(${p.cols},${p.rows})">
+      <div class="title">${p.label}</div>
+      <div class="sub">${p.cols*p.rows} células</div>
+    </div>
+  `).join('');
+
+  document.getElementById('palette-choices').innerHTML = Object.entries(PALETTES).map(([key,p]) => `
+    <div class="choice-card ${key===selectedPaletteKey?'selected':''}" data-pal="${key}" onclick="pickPalette('${key}')">
+      <div class="mini-swatches">${p.colors.map(c=>`<div class="mini-swatch" style="background:${c}"></div>`).join('')}</div>
+      <div class="sub">${p.name}</div>
+    </div>
+  `).join('');
+}
+function pickTileSize(n){
+  tileSize = n;
+  document.querySelectorAll('#tilesize-choices .choice-card').forEach(el => el.classList.toggle('selected', parseInt(el.dataset.ts,10)===n));
+}
+function pickMapSize(c,r){
+  mapCols = c; mapRows = r;
+  document.querySelectorAll('#mapsize-choices .choice-card').forEach(el => el.classList.toggle('selected', parseInt(el.dataset.mc,10)===c && parseInt(el.dataset.mr,10)===r));
+}
+function pickPalette(key){
+  selectedPaletteKey = key;
+  document.querySelectorAll('#palette-choices .choice-card').forEach(el => el.classList.toggle('selected', el.dataset.pal===key));
+}
+
+/* ======================================================
+   INICIAR EDITOR
+====================================================== */
+function blankTilePixels(){ return new Array(tileSize*tileSize).fill(null); }
+function makeTile(name){
+  const t = { id: nextTileNumId++, name: name || ('Tile '+nextTileNumId), pixels: blankTilePixels() };
+  return t;
+}
+function startEditor(fromRestore){
+  if(!fromRestore){
+    sessionPaletteColors = PALETTES[selectedPaletteKey].colors.slice();
+    currentColor = sessionPaletteColors[0];
+    tiles = [ makeTile('Tile 1') ];
+    currentTileId = tiles[0].id;
+    stampTileId = tiles[0].id;
+    mapGrid = new Array(mapCols*mapRows).fill(null);
+  }
+  tileUndoStack = []; mapUndoStack = [];
+  setTileTool('pencil');
+  setMapTool('stamp');
+
+  buildEditorPalette();
+  buildTileGrid();
+  renderTileStrip();
+  renderStampStrip();
+  updateCurrentColorSwatch();
+  buildMapCanvas();
+  goToTab('tiles');
+
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('editor-screen').style.display = 'flex';
+  document.getElementById('autosave-banner').style.display = 'none';
+  startAutosaveTimer();
+}
+function goToTab(name){
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  document.getElementById('tabbtn-'+name).classList.add('active');
+  if(name==='map') renderMapCanvas();
+}
+
+/* ======================================================
+   PALETA
+====================================================== */
+function buildEditorPalette(){
+  const el = document.getElementById('editor-palette');
+  el.innerHTML = sessionPaletteColors.map(c => `
+    <div class="pal-swatch ${c===currentColor?'selected':''}" style="background:${c}" data-color="${c}" onclick="pickColor('${c}')"></div>
+  `).join('');
+}
+function pickColor(c){
+  currentColor = c;
+  document.querySelectorAll('.pal-swatch').forEach(s => s.classList.toggle('selected', s.dataset.color===c));
+  updateCurrentColorSwatch();
+  if(currentTileTool==='eraser') setTileTool('pencil');
+}
+function updateCurrentColorSwatch(){
+  document.getElementById('current-color-swatch').style.background = currentColor;
+}
+
+/* ======================================================
+   ABA 1: DESENHAR TILES
+====================================================== */
+function currentTile(){ return tiles.find(t => t.id === currentTileId); }
+function cellSizePxTile(){ return Math.max(16, Math.min(48, Math.floor(340/tileSize))); }
+
+function buildTileGrid(){
+  const grid = document.getElementById('tile-grid');
+  const px = cellSizePxTile();
+  grid.style.gridTemplateColumns = `repeat(${tileSize}, ${px}px)`;
+  grid.style.gridTemplateRows = `repeat(${tileSize}, ${px}px)`;
+  grid.classList.toggle('grid-on', showTileGrid);
+  let html = '';
+  for(let i=0;i<tileSize*tileSize;i++) html += `<div class="tcell" id="tc-${i}"></div>`;
+  grid.innerHTML = html;
+  paintTileCells();
+
+  grid.onmousedown = e => { const idx = tcIndex(e.target); if(idx>=0) onTileCellDown(idx); };
+  grid.onmouseover = e => { const idx = tcIndex(e.target); if(idx>=0) onTileCellHover(idx); };
+  grid.onmouseleave = () => clearTileHover();
+  window.addEventListener('mouseup', () => { isPainting=false; });
+  grid.ontouchstart = e => { const idx = tcTouchIndex(e); if(idx>=0) onTileCellDown(idx); e.preventDefault(); };
+  grid.ontouchmove = e => { const idx = tcTouchIndex(e); if(idx>=0) onTileCellHover(idx); e.preventDefault(); };
+  grid.ontouchend = () => { isPainting=false; };
+}
+function tcIndex(el){
+  if(!el || !el.id || !el.id.startsWith('tc-')) return -1;
+  return parseInt(el.id.slice(3),10);
+}
+function tcTouchIndex(e){
+  const t = e.touches[0]; if(!t) return -1;
+  return tcIndex(document.elementFromPoint(t.clientX, t.clientY));
+}
+function paintTileCells(){
+  const t = currentTile();
+  if(!t) return;
+  for(let i=0;i<t.pixels.length;i++){
+    const el = document.getElementById('tc-'+i);
+    if(el) el.style.background = t.pixels[i] || 'transparent';
+  }
+}
+let lastTileHoverIdx = -1;
+function clearTileHover(){
+  if(lastTileHoverIdx>=0){ const el=document.getElementById('tc-'+lastTileHoverIdx); if(el) el.classList.remove('hovered'); }
+  lastTileHoverIdx = -1;
+  document.getElementById('tile-hover-coord').innerHTML = 'X: – &nbsp; Y: –';
+}
+function updateTileHover(idx){
+  if(idx===lastTileHoverIdx) return;
+  clearTileHover();
+  const el = document.getElementById('tc-'+idx); if(el) el.classList.add('hovered');
+  lastTileHoverIdx = idx;
+  const x = idx%tileSize, y = Math.floor(idx/tileSize);
+  document.getElementById('tile-hover-coord').textContent = `X: ${x}   Y: ${y}`;
+}
+function onTileCellDown(idx){
+  isPainting = true;
+  saveTileUndoState();
+  applyTileTool(idx);
+}
+function onTileCellHover(idx){
+  updateTileHover(idx);
+  if(!isPainting) return;
+  applyTileTool(idx);
+}
+function applyTileTool(idx){
+  const t = currentTile(); if(!t) return;
+  if(currentTileTool==='pencil'){ t.pixels[idx]=currentColor; paintOneTileCell(idx,t); }
+  else if(currentTileTool==='eraser'){ t.pixels[idx]=null; paintOneTileCell(idx,t); }
+  else if(currentTileTool==='eyedrop'){ if(t.pixels[idx]) pickColor(t.pixels[idx]); setTileTool('pencil'); }
+  else if(currentTileTool==='bucket'){ tileBucketFill(idx,t); }
+  refreshTileThumb(t.id);
+}
+function paintOneTileCell(idx,t){
+  const el = document.getElementById('tc-'+idx);
+  if(el) el.style.background = t.pixels[idx] || 'transparent';
+}
+function tileBucketFill(startIdx,t){
+  const target = t.pixels[startIdx]; const fill = currentColor;
+  if(target===fill) return;
+  const stack=[startIdx]; const visited=new Set();
+  while(stack.length){
+    const i = stack.pop();
+    if(visited.has(i)) continue;
+    if(t.pixels[i]!==target) continue;
+    visited.add(i);
+    t.pixels[i]=fill;
+    paintOneTileCell(i,t);
+    const x=i%tileSize, y=Math.floor(i/tileSize);
+    if(x>0) stack.push(i-1);
+    if(x<tileSize-1) stack.push(i+1);
+    if(y>0) stack.push(i-tileSize);
+    if(y<tileSize-1) stack.push(i+tileSize);
+  }
+}
+function setTileTool(tool){
+  currentTileTool = tool;
+  document.querySelectorAll('#tab-tiles .tool-btn').forEach(b=>b.classList.remove('active'));
+  const map = {pencil:'tt-pencil', eraser:'tt-eraser', bucket:'tt-bucket', eyedrop:'tt-eyedrop'};
+  if(map[tool]) document.getElementById(map[tool]).classList.add('active');
+}
+function toggleTileGrid(){
+  showTileGrid = !showTileGrid;
+  document.getElementById('tile-grid').classList.toggle('grid-on', showTileGrid);
+}
+function saveTileUndoState(){
+  const t = currentTile(); if(!t) return;
+  tileUndoStack.push({ id:t.id, pixels:t.pixels.slice() });
+  if(tileUndoStack.length>30) tileUndoStack.shift();
+}
+function undoTile(){
+  for(let i=tileUndoStack.length-1;i>=0;i--){
+    if(tileUndoStack[i].id === currentTileId){
+      const snap = tileUndoStack.splice(i,1)[0];
+      const t = currentTile();
+      t.pixels = snap.pixels;
+      paintTileCells();
+      refreshTileThumb(t.id);
+      return;
+    }
+  }
+}
+function clearTileCanvas(){
+  const t = currentTile(); if(!t) return;
+  if(!confirm('Limpar este tile e recomeçar do zero?')) return;
+  saveTileUndoState();
+  t.pixels = blankTilePixels();
+  paintTileCells();
+  refreshTileThumb(t.id);
+}
+
+/* ---- lista de tiles ---- */
+function drawTileToCanvas(canvas, tile){
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const cell = canvas.width/tileSize;
+  for(let y=0;y<tileSize;y++){
+    for(let x=0;x<tileSize;x++){
+      const c = tile.pixels[y*tileSize+x];
+      if(c){ ctx.fillStyle=c; ctx.fillRect(x*cell,y*cell,cell,cell); }
+    }
+  }
+}
+function refreshTileThumb(tileId){
+  document.querySelectorAll(`.tile-thumb-item[data-tile-id="${tileId}"] canvas`).forEach(canvas => {
+    const t = tiles.find(x=>x.id===tileId);
+    if(t) drawTileToCanvas(canvas, t);
+  });
+}
+function renderTileStrip(){
+  const strip = document.getElementById('tile-strip');
+  strip.innerHTML = '';
+  tiles.forEach(t => {
+    const item = document.createElement('div');
+    item.className = 'tile-thumb-item' + (t.id===currentTileId ? ' active' : '');
+    item.dataset.tileId = t.id;
+    item.onclick = () => selectTileForEdit(t.id);
+    const canvas = document.createElement('canvas');
+    canvas.width=40; canvas.height=40;
+    drawTileToCanvas(canvas, t);
+    item.appendChild(canvas);
+    const nm = document.createElement('div'); nm.className='tname'; nm.textContent=t.name;
+    item.appendChild(nm);
+    if(tiles.length>1){
+      const del = document.createElement('button');
+      del.className='tile-del'; del.textContent='✕'; del.title='Apagar tile';
+      del.onclick = (e)=>{ e.stopPropagation(); deleteTile(t.id); };
+      item.appendChild(del);
+    }
+    strip.appendChild(item);
+  });
+  const addBtn = document.createElement('div');
+  addBtn.className = 'tile-add';
+  addBtn.textContent = '➕';
+  addBtn.title = 'Novo tile';
+  addBtn.onclick = addNewTile;
+  strip.appendChild(addBtn);
+}
+function selectTileForEdit(id){
+  currentTileId = id;
+  paintTileCells();
+  document.getElementById('tile-name-input').value = currentTile().name;
+  document.querySelectorAll('#tile-strip .tile-thumb-item').forEach(el => el.classList.toggle('active', parseInt(el.dataset.tileId,10)===id));
+}
+function addNewTile(){
+  if(tiles.length>=20){ alert('Máximo de 20 tiles por projeto.'); return; }
+  const t = makeTile('Tile '+(tiles.length+1));
+  tiles.push(t);
+  currentTileId = t.id;
+  renderTileStrip();
+  renderStampStrip();
+  paintTileCells();
+  document.getElementById('tile-name-input').value = t.name;
+}
+function deleteTile(id){
+  if(tiles.length<=1) return;
+  if(!confirm('Apagar este tile? Ele também vai sumir do mapa onde foi usado.')) return;
+  tiles = tiles.filter(t => t.id!==id);
+  mapGrid = mapGrid.map(v => v===id ? null : v);
+  if(currentTileId===id) currentTileId = tiles[0].id;
+  if(stampTileId===id) stampTileId = tiles[0].id;
+  renderTileStrip();
+  renderStampStrip();
+  paintTileCells();
+  document.getElementById('tile-name-input').value = currentTile().name;
+  renderMapCanvas();
+}
+function renameCurrentTile(name){
+  const t = currentTile(); if(!t) return;
+  t.name = name || t.name;
+  document.querySelectorAll(`.tile-thumb-item[data-tile-id="${t.id}"] .tname`).forEach(el => el.textContent = t.name);
+}
+
+/* ======================================================
+   ABA 2: MONTAR MAPA
+====================================================== */
+function renderStampStrip(){
+  const strip = document.getElementById('stamp-strip');
+  strip.innerHTML = '';
+  tiles.forEach(t => {
+    const item = document.createElement('div');
+    item.className = 'tile-thumb-item' + (t.id===stampTileId ? ' stamp-active' : '');
+    item.dataset.tileId = t.id;
+    item.onclick = () => { stampTileId = t.id; renderStampStrip(); setMapTool('stamp'); };
+    const canvas = document.createElement('canvas');
+    canvas.width=40; canvas.height=40;
+    drawTileToCanvas(canvas, t);
+    item.appendChild(canvas);
+    const nm = document.createElement('div'); nm.className='tname'; nm.textContent=t.name;
+    item.appendChild(nm);
+    strip.appendChild(item);
+  });
+}
+function mapCellPx(){ return Math.max(10, Math.min(44, Math.floor(560/Math.max(mapCols,mapRows)))); }
+function buildMapCanvas(){
+  const canvas = document.getElementById('map-canvas');
+  const px = mapCellPx();
+  canvas.width = mapCols*px;
+  canvas.height = mapRows*px;
+
+  canvas.onmousedown = e => { const c = mapCellFromEvent(e); if(c) { isPainting=true; saveMapUndoState(); applyMapTool(c.x,c.y); } };
+  canvas.onmousemove = e => {
+    const c = mapCellFromEvent(e);
+    if(c) document.getElementById('map-hover-coord').textContent = `X: ${c.x}   Y: ${c.y}`;
+    if(isPainting && c) applyMapTool(c.x,c.y);
+  };
+  canvas.onmouseleave = () => { document.getElementById('map-hover-coord').innerHTML = 'X: – &nbsp; Y: –'; };
+  window.addEventListener('mouseup', () => { isPainting=false; });
+  canvas.ontouchstart = e => { const c = mapCellFromTouch(e); if(c){ isPainting=true; saveMapUndoState(); applyMapTool(c.x,c.y);} e.preventDefault(); };
+  canvas.ontouchmove = e => { const c = mapCellFromTouch(e); if(c) applyMapTool(c.x,c.y); e.preventDefault(); };
+  canvas.ontouchend = () => { isPainting=false; };
+
+  renderMapCanvas();
+}
+function mapCellFromEvent(e){
+  const canvas = document.getElementById('map-canvas');
+  const rect = canvas.getBoundingClientRect();
+  const px = mapCellPx();
+  const x = Math.floor((e.clientX-rect.left)/px);
+  const y = Math.floor((e.clientY-rect.top)/px);
+  if(x<0||y<0||x>=mapCols||y>=mapRows) return null;
+  return {x,y};
+}
+function mapCellFromTouch(e){
+  const t = e.touches[0]; if(!t) return null;
+  const canvas = document.getElementById('map-canvas');
+  const rect = canvas.getBoundingClientRect();
+  const px = mapCellPx();
+  const x = Math.floor((t.clientX-rect.left)/px);
+  const y = Math.floor((t.clientY-rect.top)/px);
+  if(x<0||y<0||x>=mapCols||y>=mapRows) return null;
+  return {x,y};
+}
+function applyMapTool(x,y){
+  const idx = y*mapCols+x;
+  if(currentMapTool==='stamp'){ mapGrid[idx]=stampTileId; }
+  else if(currentMapTool==='eraser'){ mapGrid[idx]=null; }
+  else if(currentMapTool==='bucket'){ mapBucketFill(idx); }
+  renderMapCanvas();
+}
+function mapBucketFill(startIdx){
+  const target = mapGrid[startIdx]; const fill = stampTileId;
+  if(target===fill) return;
+  const stack=[startIdx]; const visited=new Set();
+  while(stack.length){
+    const i=stack.pop();
+    if(visited.has(i)) continue;
+    if(mapGrid[i]!==target) continue;
+    visited.add(i);
+    mapGrid[i]=fill;
+    const x=i%mapCols, y=Math.floor(i/mapCols);
+    if(x>0) stack.push(i-1);
+    if(x<mapCols-1) stack.push(i+1);
+    if(y>0) stack.push(i-mapCols);
+    if(y<mapRows-1) stack.push(i+mapCols);
+  }
+}
+function setMapTool(tool){
+  currentMapTool = tool;
+  document.querySelectorAll('#tab-map .tool-btn').forEach(b=>b.classList.remove('active'));
+  const map = {stamp:'mt-stamp', eraser:'mt-eraser', bucket:'mt-bucket'};
+  if(map[tool]) document.getElementById(map[tool]).classList.add('active');
+}
+let currentMapTool = 'stamp';
+function renderMapCanvas(){
+  const canvas = document.getElementById('map-canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  const px = mapCellPx();
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  for(let y=0;y<mapRows;y++){
+    for(let x=0;x<mapCols;x++){
+      const tileId = mapGrid[y*mapCols+x];
+      if(tileId!=null){
+        const t = tiles.find(tt=>tt.id===tileId);
+        if(t) drawTilePixelsScaled(ctx, t.pixels, x*px, y*px, px);
+      }
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+      ctx.strokeRect(x*px+0.5, y*px+0.5, px-1, px-1);
+    }
+  }
+}
+function drawTilePixelsScaled(ctx, pixels, offX, offY, cellPx){
+  const sub = cellPx/tileSize;
+  for(let ty=0; ty<tileSize; ty++){
+    for(let tx=0; tx<tileSize; tx++){
+      const c = pixels[ty*tileSize+tx];
+      if(c){ ctx.fillStyle=c; ctx.fillRect(offX+tx*sub, offY+ty*sub, sub+0.6, sub+0.6); }
+    }
+  }
+}
+function saveMapUndoState(){
+  mapUndoStack.push(mapGrid.slice());
+  if(mapUndoStack.length>30) mapUndoStack.shift();
+}
+function undoMap(){
+  if(!mapUndoStack.length) return;
+  mapGrid = mapUndoStack.pop();
+  renderMapCanvas();
+}
+function clearMapCanvas(){
+  if(!confirm('Limpar o mapa inteiro?')) return;
+  saveMapUndoState();
+  mapGrid = new Array(mapCols*mapRows).fill(null);
+  renderMapCanvas();
+}
+
+document.addEventListener('keydown', e => {
+  if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='z'){
+    e.preventDefault();
+    const mapTabActive = document.getElementById('tab-map').classList.contains('active');
+    if(mapTabActive) undoMap(); else undoTile();
+  }
+});
+
+/* ======================================================
+   EXPORTAR MAPA
+====================================================== */
+function exportMapPNG(){
+  const canvas = document.getElementById('map-canvas');
+  const link = document.createElement('a');
+  link.download = 'meu-mapa.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+function exportMapJSON(){
+  const data = {
+    tileSize, mapCols, mapRows,
+    tiles: tiles.map(t => ({ id:t.id, name:t.name, pixels:t.pixels })),
+    map: mapGrid
+  };
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.download = 'meu-mapa.json';
+  link.href = url;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+async function mapCanvasBlob(){
+  renderMapCanvas();
+  const canvas = document.getElementById('map-canvas');
+  return await new Promise(res => canvas.toBlob(res, 'image/png'));
+}
+
+/* ======================================================
+   TEMA CLARO/ESCURO
+====================================================== */
+const THEME_KEY = 'overcast_tileset_theme';
+function toggleTheme(){
+  const isLight = document.body.classList.toggle('theme-light');
+  document.getElementById('theme-toggle-btn').textContent = isLight ? '☀️' : '🌙';
+  localStorage.setItem(THEME_KEY, isLight ? 'light' : 'dark');
+  renderMapCanvas();
+}
+function initTheme(){
+  const saved = localStorage.getItem(THEME_KEY);
+  if(saved==='light'){ document.body.classList.add('theme-light'); document.getElementById('theme-toggle-btn').textContent='☀️'; }
+}
+
+/* ======================================================
+   SALVAMENTO AUTOMÁTICO (localStorage)
+====================================================== */
+const AUTOSAVE_KEY = 'overcast_tileset_autosave_v1';
+const AUTOSAVE_INTERVAL_MS = 15000;
+let autosaveTimer = null;
+function autosaveNow(){
+  try{
+    const payload = { tileSize, mapCols, mapRows, selectedPaletteKey, sessionPaletteColors, tiles, mapGrid, currentTileId, stampTileId, nextTileNumId, savedAt: Date.now() };
+    localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(payload));
+  }catch(e){}
+}
+function startAutosaveTimer(){ stopAutosaveTimer(); autosaveTimer = setInterval(autosaveNow, AUTOSAVE_INTERVAL_MS); }
+function stopAutosaveTimer(){ if(autosaveTimer){ clearInterval(autosaveTimer); autosaveTimer=null; } }
+function clearAutosave(){ localStorage.removeItem(AUTOSAVE_KEY); }
+function checkAutosaveOnLoad(){
+  try{
+    const raw = localStorage.getItem(AUTOSAVE_KEY);
+    if(!raw) return;
+    const data = JSON.parse(raw);
+    if(!data || !data.tiles || !data.tiles.length) return;
+    document.getElementById('autosave-banner').style.display = 'block';
+    window._pendingAutosave = data;
+  }catch(e){}
+}
+function restoreAutosave(){
+  const data = window._pendingAutosave;
+  if(!data) return;
+  tileSize = data.tileSize; mapCols = data.mapCols; mapRows = data.mapRows;
+  selectedPaletteKey = data.selectedPaletteKey;
+  sessionPaletteColors = data.sessionPaletteColors || PALETTES[data.selectedPaletteKey].colors.slice();
+  tiles = data.tiles;
+  mapGrid = data.mapGrid;
+  currentTileId = data.currentTileId;
+  stampTileId = data.stampTileId;
+  nextTileNumId = data.nextTileNumId || (tiles.length+1);
+  currentColor = sessionPaletteColors[0];
+  startEditor(true);
+}
+function discardAutosave(){
+  clearAutosave();
+  document.getElementById('autosave-banner').style.display = 'none';
+  window._pendingAutosave = null;
+}
+window.addEventListener('beforeunload', () => {
+  if(document.getElementById('editor-screen').style.display === 'flex') autosaveNow();
+});
+
+/* ======================================================
+   NAVEGAÇÃO: voltar pra configuração
+====================================================== */
+function backToSetup(){ document.getElementById('back-confirm-modal').classList.add('show'); }
+function closeBackConfirm(){ document.getElementById('back-confirm-modal').classList.remove('show'); }
+function confirmBackNoSave(){
+  closeBackConfirm();
+  stopAutosaveTimer();
+  clearAutosave();
+  document.getElementById('editor-screen').style.display = 'none';
+  document.getElementById('setup-screen').style.display = 'flex';
+  buildSetupScreen();
+}
+
+/* ======================================================
+   SUPABASE — salvar na pasta do aluno
+====================================================== */
+const SUPABASE_URL = "https://kezlmecrxhjahhoekybs.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlemxtZWNyeGhqYWhob2VreWJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5MDkwNjAsImV4cCI6MjEwMjQ4NTA2MH0.-TcsKrFxRMeiqKrzXk57E8-60eobk3fJ0Crn7ci0MW8";
+const sb = (SUPABASE_URL.startsWith("http") && window.supabase)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+let saveTurmaData = null;
+
+function openSaveStudentModal(){
+  if(!sb){ alert('Não foi possível conectar ao Supabase.'); return; }
+  document.getElementById('save-step-turma').style.display = 'block';
+  document.getElementById('save-step-aluno').style.display = 'none';
+  document.getElementById('save-turma-error').textContent = '';
+  document.getElementById('save-status').textContent = '';
+  document.getElementById('save-student-modal').classList.add('show');
+}
+function closeSaveStudentModal(){
+  document.getElementById('save-student-modal').classList.remove('show');
+}
+function backToTurmaStep(){
+  document.getElementById('save-step-turma').style.display = 'block';
+  document.getElementById('save-step-aluno').style.display = 'none';
+}
+async function lookupTurmaForSave(){
+  const code = document.getElementById('save-turma-code').value.trim().toLowerCase();
+  const errEl = document.getElementById('save-turma-error');
+  if(!code){ errEl.textContent = '👉 Digite o código da turma.'; return; }
+  errEl.textContent = '⏳ Buscando...';
+  const { data: turma, error } = await sb.from('turmas').select('*').eq('codigo_acesso', code).maybeSingle();
+  if(error || !turma){ errEl.textContent = '❌ Turma não encontrada. Confira o código.'; return; }
+  errEl.textContent = '';
+  const { data: alunos } = await sb.from('alunos').select('*').eq('turma_id', turma.id).order('nome');
+  saveTurmaData = { turma, alunos: alunos || [] };
+  document.getElementById('save-turma-name').textContent = turma.nome;
+  const listEl = document.getElementById('save-aluno-list');
+  listEl.innerHTML = (alunos && alunos.length)
+    ? alunos.map((a,i) => `<button class="btn purple" style="justify-content:center;" onclick="saveToAlunoIndex(${i})">${a.nome}</button>`).join('')
+    : '<p style="font-family:\'Baloo 2\',sans-serif;color:var(--ink-soft);font-size:12px;">Nenhum aluno cadastrado nessa turma ainda.</p>';
+  document.getElementById('save-step-turma').style.display = 'none';
+  document.getElementById('save-step-aluno').style.display = 'block';
+}
+async function saveToAlunoIndex(i){
+  if(!saveTurmaData) return;
+  const aluno = saveTurmaData.alunos[i];
+  if(!aluno) return;
+  const status = document.getElementById('save-status');
+  status.textContent = '⏳ Enviando pra pasta de ' + aluno.nome + '...';
+  try{
+    const jsonBlob = new Blob([JSON.stringify({tileSize,mapCols,mapRows,tiles,map:mapGrid},null,2)], {type:'application/json'});
+    const pngBlob = await mapCanvasBlob();
+    const base = 'meu-mapa';
+    const pathPng = `envios/${aluno.codigo}/${base}.png`;
+    const pathJson = `envios/${aluno.codigo}/${base}.json`;
+    let { error: e1 } = await sb.storage.from('submissoes').upload(pathPng, pngBlob, { upsert:true, contentType:'image/png' });
+    if(e1) throw new Error(e1.message);
+    let { error: e2 } = await sb.storage.from('submissoes').upload(pathJson, jsonBlob, { upsert:true, contentType:'application/json' });
+    if(e2) throw new Error(e2.message);
+    await sb.rpc('registrar_envio', { p_codigo: aluno.codigo, p_nome_arquivo: base+'.png', p_storage_path: pathPng, p_tipo:'envio', p_tamanho_bytes: pngBlob.size });
+    await sb.rpc('registrar_envio', { p_codigo: aluno.codigo, p_nome_arquivo: base+'.json', p_storage_path: pathJson, p_tipo:'envio', p_tamanho_bytes: jsonBlob.size });
+    status.textContent = '✅ Salvo na pasta de ' + aluno.nome + '!';
+    setTimeout(closeSaveStudentModal, 1600);
+  }catch(e){
+    status.textContent = '❌ Erro: ' + e.message;
+  }
+}
+
+/* ======================================================
+   INIT
+====================================================== */
+initTheme();
+buildSetupScreen();
+checkAutosaveOnLoad();
+</script>
+</body>
+</html>
