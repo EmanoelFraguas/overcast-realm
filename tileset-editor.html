@@ -200,16 +200,17 @@
 
   <header>
     <a href="./index.html" class="back-home">← Voltar</a>
-    <button class="theme-toggle-btn" id="theme-toggle-btn" onclick="toggleTheme()" title="Alternar fundo claro/escuro">🌙</button>
-    <h1>🧱 EDITOR DE TILESET</h1>
-    <p>Overcast Realm — desenhe peças e monte um mapa</p>
+    <button id="lang-toggle-btn" style="position:fixed;top:10px;right:10px;z-index:999;font-size:20px;background:var(--tool-bg,#fff);border:2px solid var(--border,#ddd);border-radius:50%;width:38px;height:38px;cursor:pointer;color:var(--ink,#000);" onclick="toggleLang()" title="English">🇺🇸</button>
+    <button class="theme-toggle-btn" id="theme-toggle-btn" onclick="toggleTheme()" data-i18n-title="themeToggleTitle" title="Alternar fundo claro/escuro">🌙</button>
+    <h1 data-i18n="h1Titulo">🧱 EDITOR DE TILESET</h1>
+    <p data-i18n="subtitulo">Overcast Realm — desenhe peças e monte um mapa</p>
   </header>
 
   <div class="panel" id="autosave-banner" style="display:none; text-align:center;">
-    <p style="font-family:'Baloo 2',sans-serif;font-weight:800;color:var(--yellow);font-size:14px;margin:0 0 10px;">💾 Encontramos um projeto salvo automaticamente!</p>
+    <p style="font-family:'Baloo 2',sans-serif;font-weight:800;color:var(--yellow);font-size:14px;margin:0 0 10px;" data-i18n="autosaveEncontrado">💾 Encontramos um projeto salvo automaticamente!</p>
     <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
-      <button class="btn green" onclick="restoreAutosave()">▶️ Continuar de onde parei</button>
-      <button class="btn gray" onclick="discardAutosave()">🗑️ Começar do zero</button>
+      <button class="btn green" onclick="restoreAutosave()" data-i18n="btnContinuar">▶️ Continuar de onde parei</button>
+      <button class="btn gray" onclick="discardAutosave()" data-i18n="btnZero">🗑️ Começar do zero</button>
     </div>
   </div>
 
@@ -217,28 +218,28 @@
   <div id="setup-screen">
    <div class="setup-scroll">
     <div class="panel">
-      <h2>1️⃣ TAMANHO DE CADA TILE</h2>
+      <h2 data-i18n="h2TamanhoTile">1️⃣ TAMANHO DE CADA TILE</h2>
       <div class="choice-row" id="tilesize-choices"></div>
     </div>
     <div class="panel">
-      <h2>2️⃣ TAMANHO DO MAPA</h2>
+      <h2 data-i18n="h2TamanhoMapa">2️⃣ TAMANHO DO MAPA</h2>
       <div class="choice-row" id="mapsize-choices"></div>
     </div>
     <div class="panel">
-      <h2>3️⃣ ESCOLHA A PALETA</h2>
+      <h2 data-i18n="h2Paleta">3️⃣ ESCOLHA A PALETA</h2>
       <div class="choice-row" id="palette-choices"></div>
     </div>
    </div>
     <div class="setup-footer">
-      <button class="btn big pink" onclick="startEditor()">▶️ COMEÇAR</button>
+      <button class="btn big pink" onclick="startEditor()" data-i18n="btnComecar">▶️ COMEÇAR</button>
     </div>
   </div>
 
   <!-- ============== EDITOR ============== -->
   <div id="editor-screen">
     <div class="tabs">
-      <button class="tab-btn active" id="tabbtn-tiles" onclick="goToTab('tiles')">✏️ Desenhar Tiles</button>
-      <button class="tab-btn" id="tabbtn-map" onclick="goToTab('map')">🗺️ Montar Mapa</button>
+      <button class="tab-btn active" id="tabbtn-tiles" onclick="goToTab('tiles')" data-i18n="tabTiles">✏️ Desenhar Tiles</button>
+      <button class="tab-btn" id="tabbtn-map" onclick="goToTab('map')" data-i18n="tabMap">🗺️ Montar Mapa</button>
     </div>
 
     <!-- ===== ABA: DESENHAR TILES ===== -->
@@ -248,38 +249,38 @@
 
           <div class="col" style="flex-shrink:0;">
             <div class="toolbar">
-              <button class="tool-btn active" id="tt-pencil" onclick="setTileTool('pencil')" title="Lápis">✏️</button>
-              <button class="tool-btn" id="tt-eraser" onclick="setTileTool('eraser')" title="Borracha">🧽</button>
-              <button class="tool-btn" id="tt-bucket" onclick="setTileTool('bucket')" title="Balde">🪣</button>
-              <button class="tool-btn" id="tt-eyedrop" onclick="setTileTool('eyedrop')" title="Conta-gotas">💧</button>
-              <button class="tool-btn" id="tt-grid" onclick="toggleTileGrid()" title="Grade">#️⃣</button>
-              <button class="tool-btn" id="tt-undo" onclick="undoTile()" title="Desfazer (Ctrl+Z)">↩️</button>
+              <button class="tool-btn active" id="tt-pencil" onclick="setTileTool('pencil')" data-i18n-title="toolPencil" title="Lápis">✏️</button>
+              <button class="tool-btn" id="tt-eraser" onclick="setTileTool('eraser')" data-i18n-title="toolEraser" title="Borracha">🧽</button>
+              <button class="tool-btn" id="tt-bucket" onclick="setTileTool('bucket')" data-i18n-title="toolBucket" title="Balde">🪣</button>
+              <button class="tool-btn" id="tt-eyedrop" onclick="setTileTool('eyedrop')" data-i18n-title="toolEyedrop" title="Conta-gotas">💧</button>
+              <button class="tool-btn" id="tt-grid" onclick="toggleTileGrid()" data-i18n-title="toolGrid" title="Grade">#️⃣</button>
+              <button class="tool-btn" id="tt-undo" onclick="undoTile()" data-i18n-title="toolUndo" title="Desfazer (Ctrl+Z)">↩️</button>
             </div>
           </div>
 
           <div class="col" style="flex:1; align-items:center; justify-content:center; min-width:180px;">
             <div class="canvas-holder"><div id="tile-grid"></div></div>
             <div class="hover-coord" id="tile-hover-coord" style="margin-top:8px;">X: – &nbsp; Y: –</div>
-            <div class="current-color-row" style="margin-top:6px;">Cor atual: <span id="current-color-swatch"></span></div>
+            <div class="current-color-row" style="margin-top:6px;"><span data-i18n="corAtualLabel">Cor atual:</span> <span id="current-color-swatch"></span></div>
           </div>
 
           <div class="col col-scroll" style="width:220px; flex-shrink:0;">
             <div class="frames-panel">
-              <div class="label">// PALETA</div>
+              <div class="label" data-i18n="lblPaleta">// PALETA</div>
               <div class="palette-row" id="editor-palette"></div>
             </div>
           </div>
 
           <div class="col col-scroll" style="width:250px; flex-shrink:0;">
             <div class="frames-panel">
-              <div class="label">// SEUS_TILES (clique pra editar)</div>
+              <div class="label" data-i18n="lblSeusTiles">// SEUS_TILES (clique pra editar)</div>
               <div class="tile-strip" id="tile-strip"></div>
-              <input type="text" id="tile-name-input" class="tile-name-input" placeholder="Nome do tile (ex: Grama)" oninput="renameCurrentTile(this.value)">
+              <input type="text" id="tile-name-input" class="tile-name-input" placeholder="Nome do tile (ex: Grama)" data-i18n-placeholder="tileNamePlaceholder" oninput="renameCurrentTile(this.value)">
             </div>
             <div class="action-list">
-              <button class="btn gray" onclick="clearTileCanvas()">🧹 Limpar Este Tile</button>
-              <button class="btn cyan" onclick="goToTab('map')">🗺️ Ir Montar o Mapa ➡️</button>
-              <button class="btn gray" onclick="backToSetup()">⚙️ Configurações</button>
+              <button class="btn gray" onclick="clearTileCanvas()" data-i18n="btnLimparTile">🧹 Limpar Este Tile</button>
+              <button class="btn cyan" onclick="goToTab('map')" data-i18n="btnIrMontarMapa">🗺️ Ir Montar o Mapa ➡️</button>
+              <button class="btn gray" onclick="backToSetup()" data-i18n="btnConfiguracoes">⚙️ Configurações</button>
             </div>
           </div>
 
@@ -294,10 +295,10 @@
 
           <div class="col" style="flex-shrink:0;">
             <div class="toolbar">
-              <button class="tool-btn active" id="mt-stamp" onclick="setMapTool('stamp')" title="Carimbar">🖌️</button>
-              <button class="tool-btn" id="mt-eraser" onclick="setMapTool('eraser')" title="Apagar célula">🧽</button>
-              <button class="tool-btn" id="mt-bucket" onclick="setMapTool('bucket')" title="Balde (preenche área)">🪣</button>
-              <button class="tool-btn" id="mt-undo" onclick="undoMap()" title="Desfazer (Ctrl+Z)">↩️</button>
+              <button class="tool-btn active" id="mt-stamp" onclick="setMapTool('stamp')" data-i18n-title="toolStamp" title="Carimbar">🖌️</button>
+              <button class="tool-btn" id="mt-eraser" onclick="setMapTool('eraser')" data-i18n-title="toolEraserCell" title="Apagar célula">🧽</button>
+              <button class="tool-btn" id="mt-bucket" onclick="setMapTool('bucket')" data-i18n-title="toolBucketArea" title="Balde (preenche área)">🪣</button>
+              <button class="tool-btn" id="mt-undo" onclick="undoMap()" data-i18n-title="toolUndo" title="Desfazer (Ctrl+Z)">↩️</button>
             </div>
           </div>
 
@@ -308,16 +309,16 @@
 
           <div class="col col-scroll" style="width:250px; flex-shrink:0;">
             <div class="frames-panel">
-              <div class="label">// TILE_PRA_CARIMBAR</div>
+              <div class="label" data-i18n="lblTilePraCarimbar">// TILE_PRA_CARIMBAR</div>
               <div class="tile-strip" id="stamp-strip"></div>
             </div>
             <div class="action-list">
-              <button class="btn purple" onclick="exportMapPNG()">🖼️ Exportar Mapa (PNG)</button>
-              <button class="btn purple" onclick="exportMapJSON()">📄 Exportar Dados (JSON)</button>
-              <button class="btn green" onclick="openSaveStudentModal()">📁 Salvar na Pasta do Aluno</button>
+              <button class="btn purple" onclick="exportMapPNG()" data-i18n="btnExportarMapaPng">🖼️ Exportar Mapa (PNG)</button>
+              <button class="btn purple" onclick="exportMapJSON()" data-i18n="btnExportarDadosJson">📄 Exportar Dados (JSON)</button>
+              <button class="btn green" onclick="openSaveStudentModal()" data-i18n="btnSalvarPasta">📁 Salvar na Pasta do Aluno</button>
               <div id="export-status"></div>
-              <button class="btn gray" onclick="clearMapCanvas()">🧹 Limpar Mapa</button>
-              <button class="btn gray" onclick="backToSetup()">⚙️ Configurações</button>
+              <button class="btn gray" onclick="clearMapCanvas()" data-i18n="btnLimparMapa">🧹 Limpar Mapa</button>
+              <button class="btn gray" onclick="backToSetup()" data-i18n="btnConfiguracoes">⚙️ Configurações</button>
             </div>
           </div>
 
@@ -329,12 +330,12 @@
   <!-- ============== MODAL: confirmar antes de voltar ============== -->
   <div class="zoom-overlay" id="back-confirm-modal">
     <div class="zoom-box" style="max-width:380px;">
-      <h3>💾 SALVAR ANTES DE VOLTAR?</h3>
-      <p style="font-family:'Baloo 2',sans-serif;font-weight:700;color:var(--ink-soft);font-size:13px;margin-bottom:14px;">Se voltar sem salvar, o projeto atual será perdido.</p>
+      <h3 data-i18n="h3SalvarAntes">💾 SALVAR ANTES DE VOLTAR?</h3>
+      <p style="font-family:'Baloo 2',sans-serif;font-weight:700;color:var(--ink-soft);font-size:13px;margin-bottom:14px;" data-i18n="perderProjeto">Se voltar sem salvar, o projeto atual será perdido.</p>
       <div style="display:flex;flex-direction:column;gap:8px;">
-        <button class="btn purple" style="justify-content:center;" onclick="closeBackConfirm();openSaveStudentModal();">💾 Salvar na pasta do aluno</button>
-        <button class="btn gray" style="justify-content:center;" onclick="confirmBackNoSave()">➡️ Voltar sem salvar</button>
-        <button class="btn cyan" style="justify-content:center;" onclick="closeBackConfirm()">✕ Cancelar</button>
+        <button class="btn purple" style="justify-content:center;" onclick="closeBackConfirm();openSaveStudentModal();" data-i18n="btnSalvarPastaAluno2">💾 Salvar na pasta do aluno</button>
+        <button class="btn gray" style="justify-content:center;" onclick="confirmBackNoSave()" data-i18n="btnVoltarSemSalvar">➡️ Voltar sem salvar</button>
+        <button class="btn cyan" style="justify-content:center;" onclick="closeBackConfirm()" data-i18n="btnCancelar">✕ Cancelar</button>
       </div>
     </div>
   </div>
@@ -342,21 +343,21 @@
   <!-- ============== MODAL: salvar na pasta do aluno ============== -->
   <div class="zoom-overlay" id="save-student-modal">
     <div class="zoom-box" style="max-width:420px;">
-      <h3>📁 SALVAR NA PASTA DO ALUNO</h3>
+      <h3 data-i18n="h3SalvarPastaAluno">📁 SALVAR NA PASTA DO ALUNO</h3>
       <div id="save-step-turma">
-        <p style="font-family:'Baloo 2',sans-serif;font-weight:700;color:var(--ink-soft);font-size:13px;">Código da turma:</p>
-        <input type="text" id="save-turma-code" placeholder="Código da turma" style="width:100%;padding:10px;border-radius:8px;border:2px solid var(--border);background:var(--tool-bg);color:var(--ink);font-family:'Baloo 2',sans-serif;margin-bottom:8px;">
-        <button class="btn cyan" style="width:100%;justify-content:center;" onclick="lookupTurmaForSave()">🔎 Buscar Turma</button>
+        <p style="font-family:'Baloo 2',sans-serif;font-weight:700;color:var(--ink-soft);font-size:13px;" data-i18n="codigoTurmaLabel">Código da turma:</p>
+        <input type="text" id="save-turma-code" placeholder="Código da turma" data-i18n-placeholder="codigoTurmaPlaceholder" style="width:100%;padding:10px;border-radius:8px;border:2px solid var(--border);background:var(--tool-bg);color:var(--ink);font-family:'Baloo 2',sans-serif;margin-bottom:8px;">
+        <button class="btn cyan" style="width:100%;justify-content:center;" onclick="lookupTurmaForSave()" data-i18n="btnBuscarTurma">🔎 Buscar Turma</button>
         <div id="save-turma-error" style="font-family:'Baloo 2',sans-serif;color:var(--pink);font-size:12px;margin-top:8px;"></div>
       </div>
       <div id="save-step-aluno" style="display:none;">
-        <p style="font-family:'Baloo 2',sans-serif;font-weight:800;color:var(--yellow);font-size:14px;">Turma: <span id="save-turma-name"></span></p>
-        <p style="font-family:'Baloo 2',sans-serif;font-weight:700;color:var(--ink-soft);font-size:12px;">Clique no seu nome:</p>
+        <p style="font-family:'Baloo 2',sans-serif;font-weight:800;color:var(--yellow);font-size:14px;"><span data-i18n="turmaLabel">Turma:</span> <span id="save-turma-name"></span></p>
+        <p style="font-family:'Baloo 2',sans-serif;font-weight:700;color:var(--ink-soft);font-size:12px;" data-i18n="cliqueSeuNome">Clique no seu nome:</p>
         <div id="save-aluno-list" style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;"></div>
-        <button class="btn gray" style="width:100%;justify-content:center;margin-top:10px;" onclick="backToTurmaStep()">← Trocar turma</button>
+        <button class="btn gray" style="width:100%;justify-content:center;margin-top:10px;" onclick="backToTurmaStep()" data-i18n="btnTrocarTurma">← Trocar turma</button>
       </div>
       <div id="save-status" style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:13px;margin-top:10px;min-height:18px;"></div>
-      <button class="btn gray" style="width:100%;justify-content:center;margin-top:8px;" onclick="closeSaveStudentModal()">✕ Fechar</button>
+      <button class="btn gray" style="width:100%;justify-content:center;margin-top:8px;" onclick="closeSaveStudentModal()" data-i18n="btnFechar">✕ Fechar</button>
     </div>
   </div>
 
@@ -364,16 +365,102 @@
 
 <script>
 /* ======================================================
+   IDIOMA (PT/EN)
+====================================================== */
+let currentLang = 'pt';
+const UI_STRINGS = {
+  pt: {
+    themeToggleTitle:'Alternar fundo claro/escuro',
+    h1Titulo:'🧱 EDITOR DE TILESET', subtitulo:'Overcast Realm — desenhe peças e monte um mapa',
+    autosaveEncontrado:'💾 Encontramos um projeto salvo automaticamente!',
+    btnContinuar:'▶️ Continuar de onde parei', btnZero:'🗑️ Começar do zero',
+    h2TamanhoTile:'1️⃣ TAMANHO DE CADA TILE', h2TamanhoMapa:'2️⃣ TAMANHO DO MAPA', h2Paleta:'3️⃣ ESCOLHA A PALETA',
+    btnComecar:'▶️ COMEÇAR',
+    tabTiles:'✏️ Desenhar Tiles', tabMap:'🗺️ Montar Mapa',
+    toolPencil:'Lápis', toolEraser:'Borracha', toolBucket:'Balde', toolEyedrop:'Conta-gotas', toolGrid:'Grade', toolUndo:'Desfazer (Ctrl+Z)',
+    toolStamp:'Carimbar', toolEraserCell:'Apagar célula', toolBucketArea:'Balde (preenche área)',
+    corAtualLabel:'Cor atual:', lblPaleta:'// PALETA', lblSeusTiles:'// SEUS_TILES (clique pra editar)',
+    tileNamePlaceholder:'Nome do tile (ex: Grama)',
+    btnLimparTile:'🧹 Limpar Este Tile', btnIrMontarMapa:'🗺️ Ir Montar o Mapa ➡️', btnConfiguracoes:'⚙️ Configurações',
+    lblTilePraCarimbar:'// TILE_PRA_CARIMBAR',
+    btnExportarMapaPng:'🖼️ Exportar Mapa (PNG)', btnExportarDadosJson:'📄 Exportar Dados (JSON)',
+    btnSalvarPasta:'📁 Salvar na Pasta do Aluno', btnLimparMapa:'🧹 Limpar Mapa',
+    h3SalvarAntes:'💾 SALVAR ANTES DE VOLTAR?', perderProjeto:'Se voltar sem salvar, o projeto atual será perdido.',
+    btnSalvarPastaAluno2:'💾 Salvar na pasta do aluno', btnVoltarSemSalvar:'➡️ Voltar sem salvar', btnCancelar:'✕ Cancelar',
+    h3SalvarPastaAluno:'📁 SALVAR NA PASTA DO ALUNO', codigoTurmaLabel:'Código da turma:', codigoTurmaPlaceholder:'Código da turma',
+    btnBuscarTurma:'🔎 Buscar Turma', turmaLabel:'Turma:', cliqueSeuNome:'Clique no seu nome:', btnTrocarTurma:'← Trocar turma', btnFechar:'✕ Fechar',
+    xy:'X: – &nbsp; Y: –', simples:'simples', maisDetalhe:'mais detalhe', celulas:'células',
+    confirmLimparTile:'Limpar este tile e recomeçar do zero?', xTileMax:'Máximo de 20 tiles por projeto.',
+    confirmApagarTile:'Apagar este tile? Ele também vai sumir do mapa onde foi usado.',
+    confirmLimparMapa:'Limpar o mapa inteiro?', alertSupabase:'Não foi possível conectar ao Supabase.',
+    digiteCodigoTurma:'👉 Digite o código da turma.', buscando:'⏳ Buscando...', turmaNaoEncontrada:'❌ Turma não encontrada. Confira o código.',
+    nenhumAluno:'Nenhum aluno cadastrado nessa turma ainda.',
+    enviandoPasta:'⏳ Enviando pra pasta de ', salvoPasta:'✅ Salvo na pasta de ', erroPrefix:'❌ Erro: '
+  },
+  en: {
+    themeToggleTitle:'Toggle light/dark background',
+    h1Titulo:'🧱 TILESET EDITOR', subtitulo:'Overcast Realm — draw tiles and build a map',
+    autosaveEncontrado:'💾 We found a project that was saved automatically!',
+    btnContinuar:'▶️ Continue where I left off', btnZero:'🗑️ Start from scratch',
+    h2TamanhoTile:'1️⃣ SIZE OF EACH TILE', h2TamanhoMapa:'2️⃣ MAP SIZE', h2Paleta:'3️⃣ CHOOSE A PALETTE',
+    btnComecar:'▶️ START',
+    tabTiles:'✏️ Draw Tiles', tabMap:'🗺️ Build Map',
+    toolPencil:'Pencil', toolEraser:'Eraser', toolBucket:'Bucket', toolEyedrop:'Eyedropper', toolGrid:'Grid', toolUndo:'Undo (Ctrl+Z)',
+    toolStamp:'Stamp', toolEraserCell:'Erase cell', toolBucketArea:'Bucket (fills area)',
+    corAtualLabel:'Current color:', lblPaleta:'// PALETTE', lblSeusTiles:'// YOUR_TILES (click to edit)',
+    tileNamePlaceholder:'Tile name (e.g. Grass)',
+    btnLimparTile:'🧹 Clear This Tile', btnIrMontarMapa:'🗺️ Go Build the Map ➡️', btnConfiguracoes:'⚙️ Settings',
+    lblTilePraCarimbar:'// TILE_TO_STAMP',
+    btnExportarMapaPng:'🖼️ Export Map (PNG)', btnExportarDadosJson:'📄 Export Data (JSON)',
+    btnSalvarPasta:'📁 Save to Student Folder', btnLimparMapa:'🧹 Clear Map',
+    h3SalvarAntes:'💾 SAVE BEFORE GOING BACK?', perderProjeto:'If you go back without saving, the current project will be lost.',
+    btnSalvarPastaAluno2:'💾 Save to student folder', btnVoltarSemSalvar:'➡️ Go back without saving', btnCancelar:'✕ Cancel',
+    h3SalvarPastaAluno:'📁 SAVE TO STUDENT FOLDER', codigoTurmaLabel:'Class code:', codigoTurmaPlaceholder:'Class code',
+    btnBuscarTurma:'🔎 Find Class', turmaLabel:'Class:', cliqueSeuNome:'Click your name:', btnTrocarTurma:'← Change class', btnFechar:'✕ Close',
+    xy:'X: – &nbsp; Y: –', simples:'simple', maisDetalhe:'more detail', celulas:'cells',
+    confirmLimparTile:'Clear this tile and start from scratch?', xTileMax:'Maximum of 20 tiles per project.',
+    confirmApagarTile:'Delete this tile? It will also disappear from the map wherever it was used.',
+    confirmLimparMapa:'Clear the whole map?', alertSupabase:'Could not connect to Supabase.',
+    digiteCodigoTurma:'👉 Type in the class code.', buscando:'⏳ Searching...', turmaNaoEncontrada:'❌ Class not found. Check the code.',
+    nenhumAluno:'No students registered in this class yet.',
+    enviandoPasta:'⏳ Sending to the folder of ', salvoPasta:'✅ Saved to the folder of ', erroPrefix:'❌ Error: '
+  }
+};
+function toggleLang(){
+  currentLang = currentLang === 'pt' ? 'en' : 'pt';
+  applyLang();
+}
+function applyLang(){
+  const t = UI_STRINGS[currentLang];
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    if(t[key] !== undefined) el.innerHTML = t[key];
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    const key = el.dataset.i18nTitle;
+    if(t[key] !== undefined) el.title = t[key];
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.dataset.i18nPlaceholder;
+    if(t[key] !== undefined) el.placeholder = t[key];
+  });
+  document.getElementById('lang-toggle-btn').textContent = currentLang==='pt' ? '🇺🇸' : '🇧🇷';
+  document.getElementById('lang-toggle-btn').title = currentLang==='pt' ? 'English' : 'Português';
+  document.title = currentLang==='pt' ? 'Editor de Tileset — Overcast Realm' : 'Tileset Editor — Overcast Realm';
+  if(typeof buildSetupScreen === 'function') buildSetupScreen();
+}
+
+/* ======================================================
    PALETAS (mesmas do editor de pixel art)
 ====================================================== */
 const PALETTES = {
-  retro:  { name:'🕹️ Retrô Arcade', colors:['#000000','#ffffff','#ff5fa2','#4be8ff','#ffd23f','#4be08f','#a06bff','#ff9a3c'] },
-  doces:  { name:'🍬 Doces (Pastel)', colors:['#ffd1e8','#c9f2ff','#fff3b0','#d4f7dc','#e6d4ff','#ffe0c2','#ffffff','#5a4a6a'] },
-  natureza: { name:'🌿 Natureza', colors:['#2e5d32','#6b8f3c','#a3d977','#8b5a2b','#c9a876','#4a90c4','#f4e3c1','#3a2f28'] },
-  neon: { name:'🌃 Neon Noturno', colors:['#0d0221','#ff0abe','#00f0ff','#faff00','#7b2ff7','#ff5e00','#00ff87','#ffffff'] },
-  pico8: { name:'🎮 PICO-8 (Lospec)', colors:['#000000','#1D2B53','#7E2553','#008751','#AB5236','#5F574F','#C2C3C7','#FFF1E8','#FF004D','#FFA300','#FFEC27','#00E436','#29ADFF','#83769C','#FF77A8','#FFCCAA'] },
-  sweetie16: { name:'🍭 Sweetie 16 (Lospec)', colors:['#1a1c2c','#5d275d','#b13e53','#ef7d57','#ffcd75','#a7f070','#38b764','#257179','#29366f','#3b5dc9','#41a6f6','#73eff7','#f4f4f4','#94b0c2','#566c86','#333c57'] },
-  nyx8: { name:'🌙 Nyx8 (Lospec)', colors:['#08141e','#0f2a3f','#20394f','#f6d6bd','#c3a38a','#997577','#816271','#4e495f'] }
+  retro:  { name:'🕹️ Retrô Arcade', nameEn:'🕹️ Retro Arcade', colors:['#000000','#ffffff','#ff5fa2','#4be8ff','#ffd23f','#4be08f','#a06bff','#ff9a3c'] },
+  doces:  { name:'🍬 Doces (Pastel)', nameEn:'🍬 Candy (Pastel)', colors:['#ffd1e8','#c9f2ff','#fff3b0','#d4f7dc','#e6d4ff','#ffe0c2','#ffffff','#5a4a6a'] },
+  natureza: { name:'🌿 Natureza', nameEn:'🌿 Nature', colors:['#2e5d32','#6b8f3c','#a3d977','#8b5a2b','#c9a876','#4a90c4','#f4e3c1','#3a2f28'] },
+  neon: { name:'🌃 Neon Noturno', nameEn:'🌃 Night Neon', colors:['#0d0221','#ff0abe','#00f0ff','#faff00','#7b2ff7','#ff5e00','#00ff87','#ffffff'] },
+  pico8: { name:'🎮 PICO-8 (Lospec)', nameEn:'🎮 PICO-8 (Lospec)', colors:['#000000','#1D2B53','#7E2553','#008751','#AB5236','#5F574F','#C2C3C7','#FFF1E8','#FF004D','#FFA300','#FFEC27','#00E436','#29ADFF','#83769C','#FF77A8','#FFCCAA'] },
+  sweetie16: { name:'🍭 Sweetie 16 (Lospec)', nameEn:'🍭 Sweetie 16 (Lospec)', colors:['#1a1c2c','#5d275d','#b13e53','#ef7d57','#ffcd75','#a7f070','#38b764','#257179','#29366f','#3b5dc9','#41a6f6','#73eff7','#f4f4f4','#94b0c2','#566c86','#333c57'] },
+  nyx8: { name:'🌙 Nyx8 (Lospec)', nameEn:'🌙 Nyx8 (Lospec)', colors:['#08141e','#0f2a3f','#20394f','#f6d6bd','#c3a38a','#997577','#816271','#4e495f'] }
 };
 function hslToHex(h,s,l){
   s/=100; l/=100;
@@ -389,7 +476,7 @@ function buildBigPalette(){
   for(let h=0; h<360; h+=30) colors.push(hslToHex(h,75,55));
   return colors;
 }
-PALETTES.ampla = { name: '🌈 Paleta Ampla (20 cores)', colors: buildBigPalette() };
+PALETTES.ampla = { name: '🌈 Paleta Ampla (20 cores)', nameEn: '🌈 Wide Palette (20 colors)', colors: buildBigPalette() };
 
 /* ======================================================
    ESTADO GLOBAL
@@ -422,24 +509,25 @@ const MAP_PRESETS = [
   {cols:20, rows:12, label:'20×12'}
 ];
 function buildSetupScreen(){
+  const t = UI_STRINGS[currentLang];
   document.getElementById('tilesize-choices').innerHTML = [8,16].map(n => `
     <div class="choice-card ${n===tileSize?'selected':''}" data-ts="${n}" onclick="pickTileSize(${n})">
       <div class="title">${n}×${n}</div>
-      <div class="sub">${n===8?'simples':'mais detalhe'}</div>
+      <div class="sub">${n===8?t.simples:t.maisDetalhe}</div>
     </div>
   `).join('');
 
   document.getElementById('mapsize-choices').innerHTML = MAP_PRESETS.map(p => `
     <div class="choice-card ${p.cols===mapCols&&p.rows===mapRows?'selected':''}" data-mc="${p.cols}" data-mr="${p.rows}" onclick="pickMapSize(${p.cols},${p.rows})">
       <div class="title">${p.label}</div>
-      <div class="sub">${p.cols*p.rows} células</div>
+      <div class="sub">${p.cols*p.rows} ${t.celulas}</div>
     </div>
   `).join('');
 
   document.getElementById('palette-choices').innerHTML = Object.entries(PALETTES).map(([key,p]) => `
     <div class="choice-card ${key===selectedPaletteKey?'selected':''}" data-pal="${key}" onclick="pickPalette('${key}')">
       <div class="mini-swatches">${p.colors.map(c=>`<div class="mini-swatch" style="background:${c}"></div>`).join('')}</div>
-      <div class="sub">${p.name}</div>
+      <div class="sub">${currentLang==='pt' ? p.name : p.nameEn}</div>
     </div>
   `).join('');
 }
@@ -641,7 +729,7 @@ function undoTile(){
 }
 function clearTileCanvas(){
   const t = currentTile(); if(!t) return;
-  if(!confirm('Limpar este tile e recomeçar do zero?')) return;
+  if(!confirm(UI_STRINGS[currentLang].confirmLimparTile)) return;
   saveTileUndoState();
   t.pixels = blankTilePixels();
   paintTileCells();
@@ -702,7 +790,7 @@ function selectTileForEdit(id){
   document.querySelectorAll('#tile-strip .tile-thumb-item').forEach(el => el.classList.toggle('active', parseInt(el.dataset.tileId,10)===id));
 }
 function addNewTile(){
-  if(tiles.length>=20){ alert('Máximo de 20 tiles por projeto.'); return; }
+  if(tiles.length>=20){ alert(UI_STRINGS[currentLang].xTileMax); return; }
   const t = makeTile('Tile '+(tiles.length+1));
   tiles.push(t);
   currentTileId = t.id;
@@ -713,7 +801,7 @@ function addNewTile(){
 }
 function deleteTile(id){
   if(tiles.length<=1) return;
-  if(!confirm('Apagar este tile? Ele também vai sumir do mapa onde foi usado.')) return;
+  if(!confirm(UI_STRINGS[currentLang].confirmApagarTile)) return;
   tiles = tiles.filter(t => t.id!==id);
   mapGrid = mapGrid.map(v => v===id ? null : v);
   if(currentTileId===id) currentTileId = tiles[0].id;
@@ -858,7 +946,7 @@ function undoMap(){
   renderMapCanvas();
 }
 function clearMapCanvas(){
-  if(!confirm('Limpar o mapa inteiro?')) return;
+  if(!confirm(UI_STRINGS[currentLang].confirmLimparMapa)) return;
   saveMapUndoState();
   mapGrid = new Array(mapCols*mapRows).fill(null);
   renderMapCanvas();
@@ -990,7 +1078,7 @@ const sb = (SUPABASE_URL.startsWith("http") && window.supabase)
 let saveTurmaData = null;
 
 function openSaveStudentModal(){
-  if(!sb){ alert('Não foi possível conectar ao Supabase.'); return; }
+  if(!sb){ alert(UI_STRINGS[currentLang].alertSupabase); return; }
   document.getElementById('save-step-turma').style.display = 'block';
   document.getElementById('save-step-aluno').style.display = 'none';
   document.getElementById('save-turma-error').textContent = '';
@@ -1007,10 +1095,10 @@ function backToTurmaStep(){
 async function lookupTurmaForSave(){
   const code = document.getElementById('save-turma-code').value.trim().toLowerCase();
   const errEl = document.getElementById('save-turma-error');
-  if(!code){ errEl.textContent = '👉 Digite o código da turma.'; return; }
-  errEl.textContent = '⏳ Buscando...';
+  if(!code){ errEl.textContent = UI_STRINGS[currentLang].digiteCodigoTurma; return; }
+  errEl.textContent = UI_STRINGS[currentLang].buscando;
   const { data: turma, error } = await sb.from('turmas').select('*').eq('codigo_acesso', code).maybeSingle();
-  if(error || !turma){ errEl.textContent = '❌ Turma não encontrada. Confira o código.'; return; }
+  if(error || !turma){ errEl.textContent = UI_STRINGS[currentLang].turmaNaoEncontrada; return; }
   errEl.textContent = '';
   const { data: alunos } = await sb.from('alunos').select('*').eq('turma_id', turma.id).order('nome');
   saveTurmaData = { turma, alunos: alunos || [] };
@@ -1018,7 +1106,7 @@ async function lookupTurmaForSave(){
   const listEl = document.getElementById('save-aluno-list');
   listEl.innerHTML = (alunos && alunos.length)
     ? alunos.map((a,i) => `<button class="btn purple" style="justify-content:center;" onclick="saveToAlunoIndex(${i})">${a.nome}</button>`).join('')
-    : '<p style="font-family:\'Baloo 2\',sans-serif;color:var(--ink-soft);font-size:12px;">Nenhum aluno cadastrado nessa turma ainda.</p>';
+    : '<p style="font-family:\'Baloo 2\',sans-serif;color:var(--ink-soft);font-size:12px;">' + UI_STRINGS[currentLang].nenhumAluno + '</p>';
   document.getElementById('save-step-turma').style.display = 'none';
   document.getElementById('save-step-aluno').style.display = 'block';
 }
@@ -1027,7 +1115,7 @@ async function saveToAlunoIndex(i){
   const aluno = saveTurmaData.alunos[i];
   if(!aluno) return;
   const status = document.getElementById('save-status');
-  status.textContent = '⏳ Enviando pra pasta de ' + aluno.nome + '...';
+  status.textContent = UI_STRINGS[currentLang].enviandoPasta + aluno.nome + '...';
   try{
     const jsonBlob = new Blob([JSON.stringify({tileSize,mapCols,mapRows,tiles,map:mapGrid},null,2)], {type:'application/json'});
     const pngBlob = await mapCanvasBlob();
@@ -1040,10 +1128,10 @@ async function saveToAlunoIndex(i){
     if(e2) throw new Error(e2.message);
     await sb.rpc('registrar_envio', { p_codigo: aluno.codigo, p_nome_arquivo: base+'.png', p_storage_path: pathPng, p_tipo:'envio', p_tamanho_bytes: pngBlob.size });
     await sb.rpc('registrar_envio', { p_codigo: aluno.codigo, p_nome_arquivo: base+'.json', p_storage_path: pathJson, p_tipo:'envio', p_tamanho_bytes: jsonBlob.size });
-    status.textContent = '✅ Salvo na pasta de ' + aluno.nome + '!';
+    status.textContent = UI_STRINGS[currentLang].salvoPasta + aluno.nome + '!';
     setTimeout(closeSaveStudentModal, 1600);
   }catch(e){
-    status.textContent = '❌ Erro: ' + e.message;
+    status.textContent = UI_STRINGS[currentLang].erroPrefix + e.message;
   }
 }
 
@@ -1053,6 +1141,7 @@ async function saveToAlunoIndex(i){
 initTheme();
 buildSetupScreen();
 checkAutosaveOnLoad();
+applyLang();
 </script>
 </body>
 </html>
