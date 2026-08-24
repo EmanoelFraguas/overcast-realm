@@ -25,33 +25,37 @@
   .wrap{max-width:1080px;margin:0 auto;}
   h1,h2,h3,.pixel{ font-family:'Press Start 2P', monospace; }
 
-  .back-row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+  .back-row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
   .back-home{
     display:inline-flex; align-items:center; gap:5px; font-weight:700; font-size:12px;
     color:var(--ink-soft); background:var(--bg-card); border:2px solid var(--border);
-    border-radius:999px; padding:8px 14px; text-decoration:none;
+    border-radius:999px; padding:6px 12px; text-decoration:none;
   }
-  header{ text-align:center; margin-bottom:16px; }
-  header h1{ font-size:clamp(15px,3vw,22px); color:var(--pink); text-shadow:3px 3px 0 #000; margin:0 0 8px; }
-  header p{ font-weight:700; color:var(--ink-soft); font-size:14px; margin:0; }
+  header{ text-align:center; margin-bottom:10px; }
+  header h1{ font-size:clamp(14px,2.6vw,19px); color:var(--pink); text-shadow:2px 2px 0 #000; margin:0 0 4px; }
+  header p{ font-weight:700; color:var(--ink-soft); font-size:12px; margin:0; }
 
   .panel{
-    background:var(--bg-panel); border:3px solid var(--border); border-radius:22px;
-    box-shadow:0 8px 0 #120c22; padding:20px; margin-bottom:16px;
+    background:var(--bg-panel); border:3px solid var(--border); border-radius:18px;
+    box-shadow:0 6px 0 #120c22; padding:14px 16px; margin-bottom:12px;
   }
-  .panel h2{ font-size:13px; color:var(--yellow); margin:0 0 6px; }
-  .panel .desc{ font-weight:700; color:var(--ink-soft); font-size:14px; margin:0 0 16px; line-height:1.4; }
+  .panel h2{ font-size:12px; color:var(--yellow); margin:0 0 4px; }
+  .panel .desc{ font-weight:700; color:var(--ink-soft); font-size:12px; margin:0 0 8px; line-height:1.3; }
 
-  .preset-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:10px; }
+  .preset-strip{ display:flex; gap:14px; overflow-x:auto; padding-bottom:8px; }
+  .preset-cat-block{ display:flex; flex-direction:column; gap:4px; flex-shrink:0; }
+  .preset-cat-label{ font-weight:800; font-size:10px; color:var(--ink-soft); white-space:nowrap; }
+  .preset-cat-row{ display:flex; gap:6px; }
   .preset-card{
-    background:var(--bg-card); border:3px solid var(--border); border-radius:14px;
-    padding:10px 8px; text-align:center; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px;
+    background:var(--bg-card); border:2px solid var(--border); border-radius:10px;
+    padding:6px 8px; text-align:center; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:2px;
+    min-width:64px;
   }
   .preset-card:hover, .preset-card.active{ border-color:var(--yellow); background:#3a2f10; }
-  .preset-card .icon{ font-size:22px; }
-  .preset-card .name{ font-weight:800; font-size:12px; }
+  .preset-card .icon{ font-size:17px; }
+  .preset-card .name{ font-weight:800; font-size:9.5px; white-space:nowrap; }
 
-  .transport{ display:flex; flex-wrap:wrap; align-items:center; gap:14px; margin-bottom:16px; }
+  .transport{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:8px; }
   .bpm-row{ display:flex; align-items:center; gap:8px; }
   .bpm-row input[type=range]{ width:140px; accent-color:var(--pink); }
   .value-tag{ font-family:'Press Start 2P',monospace; font-size:10px; color:var(--cyan); }
@@ -82,10 +86,13 @@
   .cell.on{ background:var(--pink); border-color:#ff96c4; }
   .cell.drum.on{ background:var(--cyan); border-color:#8ff3ff; }
   .cell.beat-start{ border-left:3px solid var(--yellow); }
+  .cell.compasso2-start{ border-left:4px solid var(--orange); margin-left:8px; }
+  .cell.compasso2.inativo{ opacity:.35; }
   .cell.playing{ outline:2px solid #fff; }
-  .section-title{ font-weight:800; font-size:12px; color:var(--ink-soft); margin:14px 0 6px; }
+  .section-title{ font-weight:800; font-size:11px; color:var(--ink-soft); margin:8px 0 4px; }
+  .cell{ width:20px; height:20px; margin:1px; }
 
-  .instrument-row{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px; }
+  .instrument-row{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-bottom:6px; }
   .instrument-row label{ font-weight:800; font-size:12px; color:var(--ink-soft); }
   .wave-btn{
     font-weight:800; font-size:11px; border:2px solid var(--border); background:var(--bg-card);
@@ -123,55 +130,43 @@
 
   <div class="panel">
     <h2>🎯 EXEMPLOS PRONTOS</h2>
-    <p class="desc">Clique pra carregar uma musiquinha de exemplo e usar como ponto de partida.</p>
-    <div class="preset-grid" id="preset-grid"></div>
+    <div class="preset-strip" id="preset-grid"></div>
   </div>
 
   <div class="panel">
-    <h2>▶️ TRANSPORTE</h2>
     <div class="transport">
       <button class="btn green" id="play-btn" onclick="togglePlay()">▶️ Tocar</button>
       <div class="bpm-row">
-        <span style="font-weight:800;font-size:12px;color:var(--ink-soft);">ANDAMENTO</span>
+        <span style="font-weight:800;font-size:11px;color:var(--ink-soft);">BPM</span>
         <input type="range" id="ctl-bpm" min="60" max="180" value="120">
-        <span class="value-tag" id="val-bpm">120 BPM</span>
+        <span class="value-tag" id="val-bpm">120</span>
       </div>
-      <button class="btn gray" onclick="limparTudo()">🧹 Limpar Tudo</button>
+      <button class="btn purple" id="btn-2o-compasso" onclick="toggleSegundoCompasso()">🔒 2º Compasso: OFF</button>
+      <button class="btn gray" onclick="limparTudo()">🧹 Limpar</button>
+      <div style="flex:1;"></div>
+      <div id="melody-wave-row" style="display:flex;gap:6px;"></div>
     </div>
 
-    <div class="section-title">🎹 MELODIA</div>
-    <div class="instrument-row">
-      <label>INSTRUMENTO:</label>
-      <div id="melody-wave-row"></div>
-    </div>
     <div class="seq-scroll">
       <table class="seq-table" id="melody-grid"></table>
     </div>
-
-    <div class="section-title">🥁 BATERIA</div>
     <div class="seq-scroll">
       <table class="seq-table" id="drum-grid"></table>
     </div>
-  </div>
 
-  <div class="panel">
-    <h2>💾 EXPORTAR / SALVAR</h2>
-    <p class="desc">Gera o loop inteiro como um único arquivo de áudio (MP3 ou WAV, o que ficar mais leve) pra importar no Construct.</p>
-    <div class="control" style="margin-bottom:10px;">
-      <label style="font-weight:800;font-size:12px;color:var(--ink-soft);">NOME DO ARQUIVO</label><br>
-      <input type="text" id="ctl-nome" value="minha-musica" maxlength="40">
-    </div>
-    <div class="btn-row">
-      <button class="btn orange" onclick="baixarLoop()">⬇️ Baixar Loop</button>
-      <button class="btn green" onclick="abrirModalVincular()">👤 Vincular meu nome</button>
-      <button class="btn pink" id="btn-salvar-pasta" onclick="salvarNaPasta()" disabled>📁 Salvar na Pasta do Aluno</button>
+    <div class="transport" style="margin-top:10px;border-top:2px solid var(--border);padding-top:10px;">
+      <input type="text" id="ctl-nome" value="minha-musica" maxlength="40" style="max-width:180px;">
+      <button class="btn orange" onclick="baixarLoop()">⬇️ Baixar</button>
+      <button class="btn green" onclick="abrirModalVincular()">👤 Vincular</button>
+      <button class="btn pink" id="btn-salvar-pasta" onclick="salvarNaPasta()" disabled>📁 Salvar na Pasta</button>
     </div>
     <p class="status-line" id="export-status"></p>
-    <div class="info-box" id="link-badge" style="margin-top:10px; display:none;"></div>
+    <div class="info-box" id="link-badge" style="margin-top:6px; display:none;"></div>
   </div>
 
   <div class="info-box">
-    ℹ️ A melodia usa uma escala pentatônica — <b>qualquer combinação de notas que você clicar vai soar bem</b>, não tem como "errar" a nota. Cada coluna é um passo do compasso; a coluna com borda amarela marca o início de cada tempo.
+    ℹ️ Escala pentatônica — qualquer nota soa bem. A borda laranja marca o início do 2º compasso: ele já pode ser editado, mas só toca se o botão "2º Compasso" estiver ativado.
+  </div>
   </div>
 
 </div>
@@ -206,7 +201,8 @@ const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE
 /* ======================================================
    ESCALA / GRID
 ====================================================== */
-const STEPS = 16;
+const STEPS = 32; // sempre 32 na tela; o botão de 2º compasso decide se toca ou não
+let segundoCompassoAtivo = false; // false = toca só os 16 primeiros e volta; true = toca os 32
 const ESCALA = [
   {nome:'C5', freq:523.25}, {nome:'A4', freq:440.00}, {nome:'G4', freq:392.00},
   {nome:'E4', freq:329.63}, {nome:'D4', freq:293.66}, {nome:'C4', freq:261.63}
@@ -226,28 +222,85 @@ let bpm = 120;
    PRESETS
 ====================================================== */
 const PRESETS = [
-  { name:'Alegre', icon:'😊', bpm:130, wave:'square',
-    melody:[[0,0],[4,2],[8,1],[12,3]],
-    drums:{kick:[0,8], snare:[4,12], hihat:[0,2,4,6,8,10,12,14]} },
-  { name:'Suspense', icon:'😨', bpm:90, wave:'triangle',
-    melody:[[0,5],[2,5],[8,4],[10,4]],
-    drums:{kick:[0,6,10], snare:[], hihat:[0,4,8,12]} },
-  { name:'Vitória', icon:'🏆', bpm:150, wave:'square',
-    melody:[[0,3],[2,2],[4,1],[6,0],[8,0]],
-    drums:{kick:[0,4,8,12], snare:[8], hihat:[0,2,4,6,8,10,12,14]} },
-  { name:'Calma', icon:'🌙', bpm:80, wave:'sine',
-    melody:[[0,4],[4,3],[8,5],[12,3]],
-    drums:{kick:[0,8], snare:[], hihat:[]} }
+  // ---- Alegre ----
+  { name:'Alegre', cat:'😊 Alegre', icon:'😊', bpm:130, wave:'square',
+    melody:[[0,0],[4,2],[8,1],[12,3], [16,1],[20,3],[24,0],[28,2]],
+    drums:{kick:[0,8,16,24], snare:[4,12,20,28], hihat:[0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30]} },
+  { name:'Saltitante', cat:'😊 Alegre', icon:'🐰', bpm:140, wave:'triangle',
+    melody:[[0,1],[2,0],[4,2],[6,1],[8,3],[10,2],[12,1],[14,0], [16,2],[18,1],[20,3],[22,2],[24,0],[26,1],[28,3],[30,2]],
+    drums:{kick:[0,4,8,12,16,20,24,28], snare:[2,6,10,14,18,22,26,30], hihat:[0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30]} },
+  // ---- Vitória ----
+  { name:'Vitória', cat:'🏆 Vitória', icon:'🏆', bpm:150, wave:'square',
+    melody:[[0,3],[2,2],[4,1],[6,0],[8,0], [16,3],[18,2],[20,1],[22,0],[24,0],[26,0],[28,0],[30,0]],
+    drums:{kick:[0,4,8,12,16,20,24,28], snare:[8,24,28], hihat:[0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30]} },
+  { name:'Fanfarra', cat:'🏆 Vitória', icon:'🎺', bpm:160, wave:'square',
+    melody:[[0,5],[1,3],[2,1],[3,0],[4,0],[8,5],[9,3],[10,1],[11,0],[12,0],[13,0],[14,0],
+             [16,5],[17,3],[18,1],[19,0],[20,0],[24,5],[25,3],[26,1],[27,0],[28,0],[29,0],[30,0],[31,0]],
+    drums:{kick:[0,4,8,12,16,20,24,28], snare:[6,14,22,30], hihat:[0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30]} },
+  // ---- Calma ----
+  { name:'Calma', cat:'🌙 Calma', icon:'🌙', bpm:80, wave:'sine',
+    melody:[[0,4],[4,3],[8,5],[12,3], [16,5],[20,4],[24,3],[28,5]],
+    drums:{kick:[0,8,16,24], snare:[], hihat:[]} },
+  { name:'Nostalgia', cat:'🌙 Calma', icon:'🍃', bpm:70, wave:'sine',
+    melody:[[0,3],[3,4],[6,5],[9,4],[12,3],[15,4], [16,2],[19,3],[22,4],[25,3],[28,2],[31,3]],
+    drums:{kick:[0,16], snare:[], hihat:[4,12,20,28]} },
+  // ---- Suspense ----
+  { name:'Suspense', cat:'😨 Suspense', icon:'😨', bpm:90, wave:'triangle',
+    melody:[[0,5],[2,5],[8,4],[10,4], [16,5],[18,5],[24,3],[26,3]],
+    drums:{kick:[0,6,10,16,22,26], snare:[], hihat:[0,4,8,12,16,20,24,28]} },
+  { name:'Alerta', cat:'😨 Suspense', icon:'🚨', bpm:100, wave:'sawtooth',
+    melody:[[0,5],[4,5],[8,4],[12,5], [16,5],[20,5],[24,4],[28,5]],
+    drums:{kick:[0,2,8,10,16,18,24,26], snare:[6,14,22,30], hihat:[0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30]} },
+  // ---- Perigo ----
+  { name:'Perigo', cat:'⚠️ Perigo', icon:'⚠️', bpm:170, wave:'sawtooth',
+    melody:[[0,5],[2,4],[4,5],[6,4],[8,5],[10,4],[12,5],[14,4], [16,5],[18,4],[20,5],[22,4],[24,5],[26,4],[28,5],[30,4]],
+    drums:{kick:[0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30], snare:[4,12,20,28], hihat:[]} },
+  // ---- Menu ----
+  { name:'Menu', cat:'📋 Menu', icon:'📋', bpm:110, wave:'triangle',
+    melody:[[0,2],[4,1],[8,0],[12,1], [16,2],[20,1],[24,0],[28,1]],
+    drums:{kick:[0,8,16,24], snare:[], hihat:[0,4,8,12,16,20,24,28]} },
+  // ---- Fim de jogo ----
+  { name:'Fim de Jogo', cat:'💀 Derrota', icon:'💀', bpm:70, wave:'triangle',
+    melody:[[0,0],[4,1],[8,3],[12,5], [16,5],[22,5],[28,5]],
+    drums:{kick:[0,16], snare:[8], hihat:[]} },
+  // ---- Aventura ----
+  { name:'Aventura', cat:'🗺️ Aventura', icon:'🗺️', bpm:125, wave:'square',
+    melody:[[0,3],[2,2],[4,1],[6,3],[8,2],[10,1],[12,0],[14,1], [16,2],[18,1],[20,0],[22,2],[24,1],[26,0],[28,3],[30,1]],
+    drums:{kick:[0,6,8,14,16,22,24,30], snare:[4,12,20,28], hihat:[0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30]} },
+  // ---- Batalha ----
+  { name:'Batalha', cat:'⚔️ Batalha', icon:'⚔️', bpm:165, wave:'sawtooth',
+    melody:[[0,1],[1,0],[2,1],[3,2],[4,1],[5,0],[6,1],[7,2],[8,1],[9,0],[10,1],[11,2],[12,1],[13,0],[14,1],[15,2],
+             [16,2],[17,1],[18,2],[19,3],[20,2],[21,1],[22,2],[23,3],[24,2],[25,1],[26,2],[27,3],[28,2],[29,1],[30,2],[31,3]],
+    drums:{kick:[0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30], snare:[4,12,20,28], hihat:[0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30]} },
+  // ---- Mistério ----
+  { name:'Mistério', cat:'🔮 Mistério', icon:'🔮', bpm:75, wave:'sine',
+    melody:[[0,5],[6,4],[11,5], [16,4],[22,5],[27,4]],
+    drums:{kick:[0,16], snare:[], hihat:[8,24]} },
+  // ---- Festa ----
+  { name:'Festa', cat:'🎉 Festa', icon:'🎉', bpm:145, wave:'square',
+    melody:[[0,0],[2,1],[4,2],[6,1],[8,0],[10,1],[12,2],[14,1], [16,1],[18,2],[20,3],[22,2],[24,1],[26,2],[28,3],[30,2]],
+    drums:{kick:[0,4,8,12,16,20,24,28], snare:[2,6,10,14,18,22,26,30], hihat:[0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30]} }
 ];
 
 function buildPresetGrid(){
   const el = document.getElementById('preset-grid');
-  el.innerHTML = PRESETS.map((p,i) => `
-    <div class="preset-card" data-i="${i}" onclick="carregarPreset(${i})">
-      <span class="icon">${p.icon}</span>
-      <span class="name">${p.name}</span>
-    </div>
-  `).join('');
+  const categorias = [...new Set(PRESETS.map(p => p.cat))];
+  el.innerHTML = categorias.map(cat => {
+    const itens = PRESETS.map((p,i)=>({p,i})).filter(x => x.p.cat === cat);
+    return `
+      <div class="preset-cat-block">
+        <div class="preset-cat-label">${cat}</div>
+        <div class="preset-cat-row">
+          ${itens.map(({p,i}) => `
+            <div class="preset-card" data-i="${i}" onclick="carregarPreset(${i})">
+              <span class="icon">${p.icon}</span>
+              <span class="name">${p.name}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 function carregarPreset(i){
   const p = PRESETS[i];
@@ -260,6 +313,8 @@ function carregarPreset(i){
   });
   bpm = p.bpm;
   melodyWave = p.wave;
+  segundoCompassoAtivo = true; // agora os presets já usam os 2 compassos (32 passos)
+  document.getElementById('btn-2o-compasso').textContent = '🔓 2º Compasso: ON';
   document.getElementById('ctl-bpm').value = bpm;
   document.getElementById('val-bpm').textContent = bpm + ' BPM';
   setMelodyWave(melodyWave);
@@ -270,13 +325,19 @@ function carregarPreset(i){
 /* ======================================================
    RENDER DOS GRIDS
 ====================================================== */
+function classesExtraPasso(passo){
+  let cls = passo%4===0 ? 'beat-start' : '';
+  if(passo===16) cls += ' compasso2-start';
+  if(passo>=16 && !segundoCompassoAtivo) cls += ' compasso2 inativo';
+  return cls;
+}
 function renderGrids(){
   const melodyTable = document.getElementById('melody-grid');
   melodyTable.innerHTML = ESCALA.map((nota,linha) => `
     <tr>
       <td class="row-label">${nota.nome}</td>
       ${new Array(STEPS).fill(0).map((_,passo) => `
-        <td><div class="cell ${melodyGrid[linha][passo]?'on':''} ${passo%4===0?'beat-start':''}" data-linha="${linha}" data-passo="${passo}" onclick="toggleMelody(${linha},${passo})"></div></td>
+        <td><div class="cell ${melodyGrid[linha][passo]?'on':''} ${classesExtraPasso(passo)}" data-linha="${linha}" data-passo="${passo}" onclick="toggleMelody(${linha},${passo})"></div></td>
       `).join('')}
     </tr>
   `).join('');
@@ -286,10 +347,16 @@ function renderGrids(){
     <tr>
       <td class="row-label">${d.icon} ${d.nome}</td>
       ${new Array(STEPS).fill(0).map((_,passo) => `
-        <td><div class="cell drum ${drumGrid[linha][passo]?'on':''} ${passo%4===0?'beat-start':''}" data-linha="${linha}" data-passo="${passo}" onclick="toggleDrum(${linha},${passo})"></div></td>
+        <td><div class="cell drum ${drumGrid[linha][passo]?'on':''} ${classesExtraPasso(passo)}" data-linha="${linha}" data-passo="${passo}" onclick="toggleDrum(${linha},${passo})"></div></td>
       `).join('')}
     </tr>
   `).join('');
+}
+function toggleSegundoCompasso(){
+  segundoCompassoAtivo = !segundoCompassoAtivo;
+  const btn = document.getElementById('btn-2o-compasso');
+  btn.textContent = segundoCompassoAtivo ? '🔓 2º Compasso: ON' : '🔒 2º Compasso: OFF';
+  renderGrids();
 }
 function toggleMelody(linha, passo){
   melodyGrid[linha][passo] = !melodyGrid[linha][passo];
@@ -400,12 +467,13 @@ function normalizar(buffer, alvoPico){
   return buffer;
 }
 function renderizarLoop(){
+  const totalPassos = segundoCompassoAtivo ? STEPS : 16;
   const passoDuracao = 60/bpm/4;
-  const duracaoTotal = passoDuracao*STEPS;
+  const duracaoTotal = passoDuracao*totalPassos;
   const bufferPrincipal = new Float32Array(Math.ceil(duracaoTotal*SAMPLE_RATE) + Math.ceil(SAMPLE_RATE*0.3));
 
   for(let linha=0; linha<ESCALA.length; linha++){
-    for(let passo=0; passo<STEPS; passo++){
+    for(let passo=0; passo<totalPassos; passo++){
       if(melodyGrid[linha][passo]){
         const nota = renderNota(ESCALA[linha].freq, passoDuracao*0.9, melodyWave, 0.45);
         misturar(bufferPrincipal, nota, passo*passoDuracao);
@@ -413,7 +481,7 @@ function renderizarLoop(){
     }
   }
   for(let linha=0; linha<DRUMS.length; linha++){
-    for(let passo=0; passo<STEPS; passo++){
+    for(let passo=0; passo<totalPassos; passo++){
       if(drumGrid[linha][passo]){
         misturar(bufferPrincipal, renderPercussao(DRUMS[linha].key), passo*passoDuracao);
       }
@@ -445,7 +513,8 @@ function iniciarPlay(){
     for(let linha=0; linha<DRUMS.length; linha++){
       if(drumGrid[linha][passoAtual]) tocarSamples(renderPercussao(DRUMS[linha].key));
     }
-    passoAtual = (passoAtual+1) % STEPS;
+    const totalPassos = segundoCompassoAtivo ? STEPS : 16;
+    passoAtual = (passoAtual+1) % totalPassos;
   };
   tick();
   stepTimer = setInterval(tick, passoDuracaoMs);
