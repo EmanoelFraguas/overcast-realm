@@ -316,6 +316,7 @@
 <body>
 <div class="wrap">
 
+  <button id="lang-toggle-btn" style="position:fixed;top:10px;right:10px;z-index:999;font-size:22px;background:#fff;border:2px solid #d8d5e6;border-radius:50%;width:42px;height:42px;cursor:pointer;box-shadow:0 3px 0 #d8d5e6;" onclick="toggleLang()" title="English">🇺🇸</button>
   <div class="back-row">
     <a href="./index.html" class="back-home">← Voltar pro Overcast Realm</a>
     <a href="./puzzle.html" class="back-home">🧩 Puzzle Nível 1</a>
@@ -323,15 +324,15 @@
   </div>
 
   <header>
-    <div class="eyebrow">OVERCAST REALM · TURMA DE LÓGICA · NÍVEL 2</div>
-    <h1>Monte o <span class="em">Evento</span> igual no Construct!</h1>
-    <p>No Construct 3, cada evento tem Objeto → Evento/Ação → Parâmetro (às vezes). Arraste os pedacinhos pro lugar certo, na ordem certa. 🧩</p>
+    <div class="eyebrow" id="t-eyebrow">OVERCAST REALM · TURMA DE LÓGICA · NÍVEL 2</div>
+    <h1 id="t-h1">Monte o <span class="em">Evento</span> igual no Construct!</h1>
+    <p id="t-sub">No Construct 3, cada evento tem Objeto → Evento/Ação → Parâmetro (às vezes). Arraste os pedacinhos pro lugar certo, na ordem certa. 🧩</p>
   </header>
 
   <div class="legend">
-    <span class="l-obj">🟦 OBJETO</span>
-    <span class="l-evt">🟥 EVENTO / AÇÃO</span>
-    <span class="l-param">🟩 PARÂMETRO</span>
+    <span class="l-obj" id="t-l-obj">🟦 OBJETO</span>
+    <span class="l-evt" id="t-l-evt">🟥 EVENTO / AÇÃO</span>
+    <span class="l-param" id="t-l-param">🟩 PARÂMETRO</span>
   </div>
 
   <div class="progress-bar-wrap">
@@ -347,83 +348,83 @@
 // Cada exercício: cond (SE) e act (ENTÃO), cada um é uma lista de peças na ordem certa.
 // role: 'obj' (objeto), 'evt' (evento/condição ou ação), 'param' (parâmetro/objeto-alvo, nem sempre existe)
 const exercises = [
-  {icon:"☠️", title:"Espinho", scenario:'Se o <b>Personagem</b> colidir com o <b>Espinho</b>, o <b>Sistema</b> reinicia o layout.',
+  {icon:"☠️", title:{pt:"Espinho",en:"Spike"}, scenario:{pt:'Se o <b>Personagem</b> colidir com o <b>Espinho</b>, o <b>Sistema</b> reinicia o layout.',en:'If the <b>Player</b> collides with the <b>Spike</b>, the <b>System</b> restarts the layout.'},
    cond:[["obj","Personagem"],["evt","Colidir com outro objeto"],["param","Espinho"]],
    act:[["obj","Sistema"],["evt","Reiniciar layout"]]},
 
-  {icon:"⬆️", title:"Pular", scenario:'Se a tecla <b>Seta Cima</b> for pressionada, o <b>Personagem</b> pula.',
+  {icon:"⬆️", title:{pt:"Pular",en:"Jump"}, scenario:{pt:'Se a tecla <b>Seta Cima</b> for pressionada, o <b>Personagem</b> pula.',en:'If the <b>Up arrow</b> key is down, the <b>Player</b> jumps.'},
    cond:[["obj","Teclado"],["evt","Tecla pressionada"],["param","Seta Cima"]],
    act:[["obj","Personagem"],["evt","Pular"]]},
 
-  {icon:"🪙", title:"Moeda", scenario:'Se o <b>Personagem</b> colidir com a <b>Moeda</b>, a <b>Moeda</b> é destruída.',
+  {icon:"🪙", title:{pt:"Moeda",en:"Coin"}, scenario:{pt:'Se o <b>Personagem</b> colidir com a <b>Moeda</b>, a <b>Moeda</b> é destruída.',en:'If the <b>Player</b> collides with the <b>Coin</b>, the <b>Coin</b> is destroyed.'},
    cond:[["obj","Personagem"],["evt","Colidir com outro objeto"],["param","Moeda"]],
    act:[["obj","Moeda"],["evt","Destruir"]]},
 
-  {icon:"🎬", title:"Início do jogo", scenario:'Quando o layout começar, o <b>Sistema</b> cria o <b>Inimigo</b>.',
+  {icon:"🎬", title:{pt:"Início do jogo",en:"Start of game"}, scenario:{pt:'Quando o layout começar, o <b>Sistema</b> cria o <b>Inimigo</b>.',en:'When the layout starts, the <b>System</b> creates the <b>Enemy</b>.'},
    cond:[["obj","Sistema"],["evt","Ao iniciar layout"]],
    act:[["obj","Sistema"],["evt","Criar objeto"],["param","Inimigo"]]},
 
-  {icon:"💔", title:"Voltar ao início", scenario:'Se o <b>Personagem</b> colidir com o <b>Inimigo</b>, o <b>Personagem</b> volta pro Ponto Inicial.',
+  {icon:"💔", title:{pt:"Voltar ao início",en:"Back to start"}, scenario:{pt:'Se o <b>Personagem</b> colidir com o <b>Inimigo</b>, o <b>Personagem</b> volta pro Ponto Inicial.',en:'If the <b>Player</b> collides with the <b>Enemy</b>, the <b>Player</b> goes back to the Start Point.'},
    cond:[["obj","Personagem"],["evt","Colidir com outro objeto"],["param","Inimigo"]],
    act:[["obj","Personagem"],["evt","Definir posição"],["param","Ponto Inicial"]]},
 
-  {icon:"⏳", title:"Spawn por tempo", scenario:'Quando o temporizador <b>Spawn_Inimigo</b> disparar, o <b>Sistema</b> cria o <b>Inimigo</b>.',
+  {icon:"⏳", title:{pt:"Spawn por tempo",en:"Timed spawn"}, scenario:{pt:'Quando o temporizador <b>Spawn_Inimigo</b> disparar, o <b>Sistema</b> cria o <b>Inimigo</b>.',en:'When the <b>Spawn_Enemy</b> timer fires, the <b>System</b> creates the <b>Enemy</b>.'},
    cond:[["obj","Temporizador"],["evt","Ao disparar"],["param","Spawn_Inimigo"]],
    act:[["obj","Sistema"],["evt","Criar objeto"],["param","Inimigo"]]},
 
-  {icon:"💀", title:"Fim de jogo", scenario:'Se a variável <b>Vida</b> for igual a 0, o <b>Sistema</b> vai para o layout Game_Over.',
+  {icon:"💀", title:{pt:"Fim de jogo",en:"Game over"}, scenario:{pt:'Se a variável <b>Vida</b> for igual a 0, o <b>Sistema</b> vai para o layout Game_Over.',en:'If the <b>Lives</b> variable equals 0, the <b>System</b> goes to the Game_Over layout.'},
    cond:[["obj","Sistema"],["evt","Comparar variável"],["param","Vida = 0"]],
    act:[["obj","Sistema"],["evt","Ir para layout"],["param","Game_Over"]]},
 
-  {icon:"🔫", title:"Atirar", scenario:'Se a tecla <b>Espaço</b> for pressionada, o <b>Personagem</b> atira.',
+  {icon:"🔫", title:{pt:"Atirar",en:"Shoot"}, scenario:{pt:'Se a tecla <b>Espaço</b> for pressionada, o <b>Personagem</b> atira.',en:'If the <b>Space</b> key is down, the <b>Player</b> shoots.'},
    cond:[["obj","Teclado"],["evt","Tecla pressionada"],["param","Espaço"]],
    act:[["obj","Personagem"],["evt","Atirar"]]},
 
-  {icon:"💥", title:"Acertar inimigo", scenario:'Se o <b>Projétil</b> colidir com o <b>Inimigo</b>, o <b>Inimigo</b> é destruído.',
+  {icon:"💥", title:{pt:"Acertar inimigo",en:"Hit the enemy"}, scenario:{pt:'Se o <b>Projétil</b> colidir com o <b>Inimigo</b>, o <b>Inimigo</b> é destruído.',en:'If the <b>Bullet</b> collides with the <b>Enemy</b>, the <b>Enemy</b> is destroyed.'},
    cond:[["obj","Projétil"],["evt","Colidir com outro objeto"],["param","Inimigo"]],
    act:[["obj","Inimigo"],["evt","Destruir"]]},
 
-  {icon:"⏱️", title:"Contagem regressiva", scenario:'A cada 1 segundo, o <b>Sistema</b> subtrai da variável <b>Tempo_Restante</b>.',
+  {icon:"⏱️", title:{pt:"Contagem regressiva",en:"Countdown"}, scenario:{pt:'A cada 1 segundo, o <b>Sistema</b> subtrai da variável <b>Tempo_Restante</b>.',en:'Every 1 second, the <b>System</b> subtracts from the <b>Time_Left</b> variable.'},
    cond:[["obj","Sistema"],["evt","Cada X segundos"],["param","1"]],
    act:[["obj","Sistema"],["evt","Subtrair de variável"],["param","Tempo_Restante"]]},
 
-  {icon:"▶️", title:"Botão iniciar", scenario:'Se o <b>Botão_Iniciar</b> for clicado, o <b>Sistema</b> vai para o layout Fase_1.',
+  {icon:"▶️", title:{pt:"Botão iniciar",en:"Start button"}, scenario:{pt:'Se o <b>Botão_Iniciar</b> for clicado, o <b>Sistema</b> vai para o layout Fase_1.',en:'If the <b>Start_Button</b> is clicked, the <b>System</b> goes to the Level_1 layout.'},
    cond:[["obj","Botão_Iniciar"],["evt","Ao clicar"]],
    act:[["obj","Sistema"],["evt","Ir para layout"],["param","Fase_1"]]},
 
-  {icon:"🌫️", title:"Sair da tela", scenario:'Se o <b>Personagem</b> sair da área de jogo, o <b>Personagem</b> é destruído.',
+  {icon:"🌫️", title:{pt:"Sair da tela",en:"Leaving the screen"}, scenario:{pt:'Se o <b>Personagem</b> sair da área de jogo, o <b>Personagem</b> é destruído.',en:'If the <b>Player</b> is outside the layout, the <b>Player</b> is destroyed.'},
    cond:[["obj","Personagem"],["evt","Sair da tela"]],
    act:[["obj","Personagem"],["evt","Destruir"]]},
 
-  {icon:"🖱️", title:"Clique cria bala", scenario:'Se o botão do <b>Mouse</b> for clicado, o <b>Sistema</b> cria a <b>Bala</b>.',
+  {icon:"🖱️", title:{pt:"Clique cria bala",en:"Click creates a bullet"}, scenario:{pt:'Se o botão do <b>Mouse</b> for clicado, o <b>Sistema</b> cria a <b>Bala</b>.',en:'If the <b>Mouse</b> button is clicked, the <b>System</b> creates the <b>Bullet</b>.'},
    cond:[["obj","Mouse"],["evt","Botão clicado"]],
    act:[["obj","Sistema"],["evt","Criar objeto"],["param","Bala"]]},
 
-  {icon:"🎥", title:"Câmera segue jogador", scenario:'Quando o layout começar, a <b>Câmera</b> define a posição no <b>Personagem</b>.',
+  {icon:"🎥", title:{pt:"Câmera segue jogador",en:"Camera follows player"}, scenario:{pt:'Quando o layout começar, a <b>Câmera</b> define a posição no <b>Personagem</b>.',en:'When the layout starts, the <b>Camera</b> sets its position to the <b>Player</b>.'},
    cond:[["obj","Sistema"],["evt","Ao iniciar layout"]],
    act:[["obj","Câmera"],["evt","Definir posição"],["param","Personagem"]]},
 
-  {icon:"🏥", title:"Checkpoint", scenario:'Se o <b>Personagem</b> colidir com o <b>Checkpoint</b>, o <b>Sistema</b> define o valor da variável <b>Vida</b>.',
+  {icon:"🏥", title:{pt:"Checkpoint",en:"Checkpoint"}, scenario:{pt:'Se o <b>Personagem</b> colidir com o <b>Checkpoint</b>, o <b>Sistema</b> define o valor da variável <b>Vida</b>.',en:'If the <b>Player</b> collides with the <b>Checkpoint</b>, the <b>System</b> sets the value of the <b>Lives</b> variable.'},
    cond:[["obj","Personagem"],["evt","Colidir com outro objeto"],["param","Checkpoint"]],
    act:[["obj","Sistema"],["evt","Definir valor de variável"],["param","Vida"]]},
 
-  {icon:"🚪", title:"Porta da fase", scenario:'Se a <b>Porta</b> colidir com o <b>Personagem</b>, o <b>Sistema</b> vai para o layout Próxima_Fase.',
+  {icon:"🚪", title:{pt:"Porta da fase",en:"Level door"}, scenario:{pt:'Se a <b>Porta</b> colidir com o <b>Personagem</b>, o <b>Sistema</b> vai para o layout Próxima_Fase.',en:'If the <b>Door</b> collides with the <b>Player</b>, the <b>System</b> goes to the Next_Level layout.'},
    cond:[["obj","Porta"],["evt","Colidir com outro objeto"],["param","Personagem"]],
    act:[["obj","Sistema"],["evt","Ir para layout"],["param","Próxima_Fase"]]},
 
-  {icon:"🏆", title:"Vitória", scenario:'Se a variável <b>Pontos</b> for maior ou igual a 100, o <b>Sistema</b> toca o som de <b>Vitória</b>.',
+  {icon:"🏆", title:{pt:"Vitória",en:"Victory"}, scenario:{pt:'Se a variável <b>Pontos</b> for maior ou igual a 100, o <b>Sistema</b> toca o som de <b>Vitória</b>.',en:'If the <b>Points</b> variable is greater than or equal to 100, the <b>System</b> plays the <b>Victory</b> sound.'},
    cond:[["obj","Sistema"],["evt","Comparar variável"],["param","Pontos >= 100"]],
    act:[["obj","Sistema"],["evt","Tocar som"],["param","Vitória"]]},
 
-  {icon:"🧱", title:"Plataforma", scenario:'Se a <b>Plataforma</b> colidir com o <b>Personagem</b>, o <b>Personagem</b> ativa a gravidade.',
+  {icon:"🧱", title:{pt:"Plataforma",en:"Platform"}, scenario:{pt:'Se a <b>Plataforma</b> colidir com o <b>Personagem</b>, o <b>Personagem</b> ativa a gravidade.',en:'If the <b>Platform</b> collides with the <b>Player</b>, the <b>Player</b> activates gravity.'},
    cond:[["obj","Plataforma"],["evt","Colidir com outro objeto"],["param","Personagem"]],
    act:[["obj","Personagem"],["evt","Definir gravidade"],["param","Ativa"]]},
 
-  {icon:"💾", title:"Salvar progresso", scenario:'Quando o layout terminar, o <b>Sistema</b> salva o jogo.',
+  {icon:"💾", title:{pt:"Salvar progresso",en:"Save progress"}, scenario:{pt:'Quando o layout terminar, o <b>Sistema</b> salva o jogo.',en:'When the layout ends, the <b>System</b> saves the game.'},
    cond:[["obj","Sistema"],["evt","No final do layout"]],
    act:[["obj","Sistema"],["evt","Salvar jogo"]]},
 
-  {icon:"👆", title:"Toque na tela", scenario:'Se houver toque na tela, o <b>Personagem</b> se move até a posição do toque.',
+  {icon:"👆", title:{pt:"Toque na tela",en:"Screen touch"}, scenario:{pt:'Se houver toque na tela, o <b>Personagem</b> se move até a posição do toque.',en:'If there is a touch on the screen, the <b>Player</b> moves to the touch position.'},
    cond:[["obj","Personagem"],["evt","Toque na tela"]],
    act:[["obj","Personagem"],["evt","Mover para posição"],["param","Toque"]]}
 ];
@@ -450,23 +451,81 @@ function pickDecoys(role, exclude, count){
   return shuffle(pool).slice(0, count);
 }
 
-const roleTag = { obj:"OBJETO", evt:"EVENTO / AÇÃO", param:"PARÂMETRO" };
-const rolePlaceholder = { obj:"objeto...", evt:"evento/ação...", param:"parâmetro..." };
+// Dicionário de termos — traduzido pra bater com os nomes reais do Construct 3
+const TERM_EN = {
+  // objetos
+  "Personagem":"Player", "Sistema":"System", "Inimigo":"Enemy", "Moeda":"Coin", "Projétil":"Bullet",
+  "Temporizador":"Timer", "Teclado":"Keyboard", "Mouse":"Mouse", "Botão_Iniciar":"Start_Button",
+  "Câmera":"Camera", "Porta":"Door", "Plataforma":"Platform", "Checkpoint":"Checkpoint",
+  // eventos / condições / ações (nomes oficiais do Construct 3)
+  "Colidir com outro objeto":"On collision with another object",
+  "Tecla pressionada":"Key is down",
+  "Ao iniciar layout":"On start of layout",
+  "Criar objeto":"Create object",
+  "Destruir":"Destroy",
+  "Definir posição":"Set position",
+  "Ao disparar":"On timer",
+  "Comparar variável":"Compare variable",
+  "Ir para layout":"Go to layout",
+  "Atirar":"Shoot",
+  "Cada X segundos":"Every X seconds",
+  "Subtrair de variável":"Subtract from variable",
+  "Ao clicar":"On clicked",
+  "Sair da tela":"Is outside layout",
+  "Botão clicado":"On click",
+  "Definir valor de variável":"Set value",
+  "Tocar som":"Play sound",
+  "Definir gravidade":"Set gravity",
+  "No final do layout":"On end of layout",
+  "Mover para posição":"Move to position",
+  "Pular":"Jump",
+  "Reiniciar layout":"Restart layout",
+  "Salvar jogo":"Save game",
+  // parâmetros
+  "Espinho":"Spike", "Seta Cima":"Up arrow", "Espaço":"Space", "Ponto Inicial":"Start_Point",
+  "Spawn_Inimigo":"Spawn_Enemy", "Vida = 0":"Lives = 0", "Game_Over":"Game_Over", "Fase_1":"Level_1",
+  "Próxima_Fase":"Next_Level", "Vitória":"Victory", "Pontos >= 100":"Points >= 100", "Ativa":"Active",
+  "Toque":"Touch", "Bala":"Bullet", "Tempo_Restante":"Time_Left", "1":"1", "Vida":"Lives"
+};
+TERM_EN["Toque na tela"] = "On touch";
+function translateTerm(text){ return TERM_EN[text] || text; }
+
+let currentLang = 'pt';
+const UI_STRINGS = {
+  pt: { eyebrow:'OVERCAST REALM · TURMA DE LÓGICA · NÍVEL 2', h1:'Monte o <span class="em">Evento</span> igual no Construct!',
+        sub:'No Construct 3, cada evento tem Objeto → Evento/Ação → Parâmetro (às vezes). Arraste os pedacinhos pro lugar certo, na ordem certa. 🧩',
+        lObj:'🟦 OBJETO', lEvt:'🟥 EVENTO / AÇÃO', lParam:'🟩 PARÂMETRO',
+        se:'SE', entao:'ENTÃO', poolLabel:'🧩 Arraste os pedaços pros encaixes certos:',
+        conferir:'✅ Conferir', limpar:'🔄 Limpar', preencha:'👉 Preencha todos os encaixes.',
+        certinho:'🎉 Certinho!', quase:'🤔 Quase! Olhe o vermelho.', certinhoSalvo:'🎉 Certinho! (salvo antes)',
+        progresso:n=>`${n} de 20 completos`, langBtn:'🇺🇸 English',
+        roleTag:{obj:"OBJETO",evt:"EVENTO / AÇÃO",param:"PARÂMETRO"}, rolePlaceholder:{obj:"objeto...",evt:"evento/ação...",param:"parâmetro..."} },
+  en: { eyebrow:'OVERCAST REALM · LOGIC CLASS · LEVEL 2', h1:'Build the <span class="em">Event</span> just like in Construct!',
+        sub:'In Construct 3, every event has Object → Condition/Action → Parameter (sometimes). Drag the pieces to the right spot, in the right order. 🧩',
+        lObj:'🟦 OBJECT', lEvt:'🟥 CONDITION / ACTION', lParam:'🟩 PARAMETER',
+        se:'IF', entao:'THEN', poolLabel:'🧩 Drag the pieces into the right slots:',
+        conferir:'✅ Check', limpar:'🔄 Clear', preencha:'👉 Fill in all the slots.',
+        certinho:'🎉 Nice!', quase:'🤔 Almost! Check the red one.', certinhoSalvo:'🎉 Nice! (already saved)',
+        progresso:n=>`${n} of 20 complete`, langBtn:'🇧🇷 Português',
+        roleTag:{obj:"OBJECT",evt:"CONDITION / ACTION",param:"PARAMETER"}, rolePlaceholder:{obj:"object...",evt:"condition/action...",param:"parameter..."} }
+};
 
 function buildSlotsRow(sideKey, parts, n){
+  const t = UI_STRINGS[currentLang];
   return parts.map((p, i) => {
     const role = p.role;
     const slotId = `${sideKey}${n}_${i}`;
     return `
       <div class="slot-unit">
-        <span class="slot-col-tag">${roleTag[role]}</span>
-        <div class="slot" data-role="${role}" data-correct="${slotId}" data-placeholder="${rolePlaceholder[role]}">${rolePlaceholder[role]}</div>
+        <span class="slot-col-tag t-role-tag" data-role="${role}">${t.roleTag[role]}</span>
+        <div class="slot t-role-ph" data-role="${role}" data-correct="${slotId}" data-placeholder="${t.rolePlaceholder[role]}">${t.rolePlaceholder[role]}</div>
       </div>`;
   }).join('');
 }
 
 const grid = document.getElementById('grid');
-const blockText = {};
+const blockTextPT = {};
+const blockTextEN = {};
 
 exercises.forEach((ex, idx) => {
   const n = idx + 1;
@@ -489,39 +548,82 @@ exercises.forEach((ex, idx) => {
 
   const allBlocks = shuffle([...correctPieces, ...decoyPieces]);
 
-  allBlocks.forEach(b => blockText[b.id] = b.text);
+  allBlocks.forEach(b => { blockTextPT[b.id] = b.text; blockTextEN[b.id] = translateTerm(b.text); });
 
   const section = document.createElement('section');
   section.className = 'exercise';
   section.innerHTML = `
     <div class="num-badge ${colorClass}">${n}</div>
-    <div class="ex-title"><span class="icon">${ex.icon}</span> ${ex.title}</div>
-    <div class="scenario">${ex.scenario}</div>
+    <div class="ex-title"><span class="icon">${ex.icon}</span> <span class="t-title" data-ex="${n}">${ex.title.pt}</span></div>
+    <div class="scenario"><span class="t-scenario" data-ex="${n}">${ex.scenario.pt}</span></div>
 
     <div class="board" data-exercise="${n}">
       <div class="rule-row">
-        <span class="rule-label se">SE</span>
+        <span class="rule-label se t-se">SE</span>
         <div class="slots-row">${buildSlotsRow('c', condParts, n)}</div>
       </div>
       <div class="rule-row">
-        <span class="rule-label entao">ENTÃO</span>
+        <span class="rule-label entao t-entao">ENTÃO</span>
         <div class="slots-row">${buildSlotsRow('a', actParts, n)}</div>
       </div>
 
-      <p class="pool-label">🧩 Arraste os pedaços pros encaixes certos:</p>
+      <p class="pool-label t-pool-label">🧩 Arraste os pedaços pros encaixes certos:</p>
       <div class="pool">
         ${allBlocks.map(b => `<div class="block" draggable="true" data-id="${b.id}" data-role="${b.role}">${b.text}</div>`).join('')}
       </div>
     </div>
 
     <div class="actions-row">
-      <button class="primary" onclick="checkExercise(${n})">✅ Conferir</button>
-      <button class="secondary" onclick="resetExercise(${n})">🔄 Limpar</button>
+      <button class="primary t-conferir" onclick="checkExercise(${n})">✅ Conferir</button>
+      <button class="secondary t-limpar" onclick="resetExercise(${n})">🔄 Limpar</button>
       <span class="feedback" id="fb-${n}"></span>
     </div>
   `;
   grid.appendChild(section);
 });
+
+function blockText(id){ return currentLang==='pt' ? blockTextPT[id] : blockTextEN[id]; }
+
+function toggleLang(){
+  currentLang = currentLang === 'pt' ? 'en' : 'pt';
+  applyLang();
+}
+function applyLang(){
+  const t = UI_STRINGS[currentLang];
+  document.getElementById('t-eyebrow').textContent = t.eyebrow;
+  document.getElementById('t-h1').innerHTML = t.h1;
+  document.getElementById('t-sub').textContent = t.sub;
+  document.getElementById('t-l-obj').textContent = t.lObj;
+  document.getElementById('t-l-evt').textContent = t.lEvt;
+  document.getElementById('t-l-param').textContent = t.lParam;
+  document.getElementById('lang-toggle-btn').textContent = currentLang==='pt' ? '🇺🇸' : '🇧🇷';
+  document.getElementById('lang-toggle-btn').title = currentLang==='pt' ? 'English' : 'Português';
+
+  exercises.forEach((ex,idx) => {
+    const n = idx+1;
+    document.querySelectorAll(`.t-title[data-ex="${n}"]`).forEach(el => el.textContent = ex.title[currentLang]);
+    document.querySelectorAll(`.t-scenario[data-ex="${n}"]`).forEach(el => el.innerHTML = ex.scenario[currentLang]);
+  });
+  document.querySelectorAll('.t-se').forEach(el => el.textContent = t.se);
+  document.querySelectorAll('.t-entao').forEach(el => el.textContent = t.entao);
+  document.querySelectorAll('.t-pool-label').forEach(el => el.textContent = t.poolLabel);
+  document.querySelectorAll('.t-conferir').forEach(el => el.textContent = t.conferir);
+  document.querySelectorAll('.t-limpar').forEach(el => el.textContent = t.limpar);
+  document.querySelectorAll('.t-role-tag').forEach(el => el.textContent = t.roleTag[el.dataset.role]);
+
+  document.querySelectorAll('.block').forEach(b => { b.textContent = blockText(b.dataset.id); });
+  document.querySelectorAll('.slot').forEach(slot => {
+    const role = slot.dataset.role;
+    slot.dataset.placeholder = t.rolePlaceholder[role];
+    if(slot.dataset.filledId){
+      slot.textContent = blockText(slot.dataset.filledId);
+    } else {
+      slot.textContent = t.rolePlaceholder[role];
+    }
+  });
+
+  updateProgress();
+}
 
 let dragged = null;
 const solved = new Set();
@@ -550,7 +652,7 @@ async function syncCloudProgress(){
     if(changed){
       solved.forEach(n => {
         const fb = document.getElementById('fb-'+n);
-        if(fb){ fb.textContent = '🎉 Certinho! (salvo antes)'; fb.className = 'feedback ok'; }
+        if(fb){ fb.textContent = UI_STRINGS[currentLang].certinhoSalvo; fb.className = 'feedback ok'; }
       });
       updateProgress();
       saveProgress();
@@ -589,7 +691,7 @@ function attachHandlers(){
       }
 
       slot.dataset.filledId = dragged.dataset.id;
-      slot.textContent = blockText[dragged.dataset.id];
+      slot.textContent = blockText(dragged.dataset.id);
       slot.classList.add('filled');
       slot.classList.remove('correct','wrong');
       dragged.classList.add('placed');
@@ -603,10 +705,11 @@ function updateProgress(){
   const total = exercises.length;
   const done = solved.size;
   document.getElementById('progress-bar').style.width = (done/total*100)+'%';
-  document.getElementById('progress-label').textContent = done+' de '+total+' completos';
+  document.getElementById('progress-label').textContent = UI_STRINGS[currentLang].progresso(done);
 }
 
 function checkExercise(n){
+  const t = UI_STRINGS[currentLang];
   const board = document.querySelector('.board[data-exercise="'+n+'"]');
   const slots = board.querySelectorAll('.slot');
   let allFilled = true;
@@ -626,16 +729,16 @@ function checkExercise(n){
   const fb = document.getElementById('fb-'+n);
 
   if(!allFilled){
-    fb.textContent = '👉 Preencha todos os encaixes.';
+    fb.textContent = t.preencha;
     fb.className = 'feedback bad';
     return;
   }
   if(allCorrect){
-    fb.textContent = '🎉 Certinho!';
+    fb.textContent = t.certinho;
     fb.className = 'feedback ok';
     solved.add(n);
   } else {
-    fb.textContent = '🤔 Quase! Olhe o vermelho.';
+    fb.textContent = t.quase;
     fb.className = 'feedback bad';
     solved.delete(n);
   }
