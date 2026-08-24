@@ -147,28 +147,29 @@
 <body>
 <div class="wrap">
 
+  <button id="lang-toggle-btn" style="position:fixed;top:10px;right:10px;z-index:999;font-size:20px;background:var(--bg-panel);border:2px solid var(--border);border-radius:50%;width:38px;height:38px;cursor:pointer;color:#fff;" onclick="toggleLang()" title="English">🇺🇸</button>
   <div class="back-row">
     <a href="./index.html" class="back-home">← Voltar</a>
     <a href="./aula_arte_digital_1.html" class="back-home">🕹️ Aula 1</a>
   </div>
 
   <header>
-    <h1>🔦 AULA 2: LUZ E SOMBRA</h1>
-    <p>Overcast Realm — de onde vem a luz, o vocabulário da sombra, e um desafio com paleta limitada</p>
+    <h1 id="t-h1">🔦 AULA 2: LUZ E SOMBRA</h1>
+    <p id="t-sub">Overcast Realm — de onde vem a luz, o vocabulário da sombra, e um desafio com paleta limitada</p>
   </header>
 
   <div class="tabs">
-    <button class="tab-btn active" id="tabbtn-1" onclick="goToModule(1)"><span class="n">1️⃣</span>Direção da Luz</button>
-    <button class="tab-btn" id="tabbtn-2" onclick="goToModule(2)"><span class="n">2️⃣</span>Vocabulário</button>
-    <button class="tab-btn" id="tabbtn-3" onclick="goToModule(3)"><span class="n">3️⃣</span>Passo a Passo</button>
-    <button class="tab-btn" id="tabbtn-4" onclick="goToModule(4)"><span class="n">4️⃣</span>Desafio</button>
+    <button class="tab-btn active" id="tabbtn-1" onclick="goToModule(1)"><span class="n">1️⃣</span><span id="t-tab-1">Direção da Luz</span></button>
+    <button class="tab-btn" id="tabbtn-2" onclick="goToModule(2)"><span class="n">2️⃣</span><span id="t-tab-2">Vocabulário</span></button>
+    <button class="tab-btn" id="tabbtn-3" onclick="goToModule(3)"><span class="n">3️⃣</span><span id="t-tab-3">Passo a Passo</span></button>
+    <button class="tab-btn" id="tabbtn-4" onclick="goToModule(4)"><span class="n">4️⃣</span><span id="t-tab-4">Desafio</span></button>
   </div>
 
   <!-- ================= MÓDULO 1 ================= -->
   <section class="module active" id="module-1">
     <div class="panel">
-      <h2>🔦 DE ONDE VEM A LUZ?</h2>
-      <p class="desc">Antes de sombrear qualquer coisa, escolha de onde a luz está vindo. Isso decide onde fica o brilho e onde fica a sombra. Clique numa seta e observe a esfera.</p>
+      <h2 id="t-m1-h2">🔦 DE ONDE VEM A LUZ?</h2>
+      <p class="desc" id="t-m1-desc">Antes de sombrear qualquer coisa, escolha de onde a luz está vindo. Isso decide onde fica o brilho e onde fica a sombra. Clique numa seta e observe a esfera.</p>
 
       <div class="m1-layout">
         <div class="dir-pad">
@@ -186,8 +187,8 @@
   <!-- ================= MÓDULO 2 ================= -->
   <section class="module" id="module-2">
     <div class="panel">
-      <h2>🏷️ VOCABULÁRIO DA SOMBRA</h2>
-      <p class="desc">Toda sombra bem feita tem essas partes. Clique em cada termo pra ver onde ele fica na esfera.</p>
+      <h2 id="t-m2-h2">🏷️ VOCABULÁRIO DA SOMBRA</h2>
+      <p class="desc" id="t-m2-desc">Toda sombra bem feita tem essas partes. Clique em cada termo pra ver onde ele fica na esfera.</p>
 
       <div class="m2-layout">
         <div class="term-list" id="term-list"></div>
@@ -202,16 +203,16 @@
   <!-- ================= MÓDULO 3 ================= -->
   <section class="module" id="module-3">
     <div class="panel">
-      <h2>🪜 PASSO A PASSO</h2>
-      <p class="desc">É assim que se constrói uma sombra, uma camada de cada vez. Vá passando pra frente e repare o que muda a cada etapa.</p>
+      <h2 id="t-m3-h2">🪜 PASSO A PASSO</h2>
+      <p class="desc" id="t-m3-desc">É assim que se constrói uma sombra, uma camada de cada vez. Vá passando pra frente e repare o que muda a cada etapa.</p>
 
       <div class="m3-layout">
         <div class="sphere-stage"><div class="sph-grid" id="sphere-grid-m3"></div></div>
         <p class="stage-caption" id="stage-caption"></p>
         <div class="stage-dots" id="stage-dots"></div>
         <div class="stage-nav">
-          <button class="btn gray" onclick="prevStage()">⬅️ Anterior</button>
-          <button class="btn purple" onclick="nextStage()">Próxima ➡️</button>
+          <button class="btn gray" id="t-btn-anterior" onclick="prevStage()">⬅️ Anterior</button>
+          <button class="btn purple" id="t-btn-proxima" onclick="nextStage()">Próxima ➡️</button>
         </div>
       </div>
     </div>
@@ -220,17 +221,17 @@
   <!-- ================= MÓDULO 4 ================= -->
   <section class="module" id="module-4">
     <div class="panel">
-      <h2>🎨 DESAFIO: SOMBRA COM PALETA LIMITADA</h2>
-      <p class="desc">Só 4 cores: contorno, sombra, base e luz. A luz vem do canto ↖️ — pinte a sombra do lado oposto e a luz perto de onde ela bate. Use a linha pontilhada como guia.</p>
+      <h2 id="t-m4-h2">🎨 DESAFIO: SOMBRA COM PALETA LIMITADA</h2>
+      <p class="desc" id="t-m4-desc">Só 4 cores: contorno, sombra, base e luz. A luz vem do canto ↖️ — pinte a sombra do lado oposto e a luz perto de onde ela bate. Use a linha pontilhada como guia.</p>
 
       <div class="m4-layout">
         <div>
-          <p class="ref-label">✏️ SEU DESENHO</p>
+          <p class="ref-label" id="t-ref-seu">✏️ SEU DESENHO</p>
           <div class="sphere-stage"><div id="draw-grid"></div></div>
         </div>
 
         <div>
-          <p class="ref-label">👀 REFERÊNCIA (por etapas)</p>
+          <p class="ref-label" id="t-ref-referencia">👀 REFERÊNCIA (por etapas)</p>
           <div class="sphere-stage"><div class="sph-grid" id="sphere-grid-m4-ref"></div></div>
           <p class="ref-stage-caption" id="ref-stage-caption"></p>
           <div class="ref-stage-nav">
@@ -241,14 +242,14 @@
         </div>
 
         <div class="m4-side">
-          <div class="light-hint">↖️ A luz vem daqui!</div>
+          <div class="light-hint" id="t-light-hint">↖️ A luz vem daqui!</div>
           <div>
-            <p style="font-family:'Baloo 2',sans-serif;font-weight:700;color:var(--ink-soft);font-size:13px;margin:0 0 8px;">Cor atual:</p>
+            <p style="font-family:'Baloo 2',sans-serif;font-weight:700;color:var(--ink-soft);font-size:13px;margin:0 0 8px;" id="t-cor-atual">Cor atual:</p>
             <div class="m4-palette" id="m4-palette"></div>
           </div>
           <div class="m4-actions">
-            <button class="btn gray" onclick="toggleGuide()">👻 Ver/Ocultar Guia</button>
-            <button class="btn gray" onclick="clearDrawing()">🧹 Limpar</button>
+            <button class="btn gray" id="t-btn-guia" onclick="toggleGuide()">👻 Ver/Ocultar Guia</button>
+            <button class="btn gray" id="t-btn-limpar" onclick="clearDrawing()">🧹 Limpar</button>
           </div>
         </div>
       </div>
@@ -264,6 +265,79 @@
 
 <script>
 /* ======================================================
+   IDIOMA (PT/EN)
+====================================================== */
+let currentLang = 'pt';
+const UI_STRINGS = {
+  pt: { h1:'🔦 AULA 2: LUZ E SOMBRA', sub:'Overcast Realm — de onde vem a luz, o vocabulário da sombra, e um desafio com paleta limitada',
+        tab1:'Direção da Luz', tab2:'Vocabulário', tab3:'Passo a Passo', tab4:'Desafio',
+        m1h2:'🔦 DE ONDE VEM A LUZ?', m1desc:'Antes de sombrear qualquer coisa, escolha de onde a luz está vindo. Isso decide onde fica o brilho e onde fica a sombra. Clique numa seta e observe a esfera.',
+        m2h2:'🏷️ VOCABULÁRIO DA SOMBRA', m2desc:'Toda sombra bem feita tem essas partes. Clique em cada termo pra ver onde ele fica na esfera.',
+        termDescInicial:'👈 Clique num termo pra começar.',
+        m3h2:'🪜 PASSO A PASSO', m3desc:'É assim que se constrói uma sombra, uma camada de cada vez. Vá passando pra frente e repare o que muda a cada etapa.',
+        btnAnterior:'⬅️ Anterior', btnProxima:'Próxima ➡️',
+        m4h2:'🎨 DESAFIO: SOMBRA COM PALETA LIMITADA', m4desc:'Só 4 cores: contorno, sombra, base e luz. A luz vem do canto ↖️ — pinte a sombra do lado oposto e a luz perto de onde ela bate. Use a linha pontilhada como guia.',
+        refSeu:'✏️ SEU DESENHO', refReferencia:'👀 REFERÊNCIA (por etapas)', lightHint:'↖️ A luz vem daqui!', corAtual:'Cor atual:',
+        btnGuia:'👻 Ver/Ocultar Guia', btnLimpar:'🧹 Limpar', btnVoltar:'⬅️ Voltar', btnAvancar:'Avançar ➡️', btnFim:'🏁 Fim da aula' },
+  en: { h1:'🔦 LESSON 2: LIGHT AND SHADOW', sub:'Overcast Realm — where light comes from, shading vocabulary, and a limited-palette challenge',
+        tab1:'Light Direction', tab2:'Vocabulary', tab3:'Step by Step', tab4:'Challenge',
+        m1h2:'🔦 WHERE DOES THE LIGHT COME FROM?', m1desc:'Before shading anything, choose where the light is coming from. That decides where the highlight goes and where the shadow goes. Click an arrow and watch the sphere.',
+        m2h2:'🏷️ SHADING VOCABULARY', m2desc:'Every well-made shadow has these parts. Click each term to see where it sits on the sphere.',
+        termDescInicial:'👈 Click a term to get started.',
+        m3h2:'🪜 STEP BY STEP', m3desc:'This is how a shadow is built, one layer at a time. Step forward and notice what changes at each stage.',
+        btnAnterior:'⬅️ Previous', btnProxima:'Next ➡️',
+        m4h2:'🎨 CHALLENGE: SHADING WITH A LIMITED PALETTE', m4desc:"Just 4 colors: outline, shadow, base and light. The light comes from the ↖️ corner — paint the shadow on the opposite side and the light near where it hits. Use the dotted line as a guide.",
+        refSeu:'✏️ YOUR DRAWING', refReferencia:'👀 REFERENCE (by stage)', lightHint:'↖️ The light comes from here!', corAtual:'Current color:',
+        btnGuia:'👻 Show/Hide Guide', btnLimpar:'🧹 Clear', btnVoltar:'⬅️ Back', btnAvancar:'Next ➡️', btnFim:'🏁 End of lesson' }
+};
+function toggleLang(){
+  currentLang = currentLang === 'pt' ? 'en' : 'pt';
+  applyLang();
+}
+function applyLang(){
+  const t = UI_STRINGS[currentLang];
+  document.getElementById('t-h1').textContent = t.h1;
+  document.getElementById('t-sub').textContent = t.sub;
+  document.getElementById('t-tab-1').textContent = t.tab1;
+  document.getElementById('t-tab-2').textContent = t.tab2;
+  document.getElementById('t-tab-3').textContent = t.tab3;
+  document.getElementById('t-tab-4').textContent = t.tab4;
+  document.getElementById('t-m1-h2').textContent = t.m1h2;
+  document.getElementById('t-m1-desc').textContent = t.m1desc;
+  document.getElementById('t-m2-h2').textContent = t.m2h2;
+  document.getElementById('t-m2-desc').textContent = t.m2desc;
+  document.getElementById('t-m3-h2').textContent = t.m3h2;
+  document.getElementById('t-m3-desc').textContent = t.m3desc;
+  document.getElementById('t-btn-anterior').textContent = t.btnAnterior;
+  document.getElementById('t-btn-proxima').textContent = t.btnProxima;
+  document.getElementById('t-m4-h2').textContent = t.m4h2;
+  document.getElementById('t-m4-desc').textContent = t.m4desc;
+  document.getElementById('t-ref-seu').textContent = t.refSeu;
+  document.getElementById('t-ref-referencia').textContent = t.refReferencia;
+  document.getElementById('t-light-hint').textContent = t.lightHint;
+  document.getElementById('t-cor-atual').textContent = t.corAtual;
+  document.getElementById('t-btn-guia').textContent = t.btnGuia;
+  document.getElementById('t-btn-limpar').textContent = t.btnLimpar;
+  document.getElementById('prev-btn').textContent = t.btnVoltar;
+  document.getElementById('next-btn').textContent = (currentModule === 4) ? t.btnFim : t.btnAvancar;
+  document.getElementById('lang-toggle-btn').textContent = currentLang==='pt' ? '🇺🇸' : '🇧🇷';
+  document.getElementById('lang-toggle-btn').title = currentLang==='pt' ? 'English' : 'Português';
+
+  // reconstrói partes que dependem do idioma sem perder o estado atual
+  buildTermList();
+  if(selectedTermKey){
+    const btn = document.querySelector(`.term-btn[data-key="${selectedTermKey}"]`);
+    if(btn) btn.classList.add('active');
+    document.getElementById('term-desc').textContent = TERMS.find(x=>x.key===selectedTermKey).desc[currentLang];
+  } else {
+    document.getElementById('term-desc').textContent = t.termDescInicial;
+  }
+  renderStage();
+  renderM4Reference();
+  buildM4Palette();
+}
+
+/* ======================================================
    NAVEGAÇÃO ENTRE MÓDULOS
 ====================================================== */
 let currentModule = 1;
@@ -274,7 +348,7 @@ function goToModule(n){
   document.getElementById('module-'+n).classList.add('active');
   document.getElementById('tabbtn-'+n).classList.add('active');
   document.getElementById('prev-btn').disabled = (n === 1);
-  document.getElementById('next-btn').textContent = (n === 4) ? '🏁 Fim da aula' : 'Avançar ➡️';
+  document.getElementById('next-btn').textContent = (n === 4) ? UI_STRINGS[currentLang].btnFim : UI_STRINGS[currentLang].btnAvancar;
   document.getElementById('next-btn').disabled = (n === 4);
 }
 function nextModule(){ if(currentModule < 4) goToModule(currentModule+1); }
@@ -363,26 +437,28 @@ setLightDir('cima', document.querySelector('.dir-t'));
    MÓDULO 2 — vocabulário
 ====================================================== */
 const TERMS = [
-  { key:'luz',        label:'Brilho / Luz',      color:REGION_COLORS.luz,       desc:'A área virada direto pra fonte de luz. É a parte mais clara do objeto.' },
-  { key:'brilho',      label:'Reflexo Especular', color:REGION_COLORS.brilho,    desc:'Um pontinho bem branco e pequeno, o "brilho" — normalmente só uma ou duas casinhas.' },
-  { key:'base',        label:'Tom Base',          color:REGION_COLORS.base,      desc:'A cor "normal" do objeto, nem clara nem escura — o meio-tom.' },
-  { key:'sombra',       label:'Sombra de Volume',  color:REGION_COLORS.sombra,    desc:'O lado que a luz não alcança, porque a própria forma do objeto bloqueia.' },
-  { key:'contorno',   label:'Luz de Contorno',   color:REGION_COLORS.contorno,  desc:'Uma linha fina e clara na borda, do lado oposto à luz — dá a sensação de profundidade.' },
-  { key:'reflexo',     label:'Luz Refletida',     color:REGION_COLORS.reflexo,   desc:'Um pouco de luz que "quica" do chão e ilumina de leve a parte de baixo da sombra.' }
+  { key:'luz',        label:{pt:'Brilho / Luz',en:'Highlight / Light'},      color:REGION_COLORS.luz,       desc:{pt:'A área virada direto pra fonte de luz. É a parte mais clara do objeto.',en:'The area facing directly toward the light source. It is the brightest part of the object.'} },
+  { key:'brilho',      label:{pt:'Reflexo Especular',en:'Specular Highlight'}, color:REGION_COLORS.brilho,    desc:{pt:'Um pontinho bem branco e pequeno, o "brilho" — normalmente só uma ou duas casinhas.',en:'A tiny, very white dot, the "highlight" — usually just one or two pixels.'} },
+  { key:'base',        label:{pt:'Tom Base',en:'Base Tone'},          color:REGION_COLORS.base,      desc:{pt:'A cor "normal" do objeto, nem clara nem escura — o meio-tom.',en:'The object\'s "normal" color, neither light nor dark — the midtone.'} },
+  { key:'sombra',       label:{pt:'Sombra de Volume',en:'Core Shadow'},  color:REGION_COLORS.sombra,    desc:{pt:'O lado que a luz não alcança, porque a própria forma do objeto bloqueia.',en:"The side the light can't reach, because the object's own shape blocks it."} },
+  { key:'contorno',   label:{pt:'Luz de Contorno',en:'Rim Light'},   color:REGION_COLORS.contorno,  desc:{pt:'Uma linha fina e clara na borda, do lado oposto à luz — dá a sensação de profundidade.',en:'A thin, light line on the edge, on the side opposite the light — it gives a sense of depth.'} },
+  { key:'reflexo',     label:{pt:'Luz Refletida',en:'Bounce Light'},     color:REGION_COLORS.reflexo,   desc:{pt:'Um pouco de luz que "quica" do chão e ilumina de leve a parte de baixo da sombra.',en:'A bit of light that "bounces" off the ground and softly lights up the bottom of the shadow.'} }
 ];
 function buildTermList(){
   const el = document.getElementById('term-list');
   el.innerHTML = TERMS.map(t => `
     <button class="term-btn" data-key="${t.key}" onclick="selectTerm('${t.key}', this)">
-      <span class="dot" style="background:${t.color}"></span>${t.label}
+      <span class="dot" style="background:${t.color}"></span><span class="t-term-label" data-key="${t.key}">${t.label[currentLang]}</span>
     </button>
   `).join('');
 }
+let selectedTermKey = null;
 function selectTerm(key, btn){
+  selectedTermKey = key;
   document.querySelectorAll('.term-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   const term = TERMS.find(t => t.key === key);
-  document.getElementById('term-desc').textContent = term.desc;
+  document.getElementById('term-desc').textContent = term.desc[currentLang];
   const cells = sphereCells(26, LIGHT_DIRS['cima-esquerda']);
   renderSphereGrid('sphere-grid-m2', 26, 12, cells, null, key);
 }
@@ -396,19 +472,19 @@ buildTermList();
    MÓDULO 3 — passo a passo
 ====================================================== */
 const STAGES = [
-  { caption: '1. Cor base — sem sombra nenhuma ainda', map: { luz:'base', brilho:'base', contorno:'base', reflexo:'base', sombra:'base', base:'base' } },
-  { caption: '2. Sombra simples — só claro e escuro', map: { luz:'base', brilho:'base', contorno:'sombra', reflexo:'sombra', sombra:'sombra', base:'base' } },
-  { caption: '3. Realce — a luz mais forte aparece', map: { luz:'luz', brilho:'luz', contorno:'sombra', reflexo:'sombra', sombra:'sombra', base:'base' } },
-  { caption: '4. Brilho especular — o pontinho branco', map: { luz:'luz', brilho:'brilho', contorno:'sombra', reflexo:'sombra', sombra:'sombra', base:'base' } },
-  { caption: '5. Luz de contorno — uma linha na borda oposta', map: { luz:'luz', brilho:'brilho', contorno:'contorno', reflexo:'sombra', sombra:'sombra', base:'base' } },
-  { caption: '6. Luz refletida — um toque de claro na sombra', map: { luz:'luz', brilho:'brilho', contorno:'contorno', reflexo:'reflexo', sombra:'sombra', base:'base' } },
-  { caption: '7. Sombra completa — tudo junto', map: { luz:'luz', brilho:'brilho', contorno:'contorno', reflexo:'reflexo', sombra:'sombra', base:'base' } },
-  { caption: '8. Pronto! ✨', map: { luz:'luz', brilho:'brilho', contorno:'contorno', reflexo:'reflexo', sombra:'sombra', base:'base' } }
+  { caption: {pt:'1. Cor base — sem sombra nenhuma ainda',en:'1. Base color — no shading yet'}, map: { luz:'base', brilho:'base', contorno:'base', reflexo:'base', sombra:'base', base:'base' } },
+  { caption: {pt:'2. Sombra simples — só claro e escuro',en:'2. Simple shading — just light and dark'}, map: { luz:'base', brilho:'base', contorno:'sombra', reflexo:'sombra', sombra:'sombra', base:'base' } },
+  { caption: {pt:'3. Realce — a luz mais forte aparece',en:'3. Highlight — the stronger light appears'}, map: { luz:'luz', brilho:'luz', contorno:'sombra', reflexo:'sombra', sombra:'sombra', base:'base' } },
+  { caption: {pt:'4. Brilho especular — o pontinho branco',en:'4. Specular highlight — the little white dot'}, map: { luz:'luz', brilho:'brilho', contorno:'sombra', reflexo:'sombra', sombra:'sombra', base:'base' } },
+  { caption: {pt:'5. Luz de contorno — uma linha na borda oposta',en:'5. Rim light — a line on the opposite edge'}, map: { luz:'luz', brilho:'brilho', contorno:'contorno', reflexo:'sombra', sombra:'sombra', base:'base' } },
+  { caption: {pt:'6. Luz refletida — um toque de claro na sombra',en:'6. Bounce light — a touch of light in the shadow'}, map: { luz:'luz', brilho:'brilho', contorno:'contorno', reflexo:'reflexo', sombra:'sombra', base:'base' } },
+  { caption: {pt:'7. Sombra completa — tudo junto',en:'7. Full shading — everything together'}, map: { luz:'luz', brilho:'brilho', contorno:'contorno', reflexo:'reflexo', sombra:'sombra', base:'base' } },
+  { caption: {pt:'8. Pronto! ✨',en:'8. Done! ✨'}, map: { luz:'luz', brilho:'brilho', contorno:'contorno', reflexo:'reflexo', sombra:'sombra', base:'base' } }
 ];
 let stageIdx = 0;
 function renderStage(){
   const stage = STAGES[stageIdx];
-  document.getElementById('stage-caption').textContent = stage.caption;
+  document.getElementById('stage-caption').textContent = stage.caption[currentLang];
   const cells = sphereCells(26, LIGHT_DIRS['cima-esquerda']);
   renderSphereGrid('sphere-grid-m3', 26, 12, cells, stage.map);
   document.querySelectorAll('.stage-dot').forEach((d,i) => d.classList.toggle('active', i===stageIdx));
@@ -427,10 +503,10 @@ renderStage();
    MÓDULO 4 — desafio com paleta limitada
 ====================================================== */
 const M4_PALETTE = [
-  { key:'contorno', label:'Contorno', color:'#2a1a1a' },
-  { key:'sombra',   label:'Sombra',   color:'#7a4632' },
-  { key:'base',     label:'Base',     color:'#c97f56' },
-  { key:'luz',      label:'Luz',      color:'#f5d9ab' }
+  { key:'contorno', label:{pt:'Contorno',en:'Outline'}, color:'#2a1a1a' },
+  { key:'sombra',   label:{pt:'Sombra',en:'Shadow'},   color:'#7a4632' },
+  { key:'base',     label:{pt:'Base',en:'Base'},     color:'#c97f56' },
+  { key:'luz',      label:{pt:'Luz',en:'Light'},      color:'#f5d9ab' }
 ];
 const DRAW_N = 14;
 let drawColor = M4_PALETTE[2].color;
@@ -441,7 +517,7 @@ let isDrawingM4 = false;
 function buildM4Palette(){
   const el = document.getElementById('m4-palette');
   el.innerHTML = M4_PALETTE.map((p,i) => `
-    <div class="m4-swatch ${i===2?'selected':''}" style="background:${p.color}" title="${p.label}" onclick="pickM4Color('${p.color}', this)"></div>
+    <div class="m4-swatch ${i===2?'selected':''}" style="background:${p.color}" title="${p.label[currentLang]}" onclick="pickM4Color('${p.color}', this)"></div>
   `).join('');
 }
 function pickM4Color(color, el){
@@ -500,7 +576,8 @@ function toggleGuide(){
   paintAllDrawCells();
 }
 function clearDrawing(){
-  if(!confirm('Limpar o desenho e recomeçar?')) return;
+  const msg = currentLang==='pt' ? 'Limpar o desenho e recomeçar?' : 'Clear the drawing and start over?';
+  if(!confirm(msg)) return;
   drawGrid = new Array(DRAW_N*DRAW_N).fill(null);
   paintAllDrawCells();
 }
@@ -519,7 +596,7 @@ function renderM4Reference(){
   const cells = sphereCells(N, LIGHT_DIRS['cima-esquerda']);
   renderSphereGrid('sphere-grid-m4-ref', N, cellPx, cells, stage.map);
 
-  document.getElementById('ref-stage-caption').textContent = stage.caption;
+  document.getElementById('ref-stage-caption').textContent = stage.caption[currentLang];
   const dotsEl = document.getElementById('ref-stage-dots');
   dotsEl.innerHTML = STAGES.map((_,i) => `<div class="stage-dot ${i===m4RefStageIdx?'active':''}" onclick="goToM4RefStage(${i})"></div>`).join('');
 }
@@ -530,6 +607,7 @@ function prevM4RefStage(){ if(m4RefStageIdx > 0) m4RefStageIdx--; renderM4Refere
 buildM4Palette();
 buildDrawGrid();
 renderM4Reference();
+applyLang();
 </script>
 </body>
 </html>
