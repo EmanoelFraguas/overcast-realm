@@ -396,6 +396,7 @@
       <p class="sidebar-group-title" data-i18n="navFerramentas">🛠️ Ferramentas</p>
       <a href="./pixeleditor.html" class="nav-tab">🎨 Pixel Art</a>
       <a href="./tileset-editor.html" class="nav-tab">🧱 Tileset</a>
+      <a href="./gerador-audio.html" class="nav-tab">🔊 Áudio 8-bit</a>
     </div>
   </nav>
 </aside>
@@ -493,7 +494,7 @@
       <span class="btn-primary shrink-0" data-i18n="btnAbrirAula">Abrir aula</span>
     </a>
 
-    <a href="./tileset-editor.html" class="card p-6 mb-8 flex flex-col sm:flex-row items-center gap-5 bg-gradient-to-r from-[#1a2a2e] to-[#1e1a2e] hover:no-underline">
+    <a href="./tileset-editor.html" class="card p-6 mb-4 flex flex-col sm:flex-row items-center gap-5 bg-gradient-to-r from-[#1a2a2e] to-[#1e1a2e] hover:no-underline">
       <span class="text-4xl shrink-0">🧱</span>
       <div class="flex-1">
         <p class="font-pixel text-[9px] text-emerald-400 mb-2" data-i18n="tagFerramentaGame">// FERRAMENTA · GAME_DESIGN</p>
@@ -501,6 +502,16 @@
         <p class="text-xs text-gray-400" data-i18n="descTileset">Desenhe peças pequenas (grama, parede, moeda...) e depois carimbe elas num mapa maior — o mesmo jeito que fases de jogo são montadas de verdade.</p>
       </div>
       <span class="btn-primary shrink-0" data-i18n="btnAbrirEditor">Abrir editor</span>
+    </a>
+
+    <a href="./gerador-audio.html" class="card p-6 mb-8 flex flex-col sm:flex-row items-center gap-5 bg-gradient-to-r from-[#241a30] to-[#1e1a2e] hover:no-underline">
+      <span class="text-4xl shrink-0">🔊</span>
+      <div class="flex-1">
+        <p class="font-pixel text-[9px] text-pink-400 mb-2">// FERRAMENTA · ÁUDIO</p>
+        <h3 class="font-display text-lg text-white mb-1">Gerador de Áudio 8-bit</h3>
+        <p class="text-xs text-gray-400">Efeitos sonoros prontos (moeda, pulo, dano, vitória...) ou ajuste do seu jeito, exportados no formato mais leve pra usar direto no Construct 3.</p>
+      </div>
+      <span class="btn-primary shrink-0">Abrir editor</span>
     </a>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
@@ -633,7 +644,7 @@
         <h3 class="font-pixel text-[11px] text-white mb-2" data-i18n="meusArquivos">[+] Meus Arquivos (.c3p / builds)</h3>
         <p class="text-xs text-gray-400 mb-4 leading-relaxed" data-i18n="descUploadDev">Upload direto para o seu diretório na nuvem — sem depender de uma conta compartilhada. Envie quantas vezes quiser; a versão mais recente fica sempre disponível.</p>
         <div class="flex flex-wrap items-center gap-3 mb-4">
-          <input type="file" id="dev-file-input" accept=".c3p,.txt,.png,.mp3,.ogg,.wav" class="text-xs text-gray-400" />
+          <input type="file" id="dev-file-input" accept=".c3p,.txt,.png,.gif,.mp3,.ogg,.wav" class="text-xs text-gray-400" />
           <button class="btn-primary" onclick="uploadArquivoAluno('envio')" data-i18n="btnEnviarArquivo">Enviar arquivo</button>
           <span id="dev-upload-status" class="text-[10px] font-mono text-gray-500"></span>
         </div>
@@ -669,7 +680,7 @@
         <p class="text-xs text-gray-400 mb-4 leading-relaxed" data-i18n="descEnviarProjetoFinal">Selecione seu nome na lista da turma e envie o projeto final da aula, associado diretamente à sua identidade.</p>
         <div class="space-y-3">
           <select id="turma-final-aluno" class="search-input w-full text-xs"></select>
-          <input type="file" id="turma-final-file" accept=".c3p,.txt,.png,.mp3,.ogg,.wav" class="text-xs text-gray-400" />
+          <input type="file" id="turma-final-file" accept=".c3p,.txt,.png,.gif,.mp3,.ogg,.wav" class="text-xs text-gray-400" />
           <button class="btn-primary" onclick="uploadProjetoFinal()" data-i18n="btnEnviarProjetoFinal">Enviar projeto final</button>
           <span id="turma-final-status" class="block text-[10px] font-mono text-gray-500"></span>
         </div>
@@ -861,7 +872,7 @@ const sb = (SUPABASE_URL.startsWith("http"))
   : null;
 
 // Extensões aceitas nos uploads (arquivos de desenvolvimento — amplia quando entrar arte digital)
-const EXTENSOES_PERMITIDAS = ['.c3p', '.txt', '.png', '.mp3', '.ogg', '.wav'];
+const EXTENSOES_PERMITIDAS = ['.c3p', '.txt', '.png', '.gif', '.mp3', '.ogg', '.wav'];
 function extensaoPermitida(nomeArquivo) {
   const nome = nomeArquivo.toLowerCase();
   return EXTENSOES_PERMITIDAS.some(ext => nome.endsWith(ext));
