@@ -342,12 +342,14 @@
     .legend{display:none;}
   }
 </style>
+<script src="./progress.js"></script>
 </head>
 <body>
 <div class="wrap">
 
   <div class="back-row">
     <a href="./index.html" class="back-home">← Voltar</a>
+    <span id="progress-badge-mount"></span>
   </div>
 
   <header>
@@ -459,6 +461,24 @@ function saveProgress(){
     completed:[...completed],
     lastLevel: currentLevel
   }));
+  if(window.OvercastProgress){
+    OvercastProgress.saveProgress('labirinto1', { completed:[...completed], lastLevel: currentLevel });
+  }
+}
+async function syncCloudProgress(){
+  if(!window.OvercastProgress) return;
+  const cloud = await OvercastProgress.loadProgress('labirinto1');
+  if(cloud && Array.isArray(cloud.completed)){
+    let changed = false;
+    cloud.completed.forEach(n => { if(!completed.has(n)){ completed.add(n); changed = true; } });
+    if(typeof cloud.lastLevel === 'number' && cloud.lastLevel > currentLevel){ currentLevel = cloud.lastLevel; changed = true; }
+    if(currentLevel > maxUnlocked()) currentLevel = maxUnlocked();
+    if(changed){
+      buildLevelsStrip();
+      loadLevel();
+      saveProgress();
+    }
+  }
 }
 function loadProgress(){
   try{
@@ -768,6 +788,12 @@ loadProgress();
 if(currentLevel > maxUnlocked()) currentLevel = maxUnlocked();
 buildLevelsStrip();
 loadLevel();
+
+if(window.OvercastProgress){
+  OvercastProgress.mountBadge(document.getElementById('progress-badge-mount'));
+  OvercastProgress.onLink(identity => { if(identity) syncCloudProgress(); });
+  if(OvercastProgress.getIdentity()) syncCloudProgress();
+}
 </script>
 </body>
 </html>
