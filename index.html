@@ -867,6 +867,28 @@ function extensaoPermitida(nomeArquivo) {
   return EXTENSOES_PERMITIDAS.some(ext => nome.endsWith(ext));
 }
 
+// Descobre o próximo número de versão pra um arquivo, olhando o que já existe
+// na pasta 'envios/{codigo}' do aluno. "desenho.png" -> "desenho_v1.png",
+// depois "desenho_v2.png", etc — nunca sobrescreve, sempre soma 1.
+async function proximoNomeVersionado(codigoAluno, nomeOriginal) {
+  const pontoIdx = nomeOriginal.lastIndexOf('.');
+  const nome = pontoIdx > -1 ? nomeOriginal.slice(0, pontoIdx) : nomeOriginal;
+  const ext = pontoIdx > -1 ? nomeOriginal.slice(pontoIdx) : '';
+  const escapar = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const padrao = new RegExp('^' + escapar(nome) + '_v(\\d+)' + escapar(ext) + '$', 'i');
+
+  let maiorVersao = 0;
+  try {
+    const { data: arquivos } = await sb.storage.from('submissoes').list(`envios/${codigoAluno}`);
+    (arquivos || []).forEach(f => {
+      const m = f.name.match(padrao);
+      if (m) maiorVersao = Math.max(maiorVersao, parseInt(m[1], 10));
+    });
+  } catch (e) { /* pasta pode não existir ainda — começa do v1 mesmo */ }
+
+  return `${nome}_v${maiorVersao + 1}${ext}`;
+}
+
 let alunoAtivo = null; // { id, nome, codigo, etapa, turma_id }
 
 function urlPublicoArquivo(path) {
@@ -1142,12 +1164,14 @@ async function renderArquivosAluno() {
   const { data: arquivos, error } = await sb.from('arquivos')
     .select('*').eq('aluno_id', alunoAtivo.id).order('criado_em', { ascending: false });
 
+  // mostra todos os arquivos do aluno, independente de onde foram enviados
+  // (Área_Dev ou envio do projeto final na Turma) — pro aluno tudo é "meus arquivos"
   if (error || !arquivos || arquivos.length === 0) {
     container.innerHTML = `<p class="text-[11px] text-gray-600 font-mono">${UI_STRINGS[currentLang].semArquivosEnviados}</p>`;
     return;
   }
 
-  container.innerHTML = arquivos.filter(f => f.tipo === 'envio').map(f => `
+  container.innerHTML = arquivos.map(f => `
     <div class="flex items-center justify-between bg-[#150f24] border border-[#322c47] px-3 py-2">
       <a href="${urlPublicoArquivo(f.storage_path)}" target="_blank" class="text-[11px] text-blue-400 hover:underline truncate">${f.nome_arquivo}</a>
       <button class="btn-secondary text-[8px]" onclick="removerArquivoAluno('${f.id}')">${UI_STRINGS[currentLang].excluir}</button>
@@ -1166,13 +1190,14 @@ async function uploadArquivoAluno(tipo) {
   }
 
   statusEl.textContent = UI_STRINGS[currentLang].enviando;
-  const path = `envios/${alunoAtivo.codigo}/${Date.now()}_${file.name}`;
+  const nomeVersionado = await proximoNomeVersionado(alunoAtivo.codigo, file.name);
+  const path = `envios/${alunoAtivo.codigo}/${nomeVersionado}`;
 
   const { error: upErr } = await sb.storage.from('submissoes').upload(path, file, { upsert: true });
   if (upErr) { statusEl.textContent = UI_STRINGS[currentLang].erroUpload + upErr.message; return; }
 
   const { error: rpcErr } = await sb.rpc('registrar_envio', {
-    p_codigo: alunoAtivo.codigo, p_nome_arquivo: file.name, p_storage_path: path,
+    p_codigo: alunoAtivo.codigo, p_nome_arquivo: nomeVersionado, p_storage_path: path,
     p_tipo: tipo, p_tamanho_bytes: file.size
   });
   if (rpcErr) { statusEl.textContent = UI_STRINGS[currentLang].erroRegistrar + rpcErr.message; return; }
@@ -1268,13 +1293,17 @@ async function uploadProjetoFinal() {
   if (aErr || !aluno) { statusEl.textContent = UI_STRINGS[currentLang].alunoNaoEncontrado; return; }
 
   statusEl.textContent = UI_STRINGS[currentLang].enviando;
-  const path = `finais/${aluno.codigo}/${Date.now()}_${file.name}`;
+  // centralizado na mesma pasta 'envios/' que o resto dos arquivos do aluno —
+  // independente de onde o envio aconteceu, ele mora no mesmo lugar no Storage
+  // e aparece na lista "Meus Arquivos" do aluno
+  const nomeVersionado = await proximoNomeVersionado(aluno.codigo, file.name);
+  const path = `envios/${aluno.codigo}/${nomeVersionado}`;
 
   const { error: upErr } = await sb.storage.from('submissoes').upload(path, file, { upsert: true });
   if (upErr) { statusEl.textContent = UI_STRINGS[currentLang].erroUpload + upErr.message; return; }
 
   const { error: rpcErr } = await sb.rpc('registrar_envio', {
-    p_codigo: aluno.codigo, p_nome_arquivo: file.name, p_storage_path: path,
+    p_codigo: aluno.codigo, p_nome_arquivo: nomeVersionado, p_storage_path: path,
     p_tipo: 'projeto_final', p_tamanho_bytes: file.size
   });
   if (rpcErr) { statusEl.textContent = UI_STRINGS[currentLang].erroRegistrar + rpcErr.message; return; }
