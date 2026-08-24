@@ -716,7 +716,13 @@ const UI_STRINGS = {
     digiteCodigoTurma:'👉 Digite o código da turma.', buscando:'⏳ Buscando...', turmaNaoEncontrada:'❌ Turma não encontrada. Confira o código.',
     nenhumAluno:'Nenhum aluno cadastrado nessa turma ainda.', trocar:'trocar',
     vinculadoSalvando:'✅ Vinculado! Vou salvar automaticamente pra ', enviandoPasta:'⏳ Enviando pra pasta de ',
-    salvoPasta:'✅ Salvo na pasta de ', erroPrefix:'❌ Erro: ', xy:'X: – &nbsp; Y: –'
+    salvoPasta:'✅ Salvo na pasta de ', erroPrefix:'❌ Erro: ', xy:'X: – &nbsp; Y: –',
+    alertMax64:'Essa paleta já tem 64 cores — o máximo!', alertMin1:'Precisa ficar com pelo menos 1 cor na paleta.',
+    confirmApagarQuadro:'Apagar o quadro atual e recomeçar do zero?',
+    alert2QuadrosVer:'Crie pelo menos 2 quadros pra ver a animação rodando!',
+    alert2QuadrosVirar:'Crie pelo menos 2 quadros pra virar uma animação! (use "🆕 Novo Quadro" ou "➕ Duplicar")',
+    alertSupabase:'Não foi possível conectar ao Supabase. Verifique a configuração no topo do arquivo.',
+    alertImagem:'Não consegui abrir essa imagem.'
   },
   en: {
     themeToggleTitle:'Toggle light/dark background',
@@ -749,7 +755,13 @@ const UI_STRINGS = {
     digiteCodigoTurma:'👉 Type in the class code.', buscando:'⏳ Searching...', turmaNaoEncontrada:'❌ Class not found. Check the code.',
     nenhumAluno:'No students registered in this class yet.', trocar:'change',
     vinculadoSalvando:"✅ Linked! I'll save automatically for ", enviandoPasta:'⏳ Sending to the folder of ',
-    salvoPasta:'✅ Saved to the folder of ', erroPrefix:'❌ Error: ', xy:'X: – &nbsp; Y: –'
+    salvoPasta:'✅ Saved to the folder of ', erroPrefix:'❌ Error: ', xy:'X: – &nbsp; Y: –',
+    alertMax64:'This palette already has 64 colors — the max!', alertMin1:'You need to keep at least 1 color in the palette.',
+    confirmApagarQuadro:'Erase the current frame and start from scratch?',
+    alert2QuadrosVer:'Create at least 2 frames to see the animation play!',
+    alert2QuadrosVirar:'Create at least 2 frames to make an animation! (use "🆕 New Frame" or "➕ Duplicate")',
+    alertSupabase:'Could not connect to Supabase. Check the configuration at the top of the file.',
+    alertImagem:'Could not open that image.'
   }
 };
 function toggleLang(){
@@ -1042,7 +1054,7 @@ function addSessionColor(){
   const picker = document.getElementById('color-picker-hidden');
   picker.value = currentColor && currentColor.startsWith('#') ? currentColor : '#ff5fa2';
   picker.onchange = () => {
-    if(sessionPaletteColors.length >= 64){ alert('Essa paleta já tem 64 cores — o máximo!'); return; }
+    if(sessionPaletteColors.length >= 64){ alert(UI_STRINGS[currentLang].alertMax64); return; }
     sessionPaletteColors.push(picker.value);
     persistCustomPaletteIfActive();
     buildEditorPalette();
@@ -1050,7 +1062,7 @@ function addSessionColor(){
   picker.click();
 }
 function removeSessionColor(i){
-  if(sessionPaletteColors.length <= 1){ alert('Precisa ficar com pelo menos 1 cor na paleta.'); return; }
+  if(sessionPaletteColors.length <= 1){ alert(UI_STRINGS[currentLang].alertMin1); return; }
   const removedColor = sessionPaletteColors[i];
   sessionPaletteColors.splice(i,1);
   if(currentColor === removedColor) currentColor = sessionPaletteColors[0];
@@ -1338,7 +1350,7 @@ document.addEventListener('keydown', e => {
 });
 
 function clearCanvas(){
-  if(!confirm('Apagar o quadro atual e recomeçar do zero?')) return;
+  if(!confirm(UI_STRINGS[currentLang].confirmApagarQuadro)) return;
   saveUndoState();
   setPixels(new Array(gridSize*gridSize).fill(null));
   paintAllCells();
@@ -1641,7 +1653,7 @@ function togglePreviewPlay(){
 }
 function startPreviewPlay(){
   if(frames.length < 2){
-    alert('Crie pelo menos 2 quadros pra ver a animação rodando!');
+    alert(UI_STRINGS[currentLang].alert2QuadrosVer);
     return;
   }
   document.getElementById('preview-play-btn').textContent = UI_STRINGS[currentLang].parar;
@@ -1837,7 +1849,7 @@ function buildGIFBytes(){
 }
 function exportGIF(){
   if(frames.length < 2){
-    alert('Crie pelo menos 2 quadros pra virar uma animação! (use "🆕 Novo Quadro" ou "➕ Duplicar")');
+    alert(UI_STRINGS[currentLang].alert2QuadrosVirar);
     return;
   }
   const status = document.getElementById('export-status');
@@ -1879,7 +1891,7 @@ function quickDownload(){
 
 function openSaveStudentModal(fromChoiceFlow, linkMode){
   if(!sb){
-    alert('Não foi possível conectar ao Supabase. Verifique a configuração no topo do arquivo.');
+    alert(UI_STRINGS[currentLang].alertSupabase);
     return;
   }
   if(fromChoiceFlow) closeSaveChoiceModal();
@@ -2173,7 +2185,7 @@ function handleImportImage(event){
     renderFrameStrip();
     URL.revokeObjectURL(img.src);
   };
-  img.onerror = () => alert('Não consegui abrir essa imagem.');
+  img.onerror = () => alert(UI_STRINGS[currentLang].alertImagem);
   img.src = URL.createObjectURL(file);
 }
 
