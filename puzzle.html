@@ -329,14 +329,15 @@
 <body>
 <div class="wrap">
 
+  <button id="lang-toggle-btn" style="position:fixed;top:10px;right:10px;z-index:999;font-size:22px;background:#fff;border:2px solid #d8d5e6;border-radius:50%;width:42px;height:42px;cursor:pointer;box-shadow:0 3px 0 #d8d5e6;" onclick="toggleLang()" title="English">🇺🇸</button>
   <a href="./index.html" class="back-home">← Voltar pro Overcast Realm</a>
   <a href="./puzzle2.html" class="back-home" style="margin-left:10px;">Nível 2 →</a>
   <span id="progress-badge-mount" style="margin-left:10px;"></span>
 
   <header>
-    <div class="eyebrow">OVERCAST REALM · TURMA DE LÓGICA</div>
-    <h1>Monte a <span class="em">Lógica</span> do Jogo!</h1>
-    <p>Arraste os blocos SE e ENTÃO até o lugar certo em cada quadradinho. 🧩</p>
+    <div class="eyebrow" id="t-eyebrow">OVERCAST REALM · TURMA DE LÓGICA</div>
+    <h1 id="t-h1">Monte a <span class="em">Lógica</span> do Jogo!</h1>
+    <p id="t-sub">Arraste os blocos SE e ENTÃO até o lugar certo em cada quadradinho. 🧩</p>
   </header>
 
   <div class="progress-bar-wrap">
@@ -346,72 +347,84 @@
 
   <div class="grid" id="grid"></div>
 
-  <footer>🎮 Overcast Game Studio — material de apoio para aulas de lógica</footer>
+  <footer id="t-footer">🎮 Overcast Game Studio — material de apoio para aulas de lógica</footer>
 </div>
 
 <script>
 const exercises = [
-  {icon:"⚡", title:"Espinho", scenario:'Se o personagem <b>colidir com o espinho</b>, o sistema reinicia o layout.',
-   cond:[["Personagem colide com o Espinho",true],["Personagem colide com a Moeda",false]],
-   act:[["Sistema reinicia o layout",true],["Sistema vai para o layout seguinte",false]]},
-  {icon:"🔫", title:"Atirar", scenario:'Se for pressionada a tecla <b>Espaço</b>, o personagem atira.',
-   cond:[["Teclado: tecla Espaço pressionada",true],["Teclado: seta Cima pressionada",false]],
-   act:[["Personagem atira",true],["Personagem pula",false]]},
-  {icon:"🪙", title:"Moeda", scenario:'Se o personagem <b>colidir com a moeda</b>, aumenta 1 na contagem de moedas.',
-   cond:[["Personagem colide com a Moeda",true],["Personagem colide com o Espinho",false]],
-   act:[["Aumentar 1 na contagem de Moedas",true],["Sistema reinicia o layout",false]]},
-  {icon:"🏁", title:"Chegada", scenario:'Se o personagem <b>colidir com a chegada</b>, o sistema vai para o layout seguinte.',
-   cond:[["Personagem colide com a Chegada",true],["Personagem colide com o Inimigo",false]],
-   act:[["Sistema vai para o layout seguinte",true],["Sistema reinicia o layout",false]]},
-  {icon:"💥", title:"Inimigo", scenario:'Se o <b>tiro colidir com o inimigo</b>, destruir o inimigo.',
-   cond:[["Tiro colide com o Inimigo",true],["Personagem colide com o Inimigo",false]],
-   act:[["Destruir Inimigo",true],["Destruir Personagem",false]]},
-  {icon:"⬆️", title:"Pular", scenario:'Se for pressionada a <b>seta para cima</b>, o personagem pula.',
-   cond:[["Teclado: seta Cima pressionada",true],["Teclado: seta Baixo pressionada",false]],
-   act:[["Personagem pula",true],["Personagem agacha",false]]},
-  {icon:"☠️", title:"Perder vida", scenario:'Se o personagem <b>colidir com o inimigo</b>, o sistema reinicia o layout.',
-   cond:[["Personagem colide com o Inimigo",true],["Tiro colide com o Inimigo",false]],
-   act:[["Sistema reinicia o layout",true],["Destruir Inimigo",false]]},
-  {icon:"➡️", title:"Andar direita", scenario:'Se for pressionada a <b>seta direita</b>, o personagem anda para a direita.',
-   cond:[["Teclado: seta Direita pressionada",true],["Teclado: seta Esquerda pressionada",false]],
-   act:[["Personagem anda para a direita",true],["Personagem anda para a esquerda",false]]},
-  {icon:"⬅️", title:"Andar esquerda", scenario:'Se for pressionada a <b>seta esquerda</b>, o personagem anda para a esquerda.',
-   cond:[["Teclado: seta Esquerda pressionada",true],["Teclado: seta Direita pressionada",false]],
-   act:[["Personagem anda para a esquerda",true],["Personagem anda para a direita",false]]},
-  {icon:"❤️", title:"Sem vidas", scenario:'Se a <b>vida chegar a 0</b>, o sistema reinicia o layout.',
-   cond:[["Variável Vida = 0",true],["Variável Moedas = 10",false]],
-   act:[["Sistema reinicia o layout",true],["Sistema vai para o layout seguinte",false]]},
-  {icon:"🌟", title:"Power-up", scenario:'Se o personagem <b>colidir com o power-up</b>, ele fica invencível.',
-   cond:[["Personagem colide com o Power-up",true],["Personagem colide com a Moeda",false]],
-   act:[["Personagem fica invencível",true],["Personagem ganha uma vida",false]]},
-  {icon:"⏳", title:"Tempo esgotado", scenario:'Se o <b>tempo chegar a 0</b>, o sistema reinicia o layout.',
-   cond:[["Variável Tempo = 0",true],["Variável Moedas = 10",false]],
-   act:[["Sistema reinicia o layout",true],["Sistema vai para o layout seguinte",false]]},
-  {icon:"🚪", title:"Porta", scenario:'Se o personagem <b>colidir com a porta</b>, o sistema vai para o layout seguinte.',
-   cond:[["Personagem colide com a Porta",true],["Personagem colide com o Espinho",false]],
-   act:[["Sistema vai para o layout seguinte",true],["Sistema reinicia o layout",false]]},
-  {icon:"⏸️", title:"Pausar", scenario:'Se for pressionada a tecla <b>"P"</b>, o jogo pausa.',
-   cond:[['Teclado: tecla "P" pressionada',true],["Teclado: tecla Espaço pressionada",false]],
-   act:[["Jogo pausa",true],["Personagem atira",false]]},
-  {icon:"👾", title:"Inimigo sai da tela", scenario:'Se o <b>inimigo sair da área de jogo</b>, destruir o inimigo.',
-   cond:[["Inimigo sai da área de jogo",true],["Tiro sai da área de jogo",false]],
-   act:[["Destruir Inimigo",true],["Destruir Tiro",false]]},
-  {icon:"🧱", title:"Plataforma", scenario:'Se o personagem <b>colidir com a plataforma</b>, ele para de cair.',
-   cond:[["Personagem colide com a Plataforma",true],["Personagem colide com o Espinho",false]],
-   act:[["Personagem para de cair",true],["Sistema reinicia o layout",false]]},
-  {icon:"🔁", title:"Reiniciar manual", scenario:'Se for pressionada a tecla <b>"R"</b>, o sistema reinicia o layout.',
-   cond:[['Teclado: tecla "R" pressionada',true],["Teclado: tecla Espaço pressionada",false]],
-   act:[["Sistema reinicia o layout",true],["Personagem atira",false]]},
-  {icon:"✨", title:"Estrela", scenario:'Se o personagem <b>colidir com a estrela</b>, aumenta 1 na contagem de estrelas.',
-   cond:[["Personagem colide com a Estrela",true],["Personagem colide com a Moeda",false]],
-   act:[["Aumentar 1 na contagem de Estrelas",true],["Aumentar 1 na contagem de Moedas",false]]},
-  {icon:"🌊", title:"Água", scenario:'Se o personagem <b>colidir com a água</b>, o sistema reinicia o layout.',
-   cond:[["Personagem colide com a Água",true],["Personagem colide com a Chegada",false]],
-   act:[["Sistema reinicia o layout",true],["Sistema vai para o layout seguinte",false]]},
-  {icon:"🎬", title:"Início do jogo", scenario:'Se o <b>layout começar</b>, o placar mostra "0 pontos".',
-   cond:[["Sistema: ao iniciar o layout",true],["Personagem colide com a Moeda",false]],
-   act:[['Placar mostra "0 pontos"',true],["Placar soma 10 pontos",false]]}
+  {icon:"⚡", title:{pt:"Espinho",en:"Spike"}, scenario:{pt:'Se o personagem <b>colidir com o espinho</b>, o sistema reinicia o layout.', en:'If the Player <b>collides with the Spike</b>, the system restarts the layout.'},
+   cond:[["Personagem colide com o Espinho","Player: On collision with Spike",true],["Personagem colide com a Moeda","Player: On collision with Coin",false]],
+   act:[["Sistema reinicia o layout","System: Restart layout",true],["Sistema vai para o layout seguinte","System: Go to layout (next)",false]]},
+  {icon:"🔫", title:{pt:"Atirar",en:"Shoot"}, scenario:{pt:'Se for pressionada a tecla <b>Espaço</b>, o personagem atira.', en:'If the <b>Space</b> key is down, the Player shoots.'},
+   cond:[["Teclado: tecla Espaço pressionada","Keyboard: Space is down",true],["Teclado: seta Cima pressionada","Keyboard: Up arrow is down",false]],
+   act:[["Personagem atira","Player: Shoot",true],["Personagem pula","Player: Jump",false]]},
+  {icon:"🪙", title:{pt:"Moeda",en:"Coin"}, scenario:{pt:'Se o personagem <b>colidir com a moeda</b>, aumenta 1 na contagem de moedas.', en:'If the Player <b>collides with the Coin</b>, add 1 to the coin count.'},
+   cond:[["Personagem colide com a Moeda","Player: On collision with Coin",true],["Personagem colide com o Espinho","Player: On collision with Spike",false]],
+   act:[["Aumentar 1 na contagem de Moedas","Add 1 to Coins",true],["Sistema reinicia o layout","System: Restart layout",false]]},
+  {icon:"🏁", title:{pt:"Chegada",en:"Finish"}, scenario:{pt:'Se o personagem <b>colidir com a chegada</b>, o sistema vai para o layout seguinte.', en:'If the Player <b>collides with the Finish</b>, the system goes to the next layout.'},
+   cond:[["Personagem colide com a Chegada","Player: On collision with Finish",true],["Personagem colide com o Inimigo","Player: On collision with Enemy",false]],
+   act:[["Sistema vai para o layout seguinte","System: Go to layout (next)",true],["Sistema reinicia o layout","System: Restart layout",false]]},
+  {icon:"💥", title:{pt:"Inimigo",en:"Enemy"}, scenario:{pt:'Se o <b>tiro colidir com o inimigo</b>, destruir o inimigo.', en:'If the Bullet <b>collides with the Enemy</b>, destroy the Enemy.'},
+   cond:[["Tiro colide com o Inimigo","Bullet: On collision with Enemy",true],["Personagem colide com o Inimigo","Player: On collision with Enemy",false]],
+   act:[["Destruir Inimigo","Destroy Enemy",true],["Destruir Personagem","Destroy Player",false]]},
+  {icon:"⬆️", title:{pt:"Pular",en:"Jump"}, scenario:{pt:'Se for pressionada a <b>seta para cima</b>, o personagem pula.', en:'If the <b>Up arrow</b> is down, the Player jumps.'},
+   cond:[["Teclado: seta Cima pressionada","Keyboard: Up arrow is down",true],["Teclado: seta Baixo pressionada","Keyboard: Down arrow is down",false]],
+   act:[["Personagem pula","Player: Jump",true],["Personagem agacha","Player: Crouch",false]]},
+  {icon:"☠️", title:{pt:"Perder vida",en:"Lose a life"}, scenario:{pt:'Se o personagem <b>colidir com o inimigo</b>, o sistema reinicia o layout.', en:'If the Player <b>collides with the Enemy</b>, the system restarts the layout.'},
+   cond:[["Personagem colide com o Inimigo","Player: On collision with Enemy",true],["Tiro colide com o Inimigo","Bullet: On collision with Enemy",false]],
+   act:[["Sistema reinicia o layout","System: Restart layout",true],["Destruir Inimigo","Destroy Enemy",false]]},
+  {icon:"➡️", title:{pt:"Andar direita",en:"Walk right"}, scenario:{pt:'Se for pressionada a <b>seta direita</b>, o personagem anda para a direita.', en:'If the <b>Right arrow</b> is down, the Player moves right.'},
+   cond:[["Teclado: seta Direita pressionada","Keyboard: Right arrow is down",true],["Teclado: seta Esquerda pressionada","Keyboard: Left arrow is down",false]],
+   act:[["Personagem anda para a direita","Player: Move right",true],["Personagem anda para a esquerda","Player: Move left",false]]},
+  {icon:"⬅️", title:{pt:"Andar esquerda",en:"Walk left"}, scenario:{pt:'Se for pressionada a <b>seta esquerda</b>, o personagem anda para a esquerda.', en:'If the <b>Left arrow</b> is down, the Player moves left.'},
+   cond:[["Teclado: seta Esquerda pressionada","Keyboard: Left arrow is down",true],["Teclado: seta Direita pressionada","Keyboard: Right arrow is down",false]],
+   act:[["Personagem anda para a esquerda","Player: Move left",true],["Personagem anda para a direita","Player: Move right",false]]},
+  {icon:"❤️", title:{pt:"Sem vidas",en:"No lives left"}, scenario:{pt:'Se a <b>vida chegar a 0</b>, o sistema reinicia o layout.', en:'If <b>Lives reaches 0</b>, the system restarts the layout.'},
+   cond:[["Variável Vida = 0","Compare variable: Lives = 0",true],["Variável Moedas = 10","Compare variable: Coins = 10",false]],
+   act:[["Sistema reinicia o layout","System: Restart layout",true],["Sistema vai para o layout seguinte","System: Go to layout (next)",false]]},
+  {icon:"🌟", title:{pt:"Power-up",en:"Power-up"}, scenario:{pt:'Se o personagem <b>colidir com o power-up</b>, ele fica invencível.', en:'If the Player <b>collides with the Power-up</b>, it becomes invincible.'},
+   cond:[["Personagem colide com o Power-up","Player: On collision with Power-up",true],["Personagem colide com a Moeda","Player: On collision with Coin",false]],
+   act:[["Personagem fica invencível","Player becomes invincible",true],["Personagem ganha uma vida","Player gains a life",false]]},
+  {icon:"⏳", title:{pt:"Tempo esgotado",en:"Time's up"}, scenario:{pt:'Se o <b>tempo chegar a 0</b>, o sistema reinicia o layout.', en:'If <b>Time reaches 0</b>, the system restarts the layout.'},
+   cond:[["Variável Tempo = 0","Compare variable: Time = 0",true],["Variável Moedas = 10","Compare variable: Coins = 10",false]],
+   act:[["Sistema reinicia o layout","System: Restart layout",true],["Sistema vai para o layout seguinte","System: Go to layout (next)",false]]},
+  {icon:"🚪", title:{pt:"Porta",en:"Door"}, scenario:{pt:'Se o personagem <b>colidir com a porta</b>, o sistema vai para o layout seguinte.', en:'If the Player <b>collides with the Door</b>, the system goes to the next layout.'},
+   cond:[["Personagem colide com a Porta","Player: On collision with Door",true],["Personagem colide com o Espinho","Player: On collision with Spike",false]],
+   act:[["Sistema vai para o layout seguinte","System: Go to layout (next)",true],["Sistema reinicia o layout","System: Restart layout",false]]},
+  {icon:"⏸️", title:{pt:"Pausar",en:"Pause"}, scenario:{pt:'Se for pressionada a tecla <b>"P"</b>, o jogo pausa.', en:'If the <b>"P"</b> key is down, the game pauses.'},
+   cond:[['Teclado: tecla "P" pressionada','Keyboard: "P" is down',true],["Teclado: tecla Espaço pressionada","Keyboard: Space is down",false]],
+   act:[["Jogo pausa","Game pauses",true],["Personagem atira","Player: Shoot",false]]},
+  {icon:"👾", title:{pt:"Inimigo sai da tela",en:"Enemy leaves the screen"}, scenario:{pt:'Se o <b>inimigo sair da área de jogo</b>, destruir o inimigo.', en:'If the Enemy <b>is outside the layout</b>, destroy the Enemy.'},
+   cond:[["Inimigo sai da área de jogo","Enemy: Is outside layout",true],["Tiro sai da área de jogo","Bullet: Is outside layout",false]],
+   act:[["Destruir Inimigo","Destroy Enemy",true],["Destruir Tiro","Destroy Bullet",false]]},
+  {icon:"🧱", title:{pt:"Plataforma",en:"Platform"}, scenario:{pt:'Se o personagem <b>colidir com a plataforma</b>, ele para de cair.', en:'If the Player <b>collides with the Platform</b>, it stops falling.'},
+   cond:[["Personagem colide com a Plataforma","Player: On collision with Platform",true],["Personagem colide com o Espinho","Player: On collision with Spike",false]],
+   act:[["Personagem para de cair","Player stops falling",true],["Sistema reinicia o layout","System: Restart layout",false]]},
+  {icon:"🔁", title:{pt:"Reiniciar manual",en:"Manual restart"}, scenario:{pt:'Se for pressionada a tecla <b>"R"</b>, o sistema reinicia o layout.', en:'If the <b>"R"</b> key is down, the system restarts the layout.'},
+   cond:[['Teclado: tecla "R" pressionada','Keyboard: "R" is down',true],["Teclado: tecla Espaço pressionada","Keyboard: Space is down",false]],
+   act:[["Sistema reinicia o layout","System: Restart layout",true],["Personagem atira","Player: Shoot",false]]},
+  {icon:"✨", title:{pt:"Estrela",en:"Star"}, scenario:{pt:'Se o personagem <b>colidir com a estrela</b>, aumenta 1 na contagem de estrelas.', en:'If the Player <b>collides with the Star</b>, add 1 to the star count.'},
+   cond:[["Personagem colide com a Estrela","Player: On collision with Star",true],["Personagem colide com a Moeda","Player: On collision with Coin",false]],
+   act:[["Aumentar 1 na contagem de Estrelas","Add 1 to Stars",true],["Aumentar 1 na contagem de Moedas","Add 1 to Coins",false]]},
+  {icon:"🌊", title:{pt:"Água",en:"Water"}, scenario:{pt:'Se o personagem <b>colidir com a água</b>, o sistema reinicia o layout.', en:'If the Player <b>collides with the Water</b>, the system restarts the layout.'},
+   cond:[["Personagem colide com a Água","Player: On collision with Water",true],["Personagem colide com a Chegada","Player: On collision with Finish",false]],
+   act:[["Sistema reinicia o layout","System: Restart layout",true],["Sistema vai para o layout seguinte","System: Go to layout (next)",false]]},
+  {icon:"🎬", title:{pt:"Início do jogo",en:"Start of game"}, scenario:{pt:'Se o <b>layout começar</b>, o placar mostra "0 pontos".', en:'If the <b>layout starts</b>, the scoreboard shows "0 points".'},
+   cond:[["Sistema: ao iniciar o layout","System: On start of layout",true],["Personagem colide com a Moeda","Player: On collision with Coin",false]],
+   act:[['Placar mostra "0 pontos"','Scoreboard shows "0 points"',true],["Placar soma 10 pontos","Add 10 points to scoreboard",false]]}
 ];
+
+let currentLang = 'pt';
+const UI_STRINGS = {
+  pt: { eyebrow:'OVERCAST REALM · TURMA DE LÓGICA', h1:'Monte a <span class="em">Lógica</span> do Jogo!', sub:'Arraste os blocos SE e ENTÃO até o lugar certo em cada quadradinho. 🧩',
+        footer:'🎮 Overcast Game Studio — material de apoio para aulas de lógica', se:'SE', entao:'ENTÃO', seDots:'SE...', entaoDots:'ENTÃO...',
+        conferir:'✅ Conferir', limpar:'🔄 Limpar', preencha:'👉 Preencha os dois encaixes.', certinho:'🎉 Certinho!', quase:'🤔 Quase! Olhe o vermelho.',
+        certinhoSalvo:'🎉 Certinho! (salvo antes)', progresso: n => `${n} de 20 completos`, langBtn:'🇺🇸 English' },
+  en: { eyebrow:'OVERCAST REALM · LOGIC CLASS', h1:'Build the Game\'s <span class="em">Logic</span>!', sub:'Drag the IF and THEN blocks into the right spot in each puzzle. 🧩',
+        footer:'🎮 Overcast Game Studio — support material for logic classes', se:'IF', entao:'THEN', seDots:'IF...', entaoDots:'THEN...',
+        conferir:'✅ Check', limpar:'🔄 Clear', preencha:'👉 Fill in both slots.', certinho:'🎉 Nice!', quase:'🤔 Almost! Check the red one.',
+        certinhoSalvo:'🎉 Nice! (already saved)', progresso: n => `${n} of 20 complete`, langBtn:'🇧🇷 Português' }
+};
 
 function shuffle(arr){
   const a = arr.slice();
@@ -423,12 +436,13 @@ function shuffle(arr){
 }
 
 const grid = document.getElementById('grid');
-const blockText = {};
+const blockTextPT = {};
+const blockTextEN = {};
 
 exercises.forEach((ex, idx)=>{
   const n = idx+1;
-  const condShuffled = shuffle(ex.cond.map((c,i)=>({text:c[0], correct:c[1], id:'c'+n+'_'+i})));
-  const actShuffled = shuffle(ex.act.map((a,i)=>({text:a[0], correct:a[1], id:'a'+n+'_'+i})));
+  const condShuffled = shuffle(ex.cond.map((c,i)=>({pt:c[0], en:c[1], correct:c[2], id:'c'+n+'_'+i})));
+  const actShuffled = shuffle(ex.act.map((a,i)=>({pt:a[0], en:a[1], correct:a[2], id:'a'+n+'_'+i})));
   const correctCondId = condShuffled.find(c=>c.correct).id;
   const correctActId = actShuffled.find(a=>a.correct).id;
 
@@ -438,34 +452,72 @@ exercises.forEach((ex, idx)=>{
   section.className = 'exercise';
   section.innerHTML = `
     <div class="num-badge ${colorClass}">${n}</div>
-    <div class="ex-title"><span class="icon">${ex.icon}</span> ${ex.title}</div>
-    <div class="scenario">${ex.scenario}</div>
+    <div class="ex-title"><span class="icon">${ex.icon}</span> <span class="t-title" data-ex="${n}">${ex.title.pt}</span></div>
+    <div class="scenario"><span class="t-scenario" data-ex="${n}">${ex.scenario.pt}</span></div>
     <div class="board" data-exercise="${n}">
       <div class="col">
-        <div class="col-label cond">SE</div>
-        ${condShuffled.map(c=>`<div class="block" draggable="true" data-id="${c.id}" data-group="cond">${c.text}</div>`).join('')}
-        <div class="col-label act" style="margin-top:10px;">ENTÃO</div>
-        ${actShuffled.map(a=>`<div class="block" draggable="true" data-id="${a.id}" data-group="act">${a.text}</div>`).join('')}
+        <div class="col-label cond t-se">SE</div>
+        ${condShuffled.map(c=>`<div class="block" draggable="true" data-id="${c.id}" data-group="cond">${c.pt}</div>`).join('')}
+        <div class="col-label act t-entao" style="margin-top:10px;">ENTÃO</div>
+        ${actShuffled.map(a=>`<div class="block" draggable="true" data-id="${a.id}" data-group="act">${a.pt}</div>`).join('')}
       </div>
       <div class="connectors">
         <div class="conn-row">
-          <div class="slot" data-accepts="cond" data-correct="${correctCondId}">SE...</div>
+          <div class="slot t-se-dots" data-accepts="cond" data-correct="${correctCondId}">SE...</div>
           <div class="arrow">➔</div>
-          <div class="slot" data-accepts="act" data-correct="${correctActId}">ENTÃO...</div>
+          <div class="slot t-entao-dots" data-accepts="act" data-correct="${correctActId}">ENTÃO...</div>
         </div>
       </div>
     </div>
     <div class="actions-row">
-      <button class="primary" onclick="checkExercise(${n})">✅ Conferir</button>
-      <button class="secondary" onclick="resetExercise(${n})">🔄 Limpar</button>
+      <button class="primary t-conferir" onclick="checkExercise(${n})">✅ Conferir</button>
+      <button class="secondary t-limpar" onclick="resetExercise(${n})">🔄 Limpar</button>
       <span class="feedback" id="fb-${n}"></span>
     </div>
   `;
   grid.appendChild(section);
 
-  condShuffled.forEach(c=>blockText[c.id]=c.text);
-  actShuffled.forEach(a=>blockText[a.id]=a.text);
+  condShuffled.forEach(c=>{ blockTextPT[c.id]=c.pt; blockTextEN[c.id]=c.en; });
+  actShuffled.forEach(a=>{ blockTextPT[a.id]=a.pt; blockTextEN[a.id]=a.en; });
 });
+
+function blockText(id){ return currentLang==='pt' ? blockTextPT[id] : blockTextEN[id]; }
+
+function toggleLang(){
+  currentLang = currentLang === 'pt' ? 'en' : 'pt';
+  applyLang();
+}
+function applyLang(){
+  const t = UI_STRINGS[currentLang];
+  document.getElementById('t-eyebrow').textContent = t.eyebrow;
+  document.getElementById('t-h1').innerHTML = t.h1;
+  document.getElementById('t-sub').textContent = t.sub;
+  document.getElementById('t-footer').textContent = t.footer;
+  document.getElementById('lang-toggle-btn').textContent = currentLang==='pt' ? '🇺🇸' : '🇧🇷';
+  document.getElementById('lang-toggle-btn').title = currentLang==='pt' ? 'English' : 'Português';
+
+  exercises.forEach((ex,idx) => {
+    const n = idx+1;
+    document.querySelectorAll(`.t-title[data-ex="${n}"]`).forEach(el => el.textContent = ex.title[currentLang]);
+    document.querySelectorAll(`.t-scenario[data-ex="${n}"]`).forEach(el => el.innerHTML = ex.scenario[currentLang]);
+  });
+  document.querySelectorAll('.t-se').forEach(el => el.textContent = t.se);
+  document.querySelectorAll('.t-entao').forEach(el => el.textContent = t.entao);
+  document.querySelectorAll('.t-conferir').forEach(el => el.textContent = t.conferir);
+  document.querySelectorAll('.t-limpar').forEach(el => el.textContent = t.limpar);
+
+  // blocos ainda no monte (não usados) e slots já preenchidos: atualiza o texto sem embaralhar de novo
+  document.querySelectorAll('.block').forEach(b => { b.textContent = blockText(b.dataset.id); });
+  document.querySelectorAll('.slot').forEach(slot => {
+    if(slot.dataset.filledId){
+      slot.textContent = blockText(slot.dataset.filledId);
+    } else {
+      slot.textContent = slot.classList.contains('t-se-dots') ? t.seDots : t.entaoDots;
+    }
+  });
+
+  updateProgress();
+}
 
 let dragged = null;
 const solved = new Set();
@@ -495,7 +547,7 @@ async function syncCloudProgress(){
       solved.forEach(n => {
         const board = document.querySelector('.board[data-exercise="'+n+'"]');
         const fb = document.getElementById('fb-'+n);
-        if(fb){ fb.textContent = '🎉 Certinho! (salvo antes)'; fb.className = 'feedback ok'; }
+        if(fb){ fb.textContent = UI_STRINGS[currentLang].certinhoSalvo; fb.className = 'feedback ok'; }
       });
       updateProgress();
       saveProgress();
@@ -534,7 +586,7 @@ function attachHandlers(){
       }
 
       slot.dataset.filledId = dragged.dataset.id;
-      slot.textContent = blockText[dragged.dataset.id];
+      slot.textContent = blockText(dragged.dataset.id);
       slot.classList.add('filled');
       slot.classList.remove('correct','wrong');
       dragged.classList.add('placed');
@@ -548,10 +600,11 @@ function updateProgress(){
   const total = exercises.length;
   const done = solved.size;
   document.getElementById('progress-bar').style.width = (done/total*100)+'%';
-  document.getElementById('progress-label').textContent = done+' de '+total+' completos';
+  document.getElementById('progress-label').textContent = UI_STRINGS[currentLang].progresso(done);
 }
 
 function checkExercise(n){
+  const t = UI_STRINGS[currentLang];
   const board = document.querySelector('.board[data-exercise="'+n+'"]');
   const slots = board.querySelectorAll('.slot');
   let allFilled = true;
@@ -571,16 +624,16 @@ function checkExercise(n){
   const fb = document.getElementById('fb-'+n);
 
   if(!allFilled){
-    fb.textContent = '👉 Preencha os dois encaixes.';
+    fb.textContent = t.preencha;
     fb.className = 'feedback bad';
     return;
   }
   if(allCorrect){
-    fb.textContent = '🎉 Certinho!';
+    fb.textContent = t.certinho;
     fb.className = 'feedback ok';
     solved.add(n);
   } else {
-    fb.textContent = '🤔 Quase! Olhe o vermelho.';
+    fb.textContent = t.quase;
     fb.className = 'feedback bad';
     solved.delete(n);
   }
@@ -589,9 +642,10 @@ function checkExercise(n){
 }
 
 function resetExercise(n){
+  const t = UI_STRINGS[currentLang];
   const board = document.querySelector('.board[data-exercise="'+n+'"]');
   board.querySelectorAll('.slot').forEach(slot=>{
-    const label = slot.dataset.accepts === 'cond' ? 'SE...' : 'ENTÃO...';
+    const label = slot.dataset.accepts === 'cond' ? t.seDots : t.entaoDots;
     slot.textContent = label;
     slot.classList.remove('filled','correct','wrong');
     delete slot.dataset.filledId;
