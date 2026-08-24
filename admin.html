@@ -488,7 +488,7 @@ const SUPABASE_URL = "https://kezlmecrxhjahhoekybs.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlemxtZWNyeGhqYWhob2VreWJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5MDkwNjAsImV4cCI6MjEwMjQ4NTA2MH0.-TcsKrFxRMeiqKrzXk57E8-60eobk3fJ0Crn7ci0MW8";
 
 // Extensões aceitas nos uploads (arquivos de desenvolvimento — amplia quando entrar arte digital)
-const EXTENSOES_PERMITIDAS = ['.c3p', '.txt', '.png', '.mp3', '.ogg', '.wav'];
+const EXTENSOES_PERMITIDAS = ['.c3p', '.txt', '.png', '.gif', '.mp3', '.ogg', '.wav'];
 function extensaoPermitida(nomeArquivo) {
   const nome = nomeArquivo.toLowerCase();
   return EXTENSOES_PERMITIDAS.some(ext => nome.endsWith(ext));
@@ -873,7 +873,7 @@ function renderTurmaAtiva() {
               </div>
             ` : `<p class="mt-1 text-[10px] text-gray-700 font-mono">nenhum arquivo enviado ainda</p>`}
             <div class="mt-2 pl-1 flex items-center gap-2">
-              <input type="file" id="upload-input-${aluno.id}" accept=".c3p,.txt,.png,.mp3,.ogg,.wav" class="text-[9px] text-gray-500 flex-1 min-w-0" />
+              <input type="file" id="upload-input-${aluno.id}" accept=".c3p,.txt,.png,.gif,.mp3,.ogg,.wav" class="text-[9px] text-gray-500 flex-1 min-w-0" />
               <button class="btn-action btn-add text-[8px] py-0.5 px-1.5 shrink-0" onclick="uploadArquivoAdmin('${aluno.id}', '${aluno.codigo}')">UPLOAD_MANUAL</button>
             </div>
           </div>
