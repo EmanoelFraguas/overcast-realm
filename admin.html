@@ -299,6 +299,7 @@
     </div>
     <button class="sidebar-nav-item active" id="nav-turmas" onclick="switchPanel('turmas')">🏫 TURMAS</button>
     <button class="sidebar-nav-item" id="nav-conteudo" onclick="switchPanel('conteudo')">🎮 CONTEÚDO</button>
+    <button class="sidebar-nav-item" id="nav-progresso" onclick="switchPanel('progresso')">📊 PROGRESSO</button>
     <div class="sidebar-bottom pb-5 space-y-2">
       <button class="btn-action bg-gray-800 text-white w-full" onclick="exportData()">EXPORTAR_JSON</button>
       <button class="btn-action bg-red-50 text-red-700 border border-red-200 w-full" onclick="resetStorage()">RESET_FACTORY</button>
@@ -434,6 +435,37 @@
             <div id="recursos-lista-container" class="space-y-3 font-mono text-xs max-h-96 overflow-y-auto"></div>
           </div>
         </div>
+      </div>
+    </section>
+
+    <!-- ================= PAINEL: PROGRESSO ================= -->
+    <section id="panel-progresso" class="hidden">
+      <header class="mb-6">
+        <h1 class="font-pixel text-sm text-gray-900">[⚒ PROGRESSO_DOS_ALUNOS]</h1>
+        <p class="text-xs font-mono mt-2 text-gray-500">Acompanhe o que cada aluno já completou em cada atividade.</p>
+      </header>
+
+      <div class="mb-6 flex flex-wrap items-end gap-3">
+        <div>
+          <label class="block mb-1 text-gray-500 font-mono text-xs">TURMA</label>
+          <select id="progresso-turma-select" class="input-field" style="min-width:220px;" onchange="carregarProgressoTurma()">
+            <option value="">Selecione uma turma...</option>
+          </select>
+        </div>
+        <button class="btn-action btn-add" onclick="carregarProgressoTurma()">🔄 ATUALIZAR</button>
+      </div>
+
+      <p id="progresso-status" class="text-xs font-mono text-gray-500 mb-4"></p>
+
+      <div class="card p-0 overflow-x-auto" id="progresso-table-wrap" style="display:none;">
+        <table class="w-full text-xs font-mono" id="progresso-table">
+          <thead>
+            <tr class="border-b border-[#e4e1f0] bg-[#f5f4fb]">
+              <th class="text-left p-3 text-gray-500 sticky left-0 bg-[#f5f4fb]">ALUNO</th>
+            </tr>
+          </thead>
+          <tbody id="progresso-tbody"></tbody>
+        </table>
       </div>
     </section>
 
@@ -950,13 +982,101 @@ async function removerAluno(alunoId, nome) {
   carregarTurmas();
 }
 
+// ================= PAINEL: PROGRESSO =================
+function popularSeletorTurmasProgresso() {
+  const sel = document.getElementById('progresso-turma-select');
+  const atual = sel.value;
+  sel.innerHTML = '<option value="">Selecione uma turma...</option>' +
+    turmasCache.map(t => `<option value="${t.codigo_acesso}">${t.nome}</option>`).join('');
+  if (atual) sel.value = atual;
+}
+
+// colunas com formatação amigável; qualquer slug NOVO que aparecer nos dados
+// (atividade criada no futuro) ganha uma coluna automática, sem precisar
+// mexer neste código.
+const PROGRESSO_COLUNAS_CONHECIDAS = {
+  puzzle1:    { label: '🧩 Puzzle 1',     total: 20, extrair: d => Array.isArray(d?.solved)    ? d.solved.length    : null },
+  puzzle2:    { label: '🧠 Puzzle 2',     total: 20, extrair: d => Array.isArray(d?.solved)    ? d.solved.length    : null },
+  labirinto1: { label: '🤖 Labirinto 1',  total: 30, extrair: d => Array.isArray(d?.completed) ? d.completed.length : null },
+  labirinto2: { label: '🛼 Labirinto 2',  total: 30, extrair: d => Array.isArray(d?.completed) ? d.completed.length : null }
+};
+
+async function carregarProgressoTurma() {
+  const codigo = document.getElementById('progresso-turma-select').value;
+  const statusEl = document.getElementById('progresso-status');
+  const wrap = document.getElementById('progresso-table-wrap');
+
+  if (!codigo) { wrap.style.display = 'none'; statusEl.textContent = ''; return; }
+
+  statusEl.textContent = '⏳ Carregando...';
+  wrap.style.display = 'none';
+
+  const { data, error } = await sb.rpc('listar_progresso_turma', { p_codigo_turma: codigo });
+  if (error) { statusEl.textContent = '❌ Erro: ' + error.message; return; }
+
+  // agrupa as linhas (aluno × atividade) por aluno
+  const alunosMap = new Map();
+  const slugsEncontrados = new Set();
+  (data || []).forEach(row => {
+    if (!alunosMap.has(row.aluno_id)) {
+      alunosMap.set(row.aluno_id, { nome: row.aluno_nome, codigo: row.aluno_codigo, atividades: {} });
+    }
+    if (row.atividade_slug) {
+      alunosMap.get(row.aluno_id).atividades[row.atividade_slug] = { dados: row.dados, atualizado_em: row.atualizado_em };
+      slugsEncontrados.add(row.atividade_slug);
+    }
+  });
+
+  if (alunosMap.size === 0) {
+    statusEl.textContent = 'Nenhum aluno nessa turma ainda.';
+    wrap.style.display = 'none';
+    return;
+  }
+
+  // colunas conhecidas primeiro, depois qualquer slug novo encontrado nos dados
+  const colunas = Object.keys(PROGRESSO_COLUNAS_CONHECIDAS);
+  slugsEncontrados.forEach(slug => { if (!colunas.includes(slug)) colunas.push(slug); });
+
+  const thead = document.querySelector('#progresso-table thead tr');
+  thead.innerHTML = '<th class="text-left p-3 text-gray-500 sticky left-0 bg-[#f5f4fb]">ALUNO</th>' +
+    colunas.map(slug => {
+      const conhecida = PROGRESSO_COLUNAS_CONHECIDAS[slug];
+      const label = conhecida ? conhecida.label : ('🆕 ' + slug);
+      return `<th class="text-left p-3 text-gray-500 whitespace-nowrap">${label}</th>`;
+    }).join('');
+
+  const tbody = document.getElementById('progresso-tbody');
+  const alunosOrdenados = [...alunosMap.values()].sort((a, b) => a.nome.localeCompare(b.nome));
+  tbody.innerHTML = alunosOrdenados.map(aluno => {
+    const celulas = colunas.map(slug => {
+      const entrada = aluno.atividades[slug];
+      if (!entrada) return '<td class="p-3 text-gray-300">—</td>';
+      const conhecida = PROGRESSO_COLUNAS_CONHECIDAS[slug];
+      if (conhecida) {
+        const n = conhecida.extrair(entrada.dados);
+        if (n == null) return '<td class="p-3 text-gray-400">dados salvos</td>';
+        const completo = n >= conhecida.total;
+        return `<td class="p-3 ${completo ? 'text-emerald-600 font-bold' : 'text-gray-700'}">${completo ? '✅ ' : ''}${n}/${conhecida.total}</td>`;
+      }
+      return '<td class="p-3 text-gray-700">✅ dados salvos</td>';
+    }).join('');
+    return `<tr class="border-b border-[#f0eef8]"><td class="p-3 font-bold text-gray-900 sticky left-0 bg-white">${aluno.nome}</td>${celulas}</tr>`;
+  }).join('');
+
+  statusEl.textContent = alunosMap.size + ' aluno(s).';
+  wrap.style.display = 'block';
+}
+
 // MULTI-FORM CONTROL
 let activeSubForm = 'video';
 function switchPanel(panelName) {
   document.getElementById('panel-turmas').classList.toggle('hidden', panelName !== 'turmas');
   document.getElementById('panel-conteudo').classList.toggle('hidden', panelName !== 'conteudo');
+  document.getElementById('panel-progresso').classList.toggle('hidden', panelName !== 'progresso');
   document.getElementById('nav-turmas').classList.toggle('active', panelName === 'turmas');
   document.getElementById('nav-conteudo').classList.toggle('active', panelName === 'conteudo');
+  document.getElementById('nav-progresso').classList.toggle('active', panelName === 'progresso');
+  if(panelName === 'progresso') popularSeletorTurmasProgresso();
 }
 
 function switchFormTab(formName) {
