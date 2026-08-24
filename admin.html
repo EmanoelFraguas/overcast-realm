@@ -494,6 +494,28 @@ function extensaoPermitida(nomeArquivo) {
   return EXTENSOES_PERMITIDAS.some(ext => nome.endsWith(ext));
 }
 
+// Descobre o próximo número de versão pra um arquivo, olhando o que já existe
+// na pasta 'envios/{codigo}' do aluno. "desenho.png" -> "desenho_v1.png",
+// depois "desenho_v2.png", etc — nunca sobrescreve, sempre soma 1.
+async function proximoNomeVersionado(codigoAluno, nomeOriginal) {
+  const pontoIdx = nomeOriginal.lastIndexOf('.');
+  const nome = pontoIdx > -1 ? nomeOriginal.slice(0, pontoIdx) : nomeOriginal;
+  const ext = pontoIdx > -1 ? nomeOriginal.slice(pontoIdx) : '';
+  const escapar = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const padrao = new RegExp('^' + escapar(nome) + '_v(\\d+)' + escapar(ext) + '$', 'i');
+
+  let maiorVersao = 0;
+  try {
+    const { data: arquivos } = await sb.storage.from('submissoes').list(`envios/${codigoAluno}`);
+    (arquivos || []).forEach(f => {
+      const m = f.name.match(padrao);
+      if (m) maiorVersao = Math.max(maiorVersao, parseInt(m[1], 10));
+    });
+  } catch (e) { /* pasta pode não existir ainda — começa do v1 mesmo */ }
+
+  return `${nome}_v${maiorVersao + 1}${ext}`;
+}
+
 let data = { alunos: [], videos: [], links: [], jogos: [] };
 
 // Barramento Supabase (turmas/alunos/arquivos)
@@ -945,12 +967,13 @@ async function uploadArquivoAdmin(alunoId, alunoCodigo) {
     return;
   }
 
-  const path = `envios/${alunoCodigo}/${Date.now()}_${file.name}`;
+  const nomeVersionado = await proximoNomeVersionado(alunoCodigo, file.name);
+  const path = `envios/${alunoCodigo}/${nomeVersionado}`;
   const { error: upErr } = await sb.storage.from('submissoes').upload(path, file, { upsert: true });
   if (upErr) { alert('Erro no upload: ' + upErr.message); return; }
 
   const { error: rpcErr } = await sb.rpc('registrar_envio', {
-    p_codigo: alunoCodigo, p_nome_arquivo: file.name, p_storage_path: path,
+    p_codigo: alunoCodigo, p_nome_arquivo: nomeVersionado, p_storage_path: path,
     p_tipo: 'envio', p_tamanho_bytes: file.size
   });
   if (rpcErr) { alert('Erro ao registrar: ' + rpcErr.message); return; }
