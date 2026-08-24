@@ -19,7 +19,30 @@ window.OvercastProgress = (function(){
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlemxtZWNyeGhqYWhob2VreWJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5MDkwNjAsImV4cCI6MjEwMjQ4NTA2MH0.-TcsKrFxRMeiqKrzXk57E8-60eobk3fJ0Crn7ci0MW8";
   const IDENTITY_KEY = 'overcast_student_identity';
 
-  function getSb(){
+  // carrega a biblioteca do Supabase sozinho, caso a página que incluiu este
+  // script ainda não tenha o <script> dela (evita esquecer de adicionar em
+  // cada atividade nova)
+  function loadSupabaseLib(){
+    return new Promise((resolve) => {
+      if(window.supabase){ resolve(); return; }
+      const existing = document.querySelector('script[data-overcast-supabase]');
+      if(existing){
+        existing.addEventListener('load', () => resolve());
+        existing.addEventListener('error', () => resolve());
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js';
+      script.dataset.overcastSupabase = 'true';
+      script.onload = () => resolve();
+      script.onerror = () => resolve();
+      document.head.appendChild(script);
+    });
+  }
+  const sbReady = loadSupabaseLib();
+
+  async function getSb(){
+    await sbReady;
     if(!window.supabase) return null;
     if(!window._overcastSbClient){
       window._overcastSbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -41,7 +64,7 @@ window.OvercastProgress = (function(){
   /* ---- salvar / carregar progresso ---- */
   async function saveProgress(slug, dados){
     const identity = getIdentity();
-    const sb = getSb();
+    const sb = await getSb();
     if(!identity || !sb) return false;
     try{
       const { error } = await sb.rpc('salvar_progresso', {
@@ -52,7 +75,7 @@ window.OvercastProgress = (function(){
   }
   async function loadProgress(slug){
     const identity = getIdentity();
-    const sb = getSb();
+    const sb = await getSb();
     if(!identity || !sb) return null;
     try{
       const { data, error } = await sb.rpc('obter_progresso', {
@@ -145,7 +168,7 @@ window.OvercastProgress = (function(){
     overlay.addEventListener('click', e => { if(e.target === overlay) closeModal(); });
   }
   async function lookupTurma(){
-    const sb = getSb();
+    const sb = await getSb();
     const code = document.getElementById('ovp-turma-code').value.trim().toLowerCase();
     const errEl = document.getElementById('ovp-turma-error');
     if(!code){ errEl.textContent = '👉 Digite o código da turma.'; return; }
