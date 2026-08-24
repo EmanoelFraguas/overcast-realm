@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gerador de Áudio 8-bit — Overcast Realm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#181229; --bg-panel:#241c3d; --bg-card:#2c2350; --border:#4a3a7c;
+    --pink:#ff5fa2; --cyan:#4be8ff; --yellow:#ffd23f; --green:#4be08f; --purple:#a06bff; --orange:#ff9a3c;
+    --ink:#ffffff; --ink-soft:#c9bfe8;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 10% 10%, #2e2258 0%, transparent 45%),
+      radial-gradient(circle at 90% 20%, #1e3a52 0%, transparent 40%),
+      radial-gradient(circle at 80% 90%, #35204a 0%, transparent 45%),
+      var(--bg-deep);
+    color:var(--ink); font-family:'Baloo 2', sans-serif; min-height:100vh; padding:14px;
+  }
+  .wrap{max-width:1000px;margin:0 auto;}
+  h1,h2,h3,.pixel{ font-family:'Press Start 2P', monospace; }
+
+  .back-row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+  .back-home{
+    display:inline-flex; align-items:center; gap:5px; font-weight:700; font-size:12px;
+    color:var(--ink-soft); background:var(--bg-card); border:2px solid var(--border);
+    border-radius:999px; padding:8px 14px; text-decoration:none;
+  }
+  header{ text-align:center; margin-bottom:16px; }
+  header h1{ font-size:clamp(15px,3vw,22px); color:var(--cyan); text-shadow:3px 3px 0 #000; margin:0 0 8px; }
+  header p{ font-weight:700; color:var(--ink-soft); font-size:14px; margin:0; }
+
+  .panel{
+    background:var(--bg-panel); border:3px solid var(--border); border-radius:22px;
+    box-shadow:0 8px 0 #120c22; padding:20px; margin-bottom:16px;
+  }
+  .panel h2{ font-size:13px; color:var(--yellow); margin:0 0 6px; }
+  .panel .desc{ font-weight:700; color:var(--ink-soft); font-size:14px; margin:0 0 16px; line-height:1.4; }
+
+  /* presets */
+  .preset-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:10px; }
+  .preset-card{
+    background:var(--bg-card); border:3px solid var(--border); border-radius:14px;
+    padding:12px 8px; text-align:center; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px;
+  }
+  .preset-card:hover, .preset-card.active{ border-color:var(--yellow); background:#3a2f10; }
+  .preset-card .icon{ font-size:26px; }
+  .preset-card .name{ font-weight:800; font-size:13px; }
+  .preset-tags{ display:flex; gap:3px; flex-wrap:wrap; justify-content:center; }
+  .preset-tag{ font-size:9px; font-weight:700; color:var(--ink-soft); background:#180f2e; border-radius:6px; padding:1px 6px; }
+
+  /* controles manuais */
+  .control-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:14px; }
+  .control{ display:flex; flex-direction:column; gap:6px; }
+  .control label{ font-weight:800; font-size:12px; color:var(--ink-soft); }
+  .wave-row{ display:flex; gap:6px; flex-wrap:wrap; }
+  .wave-btn{
+    font-weight:800; font-size:11px; border:2px solid var(--border); background:var(--bg-card);
+    color:var(--ink-soft); border-radius:10px; padding:8px 10px; cursor:pointer;
+  }
+  .wave-btn.active{ border-color:var(--cyan); color:#fff; background:#0d2e3a; }
+  input[type=range]{ accent-color:var(--pink); width:100%; }
+  input[type=text]{
+    font-family:'Baloo 2',sans-serif; font-weight:700; padding:10px; border-radius:10px;
+    border:2px solid var(--border); background:#150f24; color:#fff; width:100%;
+  }
+  .value-tag{ font-family:'Press Start 2P',monospace; font-size:10px; color:var(--cyan); }
+
+  .btn{
+    font-family:'Press Start 2P', monospace; font-size:11px; color:#fff; border:none;
+    border-radius:999px; padding:12px 20px; cursor:pointer; box-shadow:0 4px 0 rgba(0,0,0,0.3);
+    display:inline-flex; align-items:center; gap:8px;
+  }
+  .btn:active{ transform:translateY(3px); box-shadow:none; }
+  .btn.pink{ background:var(--pink); } .btn.cyan{ background:#0891b2; } .btn.green{ background:#0d9b6c; }
+  .btn.purple{ background:var(--purple); } .btn.gray{ background:#4a3a7c; } .btn.orange{ background:#c9701f; }
+  .btn:disabled{ opacity:.4; cursor:default; }
+  .btn-row{ display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; }
+
+  /* colecao */
+  .colecao-list{ display:flex; flex-direction:column; gap:8px; }
+  .colecao-item{
+    display:flex; align-items:center; gap:10px; background:var(--bg-card); border:2px solid var(--border);
+    border-radius:12px; padding:8px 12px; flex-wrap:wrap;
+  }
+  .colecao-item .icon{ font-size:20px; }
+  .colecao-item .nome{ font-weight:800; font-size:13px; flex:1; min-width:100px; }
+  .colecao-item .tags{ display:flex; gap:3px; flex-wrap:wrap; }
+  .colecao-actions{ display:flex; gap:6px; }
+  .icon-btn{
+    background:#180f2e; border:2px solid var(--border); border-radius:8px; width:32px; height:32px;
+    cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center; color:#fff;
+  }
+  .empty-hint{ font-weight:700; color:var(--ink-soft); font-size:13px; text-align:center; padding:10px; }
+
+  .status-line{ font-weight:800; font-size:13px; min-height:18px; margin-top:8px; }
+  .status-line.ok{ color:var(--green); } .status-line.bad{ color:var(--pink); }
+
+  .info-box{
+    background:#150f24; border:2px dashed var(--cyan); border-radius:12px; padding:12px 14px;
+    font-size:12px; color:var(--ink-soft); font-weight:700; line-height:1.5;
+  }
+
+  /* modal de vincular / salvar (mesmo padrão dos outros editores) */
+  .zoom-overlay{ position:fixed; inset:0; background:rgba(10,6,20,.7); display:none; align-items:center; justify-content:center; z-index:999; padding:16px; }
+  .zoom-overlay.show{ display:flex; }
+  .zoom-box{ background:var(--bg-panel); border:3px solid var(--border); border-radius:20px; padding:22px; max-width:420px; width:100%; }
+  .zoom-box h3{ font-size:13px; color:var(--yellow); margin:0 0 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="back-row">
+    <a href="./index.html" class="back-home">← Voltar</a>
+  </div>
+
+  <header>
+    <h1>🔊 GERADOR DE ÁUDIO 8-BIT</h1>
+    <p>Overcast Realm — efeitos sonoros prontos pra usar no Construct 3</p>
+  </header>
+
+  <div class="panel">
+    <h2>🎯 EXEMPLOS PRONTOS</h2>
+    <p class="desc">Clique num efeito pra carregar ele nos controles abaixo. Já vem com tags, tipo um pequeno acervo de assets.</p>
+    <div class="preset-grid" id="preset-grid"></div>
+  </div>
+
+  <div class="panel">
+    <h2>🎛️ CONTROLES</h2>
+    <p class="desc">Ajuste fino, ou clique em "🎲 Surpreenda-me" pra sortear um som novo do zero.</p>
+
+    <div class="control-grid">
+      <div class="control">
+        <label>ONDA</label>
+        <div class="wave-row" id="wave-row"></div>
+      </div>
+      <div class="control">
+        <label>TOM INICIAL — <span class="value-tag" id="val-freqStart">400 Hz</span></label>
+        <input type="range" id="ctl-freqStart" min="60" max="2000" value="400">
+      </div>
+      <div class="control">
+        <label>TOM FINAL — <span class="value-tag" id="val-freqEnd">800 Hz</span></label>
+        <input type="range" id="ctl-freqEnd" min="60" max="2000" value="800">
+      </div>
+      <div class="control">
+        <label>DURAÇÃO — <span class="value-tag" id="val-duration">0.20 s</span></label>
+        <input type="range" id="ctl-duration" min="3" max="100" value="20">
+      </div>
+      <div class="control">
+        <label>VOLUME — <span class="value-tag" id="val-volume">50%</span></label>
+        <input type="range" id="ctl-volume" min="5" max="100" value="50">
+      </div>
+      <div class="control">
+        <label>NOME DO ARQUIVO</label>
+        <input type="text" id="ctl-nome" value="meu-som" maxlength="40">
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn cyan" onclick="tocarPreview()">▶️ Tocar</button>
+      <button class="btn purple" onclick="sortear()">🎲 Surpreenda-me</button>
+      <button class="btn green" onclick="adicionarNaColecao()">➕ Guardar na Coleção</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>📦 MINHA COLEÇÃO (nesta sessão)</h2>
+    <p class="desc">Sons que você guardou ficam aqui pra tocar, baixar ou salvar de novo — nada é enviado até você clicar em salvar ou baixar.</p>
+    <div class="colecao-list" id="colecao-list"></div>
+    <p class="empty-hint" id="colecao-empty">Nenhum som guardado ainda. Ajuste um som acima e clique em "➕ Guardar na Coleção".</p>
+  </div>
+
+  <div class="panel">
+    <h2>💾 EXPORTAR / SALVAR</h2>
+    <p class="desc">Baixa automaticamente no formato mais leve entre MP3 e WAV (o WAV nunca comprime, então quase sempre o MP3 ganha).</p>
+    <div class="btn-row">
+      <button class="btn orange" onclick="baixarAtual()">⬇️ Baixar Este Som</button>
+      <button class="btn green" onclick="abrirModalVincular()">👤 Vincular meu nome</button>
+      <button class="btn pink" id="btn-salvar-pasta" onclick="abrirModalSalvar()" disabled>📁 Salvar na Pasta do Aluno</button>
+    </div>
+    <p class="status-line" id="export-status"></p>
+    <div class="info-box" id="link-badge" style="margin-top:10px; display:none;"></div>
+  </div>
+
+  <div class="info-box">
+    ℹ️ Sobre o formato: o navegador não consegue gerar OGG de verdade sem uma peça extra pesada, então esta ferramenta compara <b>MP3</b> (comprimido, sempre bem mais leve) com <b>WAV</b> (sem compressão) e baixa automaticamente o menor dos dois — que pra um efeito curtinho quase sempre é o MP3.
+  </div>
+
+</div>
+
+<!-- ============== MODAL: vincular nome ============== -->
+<div class="zoom-overlay" id="link-modal">
+  <div class="zoom-box">
+    <h3>🔗 Vincular meu nome</h3>
+    <div id="link-step-turma">
+      <input type="text" id="link-turma-code" placeholder="Código da turma" style="width:100%;padding:10px;border-radius:8px;border:2px solid var(--border);background:#150f24;color:#fff;font-family:'Baloo 2',sans-serif;margin-bottom:8px;">
+      <button class="btn cyan" style="width:100%;justify-content:center;" onclick="buscarTurma()">🔎 Buscar Turma</button>
+      <div id="link-turma-error" style="font-weight:800;color:var(--pink);font-size:12px;margin-top:8px;"></div>
+    </div>
+    <div id="link-step-aluno" style="display:none;">
+      <p style="font-weight:800;color:var(--yellow);font-size:14px;">Turma: <span id="link-turma-name"></span></p>
+      <p style="font-weight:700;color:var(--ink-soft);font-size:12px;">Clique no seu nome:</p>
+      <div id="link-aluno-list" style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;"></div>
+      <button class="btn gray" style="width:100%;justify-content:center;margin-top:10px;" onclick="voltarStepTurma()">← Trocar turma</button>
+    </div>
+    <div id="link-status" style="font-weight:800;font-size:13px;margin-top:10px;min-height:18px;"></div>
+    <button class="btn gray" style="width:100%;justify-content:center;margin-top:8px;" onclick="fecharModalVincular()">✕ Fechar</button>
+  </div>
+</div>
+
+<!-- ============== MODAL: escolher qual som salvar ============== -->
+<div class="zoom-overlay" id="save-modal">
+  <div class="zoom-box">
+    <h3>📁 SALVAR NA PASTA DO ALUNO</h3>
+    <p style="font-weight:700;color:var(--ink-soft);font-size:13px;">Qual som salvar?</p>
+    <select id="save-select" style="width:100%;padding:10px;border-radius:8px;border:2px solid var(--border);background:#150f24;color:#fff;font-family:'Baloo 2',sans-serif;margin-bottom:10px;"></select>
+    <button class="btn green" style="width:100%;justify-content:center;" onclick="confirmarSalvarPasta()">📁 Salvar</button>
+    <div id="save-status" style="font-weight:800;font-size:13px;margin-top:10px;min-height:18px;"></div>
+    <button class="btn gray" style="width:100%;justify-content:center;margin-top:8px;" onclick="fecharModalSalvar()">✕ Fechar</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const SUPABASE_URL = "https://kezlmecrxhjahhoekybs.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlemxtZWNyeGhqYWhob2VreWJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5MDkwNjAsImV4cCI6MjEwMjQ4NTA2MH0.-TcsKrFxRMeiqKrzXk57E8-60eobk3fJ0Crn7ci0MW8";
+const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+/* ======================================================
+   SÍNTESE DE ÁUDIO 8-BIT
+====================================================== */
+const SAMPLE_RATE = 22050; // taxa mais baixa == arquivo mais leve, e combina com a estética 8-bit
+
+function waveSample(type, phase){
+  const p = phase - Math.floor(phase);
+  switch(type){
+    case 'square': return p < 0.5 ? 1 : -1;
+    case 'sawtooth': return 2*(p - Math.floor(p+0.5));
+    case 'triangle': return 4*Math.abs(p - Math.floor(p+0.75)+0.25) - 1;
+    case 'sine': return Math.sin(2*Math.PI*p);
+    case 'noise': return Math.random()*2-1;
+    default: return 0;
+  }
+}
+
+function gerarSamples({wave, freqStart, freqEnd, duration, volume}){
+  const n = Math.max(1, Math.floor(SAMPLE_RATE * duration));
+  const samples = new Float32Array(n);
+  let phase = 0;
+  const attackLen = 0.03, releaseStart = 0.7;
+  for(let i=0;i<n;i++){
+    const t = i/n;
+    const freq = freqStart + (freqEnd - freqStart) * t;
+    phase += freq / SAMPLE_RATE;
+    let env = 1;
+    if(t < attackLen) env = t/attackLen;
+    else if(t > releaseStart) env = 1 - (t-releaseStart)/(1-releaseStart);
+    samples[i] = waveSample(wave, phase) * env * volume;
+  }
+  return samples;
+}
+
+let audioCtx = null;
+function tocarSamples(samples){
+  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const buffer = audioCtx.createBuffer(1, samples.length, SAMPLE_RATE);
+  buffer.copyToChannel(samples, 0);
+  const src = audioCtx.createBufferSource();
+  src.buffer = buffer;
+  src.connect(audioCtx.destination);
+  src.start();
+}
+
+/* ---- WAV ---- */
+function floatTo16BitPCM(samples){
+  const buf = new Int16Array(samples.length);
+  for(let i=0;i<samples.length;i++){
+    let s = Math.max(-1, Math.min(1, samples[i]));
+    buf[i] = s < 0 ? s*0x8000 : s*0x7FFF;
+  }
+  return buf;
+}
+function buildWavBlob(samples){
+  const pcm = floatTo16BitPCM(samples);
+  const numChannels = 1, bytesPerSample = 2;
+  const blockAlign = numChannels*bytesPerSample;
+  const byteRate = SAMPLE_RATE*blockAlign;
+  const dataSize = pcm.length*bytesPerSample;
+  const buffer = new ArrayBuffer(44 + dataSize);
+  const view = new DataView(buffer);
+  const writeStr = (offset, str) => { for(let i=0;i<str.length;i++) view.setUint8(offset+i, str.charCodeAt(i)); };
+  writeStr(0,'RIFF'); view.setUint32(4, 36+dataSize, true); writeStr(8,'WAVE');
+  writeStr(12,'fmt '); view.setUint32(16,16,true); view.setUint16(20,1,true);
+  view.setUint16(22,numChannels,true); view.setUint32(24,SAMPLE_RATE,true);
+  view.setUint32(28,byteRate,true); view.setUint16(32,blockAlign,true); view.setUint16(34,16,true);
+  writeStr(36,'data'); view.setUint32(40,dataSize,true);
+  let offset = 44;
+  for(let i=0;i<pcm.length;i++, offset+=2) view.setInt16(offset, pcm[i], true);
+  return new Blob([buffer], {type:'audio/wav'});
+}
+
+/* ---- MP3 (via lamejs, carregado por CDN) ---- */
+function buildMp3Blob(samples){
+  if(typeof lamejs === 'undefined') return null;
+  try{
+    const pcm = floatTo16BitPCM(samples);
+    const encoder = new lamejs.Mp3Encoder(1, SAMPLE_RATE, 64); // mono, 64kbps — de sobra pra um bipe curto
+    const blockSize = 1152;
+    const chunks = [];
+    for(let i=0;i<pcm.length;i+=blockSize){
+      const chunk = pcm.subarray(i, i+blockSize);
+      const buf = encoder.encodeBuffer(chunk);
+      if(buf.length > 0) chunks.push(buf);
+    }
+    const end = encoder.flush();
+    if(end.length > 0) chunks.push(end);
+    return new Blob(chunks, {type:'audio/mp3'});
+  }catch(e){ console.error('Erro ao gerar MP3:', e); return null; }
+}
+
+// escolhe o menor entre WAV e MP3; se o MP3 não puder ser gerado, cai pro WAV
+function exportarMaisLeve(samples){
+  const wavBlob = buildWavBlob(samples);
+  const mp3Blob = buildMp3Blob(samples);
+  if(mp3Blob && mp3Blob.size < wavBlob.size){
+    return { blob: mp3Blob, ext: 'mp3', wavSize: wavBlob.size, escolhidoSize: mp3Blob.size };
+  }
+  return { blob: wavBlob, ext: 'wav', wavSize: wavBlob.size, escolhidoSize: wavBlob.size };
+}
+
+/* ======================================================
+   PRESETS (com tags — sementinha do futuro acervo de assets)
+====================================================== */
+const PRESETS = [
+  { name:'Moeda', icon:'🪙', tags:['coleta','positivo'], wave:'square', freqStart:800, freqEnd:1600, duration:0.15, volume:0.5 },
+  { name:'Pulo', icon:'⬆️', tags:['movimento'], wave:'triangle', freqStart:250, freqEnd:600, duration:0.18, volume:0.6 },
+  { name:'Dano', icon:'💥', tags:['combate','negativo'], wave:'noise', freqStart:150, freqEnd:80, duration:0.15, volume:0.6 },
+  { name:'Power-up', icon:'⭐', tags:['coleta','positivo'], wave:'square', freqStart:400, freqEnd:1200, duration:0.35, volume:0.5 },
+  { name:'Tiro', icon:'🔫', tags:['combate','acao'], wave:'sawtooth', freqStart:1200, freqEnd:300, duration:0.12, volume:0.5 },
+  { name:'Clique de UI', icon:'🖱️', tags:['ui','menu'], wave:'square', freqStart:1000, freqEnd:1000, duration:0.04, volume:0.4 },
+  { name:'Erro', icon:'❌', tags:['ui','negativo'], wave:'sawtooth', freqStart:300, freqEnd:150, duration:0.2, volume:0.5 },
+  { name:'Passo', icon:'👣', tags:['movimento'], wave:'noise', freqStart:200, freqEnd:200, duration:0.06, volume:0.3 },
+  { name:'Vitória', icon:'🏆', tags:['fim','positivo'], wave:'square', freqStart:500, freqEnd:1000, duration:0.5, volume:0.5 },
+  { name:'Game Over', icon:'💀', tags:['fim','negativo'], wave:'triangle', freqStart:400, freqEnd:80, duration:0.8, volume:0.5 }
+];
+const WAVES = [
+  {key:'square', label:'Quadrada'}, {key:'triangle', label:'Triangular'}, {key:'sawtooth', label:'Serra'},
+  {key:'sine', label:'Senoidal'}, {key:'noise', label:'Ruído'}
+];
+
+let estadoAtual = { wave:'square', freqStart:400, freqEnd:800, duration:0.20, volume:0.5, nome:'meu-som', tags:[] };
+let colecao = []; // [{nome, tags, icon, params}]
+
+/* ======================================================
+   UI: presets, controles, preview
+====================================================== */
+function buildPresetGrid(){
+  const el = document.getElementById('preset-grid');
+  el.innerHTML = PRESETS.map((p,i) => `
+    <div class="preset-card" data-i="${i}" onclick="carregarPreset(${i})">
+      <span class="icon">${p.icon}</span>
+      <span class="name">${p.name}</span>
+      <div class="preset-tags">${p.tags.map(t=>`<span class="preset-tag">#${t}</span>`).join('')}</div>
+    </div>
+  `).join('');
+}
+function carregarPreset(i){
+  const p = PRESETS[i];
+  estadoAtual = { wave:p.wave, freqStart:p.freqStart, freqEnd:p.freqEnd, duration:p.duration, volume:p.volume, nome:slugify(p.name), tags:p.tags.slice() };
+  syncControlsFromState();
+  document.querySelectorAll('.preset-card').forEach((el,idx) => el.classList.toggle('active', idx===i));
+  tocarPreview();
+}
+function slugify(s){
+  return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+}
+
+function buildWaveRow(){
+  const el = document.getElementById('wave-row');
+  el.innerHTML = WAVES.map(w => `<button class="wave-btn" data-wave="${w.key}" onclick="setWave('${w.key}')">${w.label}</button>`).join('');
+}
+function setWave(key){
+  estadoAtual.wave = key;
+  document.querySelectorAll('.wave-btn').forEach(b => b.classList.toggle('active', b.dataset.wave===key));
+}
+
+function syncControlsFromState(){
+  document.getElementById('ctl-freqStart').value = estadoAtual.freqStart;
+  document.getElementById('ctl-freqEnd').value = estadoAtual.freqEnd;
+  document.getElementById('ctl-duration').value = Math.round(estadoAtual.duration*100);
+  document.getElementById('ctl-volume').value = Math.round(estadoAtual.volume*100);
+  document.getElementById('ctl-nome').value = estadoAtual.nome;
+  setWave(estadoAtual.wave);
+  updateValueLabels();
+}
+function updateValueLabels(){
+  document.getElementById('val-freqStart').textContent = estadoAtual.freqStart + ' Hz';
+  document.getElementById('val-freqEnd').textContent = estadoAtual.freqEnd + ' Hz';
+  document.getElementById('val-duration').textContent = estadoAtual.duration.toFixed(2) + ' s';
+  document.getElementById('val-volume').textContent = Math.round(estadoAtual.volume*100) + '%';
+}
+function attachControlListeners(){
+  document.getElementById('ctl-freqStart').oninput = e => { estadoAtual.freqStart = parseInt(e.target.value,10); updateValueLabels(); };
+  document.getElementById('ctl-freqEnd').oninput = e => { estadoAtual.freqEnd = parseInt(e.target.value,10); updateValueLabels(); };
+  document.getElementById('ctl-duration').oninput = e => { estadoAtual.duration = parseInt(e.target.value,10)/100; updateValueLabels(); };
+  document.getElementById('ctl-volume').oninput = e => { estadoAtual.volume = parseInt(e.target.value,10)/100; updateValueLabels(); };
+  document.getElementById('ctl-nome').oninput = e => { estadoAtual.nome = e.target.value; };
+}
+
+function tocarPreview(){
+  const samples = gerarSamples(estadoAtual);
+  tocarSamples(samples);
+}
+function sortear(){
+  const wave = WAVES[Math.floor(Math.random()*WAVES.length)].key;
+  const freqStart = Math.floor(100 + Math.random()*1200);
+  const freqEnd = Math.floor(80 + Math.random()*1600);
+  const duration = +(0.05 + Math.random()*0.55).toFixed(2);
+  estadoAtual = { wave, freqStart, freqEnd, duration, volume:0.5, nome:'som-sorteado', tags:['aleatorio'] };
+  syncControlsFromState();
+  document.querySelectorAll('.preset-card').forEach(el => el.classList.remove('active'));
+  tocarPreview();
+}
+
+/* ======================================================
+   COLEÇÃO (guardar vários sons na mesma sessão)
+====================================================== */
+function adicionarNaColecao(){
+  const nome = (document.getElementById('ctl-nome').value || 'meu-som').trim() || 'meu-som';
+  colecao.push({ nome: slugify(nome), tags: estadoAtual.tags.slice(), params: {...estadoAtual} });
+  renderColecao();
+}
+function removerDaColecao(i){
+  colecao.splice(i,1);
+  renderColecao();
+}
+function renderColecao(){
+  const list = document.getElementById('colecao-list');
+  const empty = document.getElementById('colecao-empty');
+  empty.style.display = colecao.length ? 'none' : 'block';
+  list.innerHTML = colecao.map((item,i) => `
+    <div class="colecao-item">
+      <span class="icon">🎵</span>
+      <span class="nome">${item.nome}</span>
+      <div class="tags">${item.tags.map(t=>`<span class="preset-tag">#${t}</span>`).join('')}</div>
+      <div class="colecao-actions">
+        <button class="icon-btn" onclick="tocarSamples(gerarSamples(colecao[${i}].params))" title="Tocar">▶️</button>
+        <button class="icon-btn" onclick="baixarItemColecao(${i})" title="Baixar">⬇️</button>
+        <button class="icon-btn" onclick="removerDaColecao(${i})" title="Remover">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+function baixarItemColecao(i){
+  const item = colecao[i];
+  const samples = gerarSamples(item.params);
+  const { blob, ext } = exportarMaisLeve(samples);
+  disparaDownload(blob, `${item.nome}.${ext}`);
+}
+
+function disparaDownload(blob, filename){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+function baixarAtual(){
+  const statusEl = document.getElementById('export-status');
+  const nome = (document.getElementById('ctl-nome').value || 'meu-som').trim() || 'meu-som';
+  const samples = gerarSamples(estadoAtual);
+  const { blob, ext, wavSize, escolhidoSize } = exportarMaisLeve(samples);
+  disparaDownload(blob, `${slugify(nome)}.${ext}`);
+  const economiaPct = wavSize > 0 ? Math.round((1 - escolhidoSize/wavSize)*100) : 0;
+  statusEl.className = 'status-line ok';
+  statusEl.textContent = ext === 'mp3'
+    ? `✅ Baixado como MP3 (${(escolhidoSize/1024).toFixed(1)} KB — ${economiaPct}% mais leve que o WAV).`
+    : `✅ Baixado como WAV (${(escolhidoSize/1024).toFixed(1)} KB — o MP3 não pôde ser gerado agora, então usei o WAV).`;
+}
+
+/* ======================================================
+   VINCULAR ALUNO / SALVAR NA PASTA (mesmo padrão dos outros editores)
+====================================================== */
+let linkedAluno = null;
+let linkTurmaData = null;
+
+function abrirModalVincular(){
+  document.getElementById('link-modal').classList.add('show');
+}
+function fecharModalVincular(){
+  document.getElementById('link-modal').classList.remove('show');
+}
+async function buscarTurma(){
+  const code = document.getElementById('link-turma-code').value.trim().toLowerCase();
+  const errEl = document.getElementById('link-turma-error');
+  if(!code){ errEl.textContent = '👉 Digite o código da turma.'; return; }
+  if(!sb){ errEl.textContent = '❌ Não consegui conectar.'; return; }
+  errEl.textContent = '⏳ Buscando...';
+  const { data: turma, error } = await sb.from('turmas').select('*').eq('codigo_acesso', code).maybeSingle();
+  if(error || !turma){ errEl.textContent = '❌ Turma não encontrada.'; return; }
+  errEl.textContent = '';
+  const { data: alunos } = await sb.from('alunos').select('*').eq('turma_id', turma.id).order('nome');
+  linkTurmaData = { turma, alunos: alunos||[] };
+  document.getElementById('link-turma-name').textContent = turma.nome;
+  document.getElementById('link-aluno-list').innerHTML = (alunos&&alunos.length)
+    ? alunos.map((a,i)=>`<button class="btn purple" style="justify-content:center;" onclick="escolherAluno(${i})">${a.nome}</button>`).join('')
+    : '<p style="font-size:12px;color:var(--ink-soft);">Nenhum aluno cadastrado.</p>';
+  document.getElementById('link-step-turma').style.display='none';
+  document.getElementById('link-step-aluno').style.display='block';
+}
+function voltarStepTurma(){
+  document.getElementById('link-step-turma').style.display='block';
+  document.getElementById('link-step-aluno').style.display='none';
+}
+function escolherAluno(i){
+  linkedAluno = linkTurmaData.alunos[i];
+  document.getElementById('link-status').textContent = '✅ Vinculado como ' + linkedAluno.nome + '!';
+  document.getElementById('link-status').style.color = 'var(--green)';
+  updateLinkBadge();
+  document.getElementById('btn-salvar-pasta').disabled = false;
+  setTimeout(fecharModalVincular, 1200);
+}
+function updateLinkBadge(){
+  const el = document.getElementById('link-badge');
+  if(linkedAluno){
+    el.style.display = 'block';
+    el.innerHTML = `👤 Vinculado como <b>${linkedAluno.nome}</b>`;
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+function abrirModalSalvar(){
+  if(!linkedAluno){ abrirModalVincular(); return; }
+  const sel = document.getElementById('save-select');
+  const opcoes = [{ nome: (document.getElementById('ctl-nome').value||'meu-som').trim()||'meu-som', params: {...estadoAtual}, atual:true }]
+    .concat(colecao.map(c => ({ nome:c.nome, params:c.params })));
+  sel.innerHTML = opcoes.map((o,i) => `<option value="${i}">${o.nome}${o.atual ? ' (som atual nos controles)' : ''}</option>`).join('');
+  sel.dataset.opcoes = JSON.stringify(opcoes);
+  document.getElementById('save-status').textContent = '';
+  document.getElementById('save-modal').classList.add('show');
+}
+function fecharModalSalvar(){
+  document.getElementById('save-modal').classList.remove('show');
+}
+async function confirmarSalvarPasta(){
+  const sel = document.getElementById('save-select');
+  const opcoes = JSON.parse(sel.dataset.opcoes || '[]');
+  const escolhido = opcoes[parseInt(sel.value,10)];
+  const status = document.getElementById('save-status');
+  if(!escolhido || !linkedAluno || !sb){ status.textContent = '❌ Erro ao salvar.'; return; }
+  status.textContent = '⏳ Enviando...';
+  try{
+    const samples = gerarSamples(escolhido.params);
+    const { blob, ext } = exportarMaisLeve(samples);
+    const nomeVersionado = await proximoNomeVersionado(linkedAluno.codigo, `${slugify(escolhido.nome)}.${ext}`);
+    const path = `envios/${linkedAluno.codigo}/${nomeVersionado}`;
+    const { error: upErr } = await sb.storage.from('submissoes').upload(path, blob, { upsert:true, contentType: ext==='mp3'?'audio/mp3':'audio/wav' });
+    if(upErr) throw new Error(upErr.message);
+    const { error: rpcErr } = await sb.rpc('registrar_envio', {
+      p_codigo: linkedAluno.codigo, p_nome_arquivo: nomeVersionado, p_storage_path: path,
+      p_tipo: 'envio', p_tamanho_bytes: blob.size
+    });
+    if(rpcErr) throw new Error(rpcErr.message);
+    status.style.color = 'var(--green)';
+    status.textContent = '✅ Salvo na pasta de ' + linkedAluno.nome + '!';
+    setTimeout(fecharModalSalvar, 1400);
+  }catch(e){
+    status.style.color = 'var(--pink)';
+    status.textContent = '❌ Erro: ' + e.message;
+  }
+}
+
+// Descobre o próximo número de versão pra um arquivo, olhando o que já existe
+// na pasta 'envios/{codigo}' do aluno — mesmo padrão dos outros editores do site.
+async function proximoNomeVersionado(codigoAluno, nomeOriginal) {
+  const pontoIdx = nomeOriginal.lastIndexOf('.');
+  const nome = pontoIdx > -1 ? nomeOriginal.slice(0, pontoIdx) : nomeOriginal;
+  const ext = pontoIdx > -1 ? nomeOriginal.slice(pontoIdx) : '';
+  const escapar = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const padrao = new RegExp('^' + escapar(nome) + '_v(\\d+)' + escapar(ext) + '$', 'i');
+  let maiorVersao = 0;
+  try {
+    const { data: arquivos } = await sb.storage.from('submissoes').list(`envios/${codigoAluno}`);
+    (arquivos || []).forEach(f => {
+      const m = f.name.match(padrao);
+      if (m) maiorVersao = Math.max(maiorVersao, parseInt(m[1], 10));
+    });
+  } catch (e) { /* pasta pode não existir ainda — começa do v1 mesmo */ }
+  return `${nome}_v${maiorVersao + 1}${ext}`;
+}
+
+/* ======================================================
+   INIT
+====================================================== */
+buildPresetGrid();
+buildWaveRow();
+syncControlsFromState();
+attachControlListeners();
+</script>
+</body>
+</html>
