@@ -446,19 +446,20 @@
 <div class="wrap">
 
   <header>
-    <button class="theme-toggle-btn" id="theme-toggle-btn" onclick="toggleTheme()" title="Alternar fundo claro/escuro">🌙</button>
-    <h1>🎨 EDITOR DE PIXEL ART</h1>
-    <p>Overcast Realm — Aula de Arte Digital</p>
+    <button id="lang-toggle-btn" style="position:fixed;top:10px;right:10px;z-index:999;font-size:20px;background:var(--panel-bg,#fff);border:2px solid var(--ink-soft,#ddd);border-radius:50%;width:38px;height:38px;cursor:pointer;" onclick="toggleLang()" title="English">🇺🇸</button>
+    <button class="theme-toggle-btn" id="theme-toggle-btn" onclick="toggleTheme()" data-i18n-title="themeToggleTitle" title="Alternar fundo claro/escuro">🌙</button>
+    <h1 data-i18n="h1Titulo">🎨 EDITOR DE PIXEL ART</h1>
+    <p data-i18n="subtitulo">Overcast Realm — Aula de Arte Digital</p>
   </header>
 
   <!-- ============== BANNER: recuperar desenho salvo automaticamente ============== -->
   <div class="panel" id="autosave-banner" style="display:none; text-align:center;">
-    <p style="font-family:'Baloo 2',sans-serif;font-weight:800;color:var(--yellow);font-size:14px;margin:0 0 10px;">
+    <p style="font-family:'Baloo 2',sans-serif;font-weight:800;color:var(--yellow);font-size:14px;margin:0 0 10px;" data-i18n="autosaveEncontrado">
       💾 Encontramos um desenho salvo automaticamente!
     </p>
     <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
-      <button class="btn green" onclick="restoreAutosave()">▶️ Continuar de onde parei</button>
-      <button class="btn gray" onclick="discardAutosave()">🗑️ Começar do zero</button>
+      <button class="btn green" onclick="restoreAutosave()" data-i18n="btnContinuar">▶️ Continuar de onde parei</button>
+      <button class="btn gray" onclick="discardAutosave()" data-i18n="btnZero">🗑️ Começar do zero</button>
     </div>
   </div>
 
@@ -466,32 +467,32 @@
   <div id="setup-screen">
    <div class="setup-scroll">
     <div class="panel" style="text-align:center;">
-      <h2>🔗 SALVAR AUTOMATICAMENTE?</h2>
-      <p style="font-family:'Baloo 2',sans-serif;font-weight:700;color:var(--ink-soft);font-size:13px;margin:0 0 10px;">
+      <h2 data-i18n="h2SalvarAuto">🔗 SALVAR AUTOMATICAMENTE?</h2>
+      <p style="font-family:'Baloo 2',sans-serif;font-weight:700;color:var(--ink-soft);font-size:13px;margin:0 0 10px;" data-i18n="vincularDesc">
         Vincule seu nome pra eu ir salvando seu desenho sozinho na sua pasta, sem precisar clicar em nada. (Opcional)
       </p>
       <div class="link-badge" style="display:none;justify-content:center;"></div>
-      <button class="btn green" onclick="openSaveStudentModal(false, true)">👤 Vincular meu nome</button>
+      <button class="btn green" onclick="openSaveStudentModal(false, true)" data-i18n="btnVincularNome">👤 Vincular meu nome</button>
     </div>
 
     <div class="panel">
-      <h2>1️⃣ TAMANHO DA TELA</h2>
+      <h2 data-i18n="h2Tamanho">1️⃣ TAMANHO DA TELA</h2>
       <div class="choice-row" id="size-choices"></div>
     </div>
 
     <div class="panel">
-      <h2>2️⃣ ESCOLHA A PALETA</h2>
+      <h2 data-i18n="h2Paleta">2️⃣ ESCOLHA A PALETA</h2>
       <div class="choice-row" id="palette-choices"></div>
     </div>
 
     <div class="panel">
-      <h2>3️⃣ ESCOLHA UM DESAFIO (OU DESENHE LIVRE)</h2>
+      <h2 data-i18n="h2Desafio">3️⃣ ESCOLHA UM DESAFIO (OU DESENHE LIVRE)</h2>
       <div class="choice-row" id="challenge-choices"></div>
     </div>
    </div>
 
     <div class="setup-footer">
-      <button class="btn big pink" onclick="startEditor()">▶️ COMEÇAR A DESENHAR</button>
+      <button class="btn big pink" onclick="startEditor()" data-i18n="btnComecar">▶️ COMEÇAR A DESENHAR</button>
     </div>
   </div>
 
@@ -502,18 +503,18 @@
 
         <div class="col" style="flex-shrink:0;">
           <div class="toolbar">
-            <button class="tool-btn active" id="tool-pencil" onclick="setTool('pencil')" title="Lápis">✏️</button>
-            <button class="tool-btn" id="tool-eraser" onclick="setTool('eraser')" title="Borracha">🧽</button>
-            <button class="tool-btn" id="tool-bucket" onclick="setTool('bucket')" title="Balde de tinta">🪣</button>
-            <button class="tool-btn" id="tool-eyedrop" onclick="setTool('eyedrop')" title="Conta-gotas">💧</button>
-            <button class="tool-btn" id="tool-line" onclick="setTool('line')" title="Linha">📏</button>
-            <button class="tool-btn" id="tool-square" onclick="setTool('square')" title="Quadrado">⬜</button>
-            <button class="tool-btn" id="tool-circle" onclick="setTool('circle')" title="Círculo">⭕</button>
-            <button class="tool-btn" id="tool-grid" onclick="toggleGrid()" title="Mostrar/ocultar grade">#️⃣</button>
-            <button class="tool-btn" id="tool-undo" onclick="undo()" title="Desfazer (Ctrl+Z)">↩️</button>
+            <button class="tool-btn active" id="tool-pencil" onclick="setTool('pencil')" data-i18n-title="toolPencil" title="Lápis">✏️</button>
+            <button class="tool-btn" id="tool-eraser" onclick="setTool('eraser')" data-i18n-title="toolEraser" title="Borracha">🧽</button>
+            <button class="tool-btn" id="tool-bucket" onclick="setTool('bucket')" data-i18n-title="toolBucket" title="Balde de tinta">🪣</button>
+            <button class="tool-btn" id="tool-eyedrop" onclick="setTool('eyedrop')" data-i18n-title="toolEyedrop" title="Conta-gotas">💧</button>
+            <button class="tool-btn" id="tool-line" onclick="setTool('line')" data-i18n-title="toolLine" title="Linha">📏</button>
+            <button class="tool-btn" id="tool-square" onclick="setTool('square')" data-i18n-title="toolSquare" title="Quadrado">⬜</button>
+            <button class="tool-btn" id="tool-circle" onclick="setTool('circle')" data-i18n-title="toolCircle" title="Círculo">⭕</button>
+            <button class="tool-btn" id="tool-grid" onclick="toggleGrid()" data-i18n-title="toolGrid" title="Mostrar/ocultar grade">#️⃣</button>
+            <button class="tool-btn" id="tool-undo" onclick="undo()" data-i18n-title="toolUndo" title="Desfazer (Ctrl+Z)">↩️</button>
           </div>
           <div class="brush-panel" id="brush-panel">
-            <div class="brush-label">✏️ TAMANHO</div>
+            <div class="brush-label" data-i18n="brushLabel">✏️ TAMANHO</div>
             <div class="brush-row">
               <button class="brush-btn active" data-size="1" onclick="setBrushSize(1)">1</button>
               <button class="brush-btn" data-size="2" onclick="setBrushSize(2)">2</button>
@@ -533,61 +534,61 @@
           </div>
           <div class="hover-coord" id="hover-coord">X: – &nbsp; Y: –</div>
           <div class="current-color-row">
-            Cor atual: <span id="current-color-swatch"></span>
+            <span data-i18n="corAtualLabel">Cor atual:</span> <span id="current-color-swatch"></span>
           </div>
         </div>
 
         <div class="col col-scroll" style="width:230px; flex-shrink:0;">
           <div class="frames-panel">
             <div class="label" style="display:flex;justify-content:space-between;align-items:center;">
-              <span>// PALETA</span>
-              <button class="btn small gray" id="palette-edit-btn" style="font-size:8px;" onclick="togglePaletteEditMode()">✏️ Editar</button>
+              <span data-i18n="lblPaleta">// PALETA</span>
+              <button class="btn small gray" id="palette-edit-btn" style="font-size:8px;" onclick="togglePaletteEditMode()" data-i18n="btnEditar">✏️ Editar</button>
             </div>
             <div class="palette-row" id="editor-palette"></div>
             <input type="color" id="color-picker-hidden" style="position:absolute;opacity:0;width:0;height:0;pointer-events:none;">
-            <p id="palette-edit-hint" style="display:none;font-family:'Baloo 2',sans-serif;font-size:10px;color:var(--ink-soft);margin:6px 0 0;">Toque numa cor pra apagar, ou no ➕ pra adicionar uma nova.</p>
+            <p id="palette-edit-hint" style="display:none;font-family:'Baloo 2',sans-serif;font-size:10px;color:var(--ink-soft);margin:6px 0 0;" data-i18n="paletteEditHint">Toque numa cor pra apagar, ou no ➕ pra adicionar uma nova.</p>
           </div>
 
           <div class="ref-box" id="ref-box" style="display:none;">
-            <div class="label">// DESAFIO_DE_REFERÊNCIA</div>
+            <div class="label" data-i18n="lblDesafioRef">// DESAFIO_DE_REFERÊNCIA</div>
             <div id="ref-canvas"></div>
             <div style="margin-top:8px; display:flex; flex-direction:column; gap:6px; align-items:center;">
-              <button class="btn pink" style="font-size:9px;" onclick="openRefZoom()">🔍 Ampliar</button>
+              <button class="btn pink" style="font-size:9px;" onclick="openRefZoom()" data-i18n="btnAmpliar">🔍 Ampliar</button>
               <label style="font-family:'Baloo 2',sans-serif;font-weight:700;font-size:12px;color:var(--ink-soft);">
-                <input type="checkbox" id="overlay-toggle" onchange="toggleOverlay()"> 👻 Ver por cima do desenho
+                <input type="checkbox" id="overlay-toggle" onchange="toggleOverlay()"> <span data-i18n="verPorCima">👻 Ver por cima do desenho</span>
               </label>
             </div>
           </div>
 
           <div class="frames-panel">
-            <div class="label">// IMPORTAR</div>
+            <div class="label" data-i18n="lblImportar">// IMPORTAR</div>
             <div style="display:flex;flex-direction:column;gap:6px;">
-              <button class="btn orange" style="font-size:9px;justify-content:center;" onclick="document.getElementById('import-image-input').click()">🖼️ Importar Imagem</button>
-              <button class="btn orange" style="font-size:9px;justify-content:center;" onclick="document.getElementById('import-gif-input').click()">🎞️ Importar Animação (GIF)</button>
+              <button class="btn orange" style="font-size:9px;justify-content:center;" onclick="document.getElementById('import-image-input').click()" data-i18n="btnImportarImagem">🖼️ Importar Imagem</button>
+              <button class="btn orange" style="font-size:9px;justify-content:center;" onclick="document.getElementById('import-gif-input').click()" data-i18n="btnImportarGif">🎞️ Importar Animação (GIF)</button>
               <input type="file" id="import-image-input" accept="image/png,image/*" style="display:none;" onchange="handleImportImage(event)">
               <input type="file" id="import-gif-input" accept="image/gif" style="display:none;" onchange="handleImportGIF(event)">
-              <p style="font-family:'Baloo 2',sans-serif;font-size:10px;color:var(--ink-soft);margin:2px 0 0;">As cores são ajustadas pra paleta escolhida agora.</p>
+              <p style="font-family:'Baloo 2',sans-serif;font-size:10px;color:var(--ink-soft);margin:2px 0 0;" data-i18n="coresAjustadas">As cores são ajustadas pra paleta escolhida agora.</p>
             </div>
           </div>
         </div>
 
         <div class="col col-scroll" style="width:230px; flex-shrink:0;">
           <div class="frames-panel">
-            <div class="label">// QUADROS_DA_ANIMAÇÃO</div>
+            <div class="label" data-i18n="lblQuadros">// QUADROS_DA_ANIMAÇÃO</div>
             <div class="frame-strip" id="frame-strip"></div>
             <div class="frame-actions">
-              <button class="btn green" onclick="addFrame(true)">➕ Duplicar</button>
-              <button class="btn cyan" onclick="addFrame(false)">🆕 Novo</button>
+              <button class="btn green" onclick="addFrame(true)" data-i18n="btnDuplicar">➕ Duplicar</button>
+              <button class="btn cyan" onclick="addFrame(false)" data-i18n="btnNovoQuadro">🆕 Novo</button>
             </div>
             <label style="display:flex;align-items:center;gap:6px;margin-top:8px;font-family:'Baloo 2',sans-serif;font-weight:700;font-size:11px;color:var(--ink-soft);">
-              <input type="checkbox" id="onion-toggle" onchange="toggleOnionSkin()"> 🧅 Ver quadro anterior
+              <input type="checkbox" id="onion-toggle" onchange="toggleOnionSkin()"> <span data-i18n="verQuadroAnterior">🧅 Ver quadro anterior</span>
             </label>
           </div>
 
           <div class="preview-panel">
-            <div class="label" style="font-family:'Press Start 2P', monospace; font-size:9px; color:var(--ink-soft); margin-bottom:8px;">// PRÉVIA_DA_ANIMAÇÃO</div>
+            <div class="label" style="font-family:'Press Start 2P', monospace; font-size:9px; color:var(--ink-soft); margin-bottom:8px;" data-i18n="lblPrevia">// PRÉVIA_DA_ANIMAÇÃO</div>
             <canvas id="preview-canvas" width="110" height="110"></canvas>
-            <button class="btn green" id="preview-play-btn" style="width:100%;justify-content:center;" onclick="togglePreviewPlay()">▶️ Reproduzir</button>
+            <button class="btn green" id="preview-play-btn" style="width:100%;justify-content:center;" onclick="togglePreviewPlay()" data-i18n="btnReproduzir">▶️ Reproduzir</button>
             <div class="fps-row">
               🐢 <input type="range" id="fps-input" min="1" max="18" value="6"> 🐇
               <span id="fps-label">6 fps</span>
@@ -596,13 +597,13 @@
 
           <div class="link-badge" style="display:none;"></div>
           <div class="action-list">
-            <button class="btn purple" onclick="exportGIF()">🎞️ Exportar GIF</button>
-            <button class="btn cyan" onclick="exportSpriteSheet()">🖼️ Exportar Sprite Sheet</button>
-            <button class="btn cyan" onclick="exportPNG()">💾 Exportar PNG</button>
-            <button class="btn green" onclick="openSaveStudentModal(false)">📁 Salvar na Pasta do Aluno</button>
+            <button class="btn purple" onclick="exportGIF()" data-i18n="btnExportarGif">🎞️ Exportar GIF</button>
+            <button class="btn cyan" onclick="exportSpriteSheet()" data-i18n="btnExportarSprite">🖼️ Exportar Sprite Sheet</button>
+            <button class="btn cyan" onclick="exportPNG()" data-i18n="btnExportarPng">💾 Exportar PNG</button>
+            <button class="btn green" onclick="openSaveStudentModal(false)" data-i18n="btnSalvarPasta">📁 Salvar na Pasta do Aluno</button>
             <div id="export-status"></div>
-            <button class="btn gray" onclick="clearCanvas()">🧹 Limpar Quadro</button>
-            <button class="btn gray" onclick="backToSetup()">⚙️ Configurações</button>
+            <button class="btn gray" onclick="clearCanvas()" data-i18n="btnLimparQuadro">🧹 Limpar Quadro</button>
+            <button class="btn gray" onclick="backToSetup()" data-i18n="btnConfiguracoes">⚙️ Configurações</button>
           </div>
         </div>
 
@@ -613,14 +614,14 @@
   <!-- ============== MODAL: confirmar antes de voltar ============== -->
   <div class="zoom-overlay" id="back-confirm-modal">
     <div class="zoom-box" style="max-width:380px;">
-      <h3>💾 SALVAR ANTES DE VOLTAR?</h3>
-      <p style="font-family:'Baloo 2',sans-serif;font-weight:700;color:var(--ink-soft);font-size:13px;margin-bottom:14px;">
+      <h3 data-i18n="h3SalvarAntes">💾 SALVAR ANTES DE VOLTAR?</h3>
+      <p style="font-family:'Baloo 2',sans-serif;font-weight:700;color:var(--ink-soft);font-size:13px;margin-bottom:14px;" data-i18n="perderDesenho">
         Se voltar sem salvar, o desenho atual será perdido.
       </p>
       <div style="display:flex;flex-direction:column;gap:8px;">
-        <button class="btn purple" style="justify-content:center;" onclick="openSaveChoiceModal(true)">💾 Salvar antes de voltar</button>
-        <button class="btn gray" style="justify-content:center;" onclick="confirmBackNoSave()">➡️ Voltar sem salvar</button>
-        <button class="btn cyan" style="justify-content:center;" onclick="closeBackConfirm()">✕ Cancelar</button>
+        <button class="btn purple" style="justify-content:center;" onclick="openSaveChoiceModal(true)" data-i18n="btnSalvarAntes">💾 Salvar antes de voltar</button>
+        <button class="btn gray" style="justify-content:center;" onclick="confirmBackNoSave()" data-i18n="btnVoltarSemSalvar">➡️ Voltar sem salvar</button>
+        <button class="btn cyan" style="justify-content:center;" onclick="closeBackConfirm()" data-i18n="btnCancelar">✕ Cancelar</button>
       </div>
     </div>
   </div>
@@ -628,11 +629,11 @@
   <!-- ============== MODAL: escolher como salvar ============== -->
   <div class="zoom-overlay" id="save-choice-modal">
     <div class="zoom-box" style="max-width:360px;">
-      <h3>💾 COMO SALVAR?</h3>
+      <h3 data-i18n="h3ComoSalvar">💾 COMO SALVAR?</h3>
       <div style="display:flex;flex-direction:column;gap:8px;">
-        <button class="btn cyan" style="justify-content:center;" onclick="quickDownload()">⬇️ Baixar no Computador</button>
-        <button class="btn purple" style="justify-content:center;" onclick="openSaveStudentModal(true)">📁 Salvar na Pasta do Aluno</button>
-        <button class="btn gray" style="justify-content:center;" onclick="closeSaveChoiceModal()">✕ Cancelar</button>
+        <button class="btn cyan" style="justify-content:center;" onclick="quickDownload()" data-i18n="btnBaixarComputador">⬇️ Baixar no Computador</button>
+        <button class="btn purple" style="justify-content:center;" onclick="openSaveStudentModal(true)" data-i18n="btnSalvarPasta">📁 Salvar na Pasta do Aluno</button>
+        <button class="btn gray" style="justify-content:center;" onclick="closeSaveChoiceModal()" data-i18n="btnCancelar">✕ Cancelar</button>
       </div>
     </div>
   </div>
@@ -640,30 +641,30 @@
   <!-- ============== MODAL: salvar na pasta do aluno ============== -->
   <div class="zoom-overlay" id="save-student-modal">
     <div class="zoom-box" style="max-width:420px;">
-      <h3 id="save-student-modal-title">📁 SALVAR NA PASTA DO ALUNO</h3>
+      <h3 id="save-student-modal-title" data-i18n="h3SalvarPastaAluno">📁 SALVAR NA PASTA DO ALUNO</h3>
 
       <div id="save-step-turma">
-        <p style="font-family:'Baloo 2',sans-serif;font-weight:700;color:var(--ink-soft);font-size:13px;">Código da turma:</p>
-        <input type="text" id="save-turma-code" placeholder="Código da turma" style="width:100%;padding:10px;border-radius:8px;border:2px solid var(--border);background:var(--tool-bg);color:#fff;font-family:'Baloo 2',sans-serif;margin-bottom:8px;">
-        <button class="btn cyan" style="width:100%;justify-content:center;" onclick="lookupTurmaForSave()">🔎 Buscar Turma</button>
+        <p style="font-family:'Baloo 2',sans-serif;font-weight:700;color:var(--ink-soft);font-size:13px;" data-i18n="codigoTurmaLabel">Código da turma:</p>
+        <input type="text" id="save-turma-code" placeholder="Código da turma" data-i18n-placeholder="codigoTurmaPlaceholder" style="width:100%;padding:10px;border-radius:8px;border:2px solid var(--border);background:var(--tool-bg);color:#fff;font-family:'Baloo 2',sans-serif;margin-bottom:8px;">
+        <button class="btn cyan" style="width:100%;justify-content:center;" onclick="lookupTurmaForSave()" data-i18n="btnBuscarTurma">🔎 Buscar Turma</button>
         <div id="save-turma-error" style="font-family:'Baloo 2',sans-serif;color:var(--pink);font-size:12px;margin-top:8px;"></div>
       </div>
 
       <div id="save-step-aluno" style="display:none;">
-        <p style="font-family:'Baloo 2',sans-serif;font-weight:800;color:var(--yellow);font-size:14px;">Turma: <span id="save-turma-name"></span></p>
-        <p style="font-family:'Baloo 2',sans-serif;font-weight:700;color:var(--ink-soft);font-size:12px;">Clique no seu nome:</p>
+        <p style="font-family:'Baloo 2',sans-serif;font-weight:800;color:var(--yellow);font-size:14px;"><span data-i18n="turmaLabel">Turma:</span> <span id="save-turma-name"></span></p>
+        <p style="font-family:'Baloo 2',sans-serif;font-weight:700;color:var(--ink-soft);font-size:12px;" data-i18n="cliqueSeuNome">Clique no seu nome:</p>
         <div id="save-aluno-list" style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;"></div>
-        <button class="btn gray" style="width:100%;justify-content:center;margin-top:10px;" onclick="backToTurmaStep()">← Trocar turma</button>
+        <button class="btn gray" style="width:100%;justify-content:center;margin-top:10px;" onclick="backToTurmaStep()" data-i18n="btnTrocarTurma">← Trocar turma</button>
       </div>
 
       <div id="save-status" style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:13px;margin-top:10px;min-height:18px;"></div>
-      <button class="btn gray" style="width:100%;justify-content:center;margin-top:8px;" onclick="closeSaveStudentModal()">✕ Fechar</button>
+      <button class="btn gray" style="width:100%;justify-content:center;margin-top:8px;" onclick="closeSaveStudentModal()" data-i18n="btnFechar">✕ Fechar</button>
     </div>
   </div>
 
   <div class="zoom-overlay" id="zoom-overlay" onclick="if(event.target===this) closeRefZoom()">
     <div class="zoom-box">
-      <h3>// TRACE A LINHA E A COLUNA PRA ACHAR A COORDENADA</h3>
+      <h3 data-i18n="h3TraceLinha">// TRACE A LINHA E A COLUNA PRA ACHAR A COORDENADA</h3>
       <div class="axis-wrap" style="display:inline-flex;">
         <div class="axis-x-row" id="zoom-xaxis"></div>
         <div class="axis-grid-row">
@@ -672,7 +673,7 @@
         </div>
       </div>
       <div class="hover-coord" id="zoom-hover-coord" style="margin:12px auto;">X: – &nbsp; Y: –</div>
-      <button class="btn pink" onclick="closeRefZoom()">✕ Fechar</button>
+      <button class="btn pink" onclick="closeRefZoom()" data-i18n="btnFechar">✕ Fechar</button>
     </div>
   </div>
 
@@ -680,19 +681,115 @@
 
 <script>
 /* ======================================================
+   IDIOMA (PT/EN)
+====================================================== */
+let currentLang = 'pt';
+const UI_STRINGS = {
+  pt: {
+    themeToggleTitle:'Alternar fundo claro/escuro',
+    h1Titulo:'🎨 EDITOR DE PIXEL ART', subtitulo:'Overcast Realm — Aula de Arte Digital',
+    autosaveEncontrado:'💾 Encontramos um desenho salvo automaticamente!',
+    btnContinuar:'▶️ Continuar de onde parei', btnZero:'🗑️ Começar do zero',
+    h2SalvarAuto:'🔗 SALVAR AUTOMATICAMENTE?',
+    vincularDesc:'Vincule seu nome pra eu ir salvando seu desenho sozinho na sua pasta, sem precisar clicar em nada. (Opcional)',
+    btnVincularNome:'👤 Vincular meu nome',
+    h2Tamanho:'1️⃣ TAMANHO DA TELA', h2Paleta:'2️⃣ ESCOLHA A PALETA', h2Desafio:'3️⃣ ESCOLHA UM DESAFIO (OU DESENHE LIVRE)',
+    btnComecar:'▶️ COMEÇAR A DESENHAR',
+    toolPencil:'Lápis', toolEraser:'Borracha', toolBucket:'Balde de tinta', toolEyedrop:'Conta-gotas',
+    toolLine:'Linha', toolSquare:'Quadrado', toolCircle:'Círculo', toolGrid:'Mostrar/ocultar grade', toolUndo:'Desfazer (Ctrl+Z)',
+    brushLabel:'✏️ TAMANHO', corAtualLabel:'Cor atual:',
+    lblPaleta:'// PALETA', btnEditar:'✏️ Editar', paletteEditHint:'Toque numa cor pra apagar, ou no ➕ pra adicionar uma nova.',
+    lblDesafioRef:'// DESAFIO_DE_REFERÊNCIA', btnAmpliar:'🔍 Ampliar', verPorCima:'👻 Ver por cima do desenho',
+    lblImportar:'// IMPORTAR', btnImportarImagem:'🖼️ Importar Imagem', btnImportarGif:'🎞️ Importar Animação (GIF)',
+    coresAjustadas:'As cores são ajustadas pra paleta escolhida agora.',
+    lblQuadros:'// QUADROS_DA_ANIMAÇÃO', btnDuplicar:'➕ Duplicar', btnNovoQuadro:'🆕 Novo', verQuadroAnterior:'🧅 Ver quadro anterior',
+    lblPrevia:'// PRÉVIA_DA_ANIMAÇÃO', btnReproduzir:'▶️ Reproduzir',
+    btnExportarGif:'🎞️ Exportar GIF', btnExportarSprite:'🖼️ Exportar Sprite Sheet', btnExportarPng:'💾 Exportar PNG',
+    btnSalvarPasta:'📁 Salvar na Pasta do Aluno', btnLimparQuadro:'🧹 Limpar Quadro', btnConfiguracoes:'⚙️ Configurações',
+    h3SalvarAntes:'💾 SALVAR ANTES DE VOLTAR?', perderDesenho:'Se voltar sem salvar, o desenho atual será perdido.',
+    btnSalvarAntes:'💾 Salvar antes de voltar', btnVoltarSemSalvar:'➡️ Voltar sem salvar', btnCancelar:'✕ Cancelar',
+    h3ComoSalvar:'💾 COMO SALVAR?', btnBaixarComputador:'⬇️ Baixar no Computador',
+    h3SalvarPastaAluno:'📁 SALVAR NA PASTA DO ALUNO', codigoTurmaLabel:'Código da turma:', codigoTurmaPlaceholder:'Código da turma', btnBuscarTurma:'🔎 Buscar Turma',
+    turmaLabel:'Turma:', cliqueSeuNome:'Clique no seu nome:', btnTrocarTurma:'← Trocar turma', btnFechar:'✕ Fechar',
+    h3TraceLinha:'// TRACE A LINHA E A COLUNA PRA ACHAR A COORDENADA',
+    parar:'⏸️ Pausar', reproduzir:'▶️ Reproduzir', gerandoGif:'⏳ Gerando GIF...', gifBaixado:'✅ GIF baixado!',
+    digiteCodigoTurma:'👉 Digite o código da turma.', buscando:'⏳ Buscando...', turmaNaoEncontrada:'❌ Turma não encontrada. Confira o código.',
+    nenhumAluno:'Nenhum aluno cadastrado nessa turma ainda.', trocar:'trocar',
+    vinculadoSalvando:'✅ Vinculado! Vou salvar automaticamente pra ', enviandoPasta:'⏳ Enviando pra pasta de ',
+    salvoPasta:'✅ Salvo na pasta de ', erroPrefix:'❌ Erro: ', xy:'X: – &nbsp; Y: –'
+  },
+  en: {
+    themeToggleTitle:'Toggle light/dark background',
+    h1Titulo:'🎨 PIXEL ART EDITOR', subtitulo:'Overcast Realm — Digital Art Class',
+    autosaveEncontrado:'💾 We found a drawing that was saved automatically!',
+    btnContinuar:'▶️ Continue where I left off', btnZero:'🗑️ Start from scratch',
+    h2SalvarAuto:'🔗 SAVE AUTOMATICALLY?',
+    vincularDesc:"Link your name so I can keep saving your drawing to your folder by myself, no clicking needed. (Optional)",
+    btnVincularNome:'👤 Link my name',
+    h2Tamanho:'1️⃣ CANVAS SIZE', h2Paleta:'2️⃣ CHOOSE A PALETTE', h2Desafio:'3️⃣ CHOOSE A CHALLENGE (OR DRAW FREELY)',
+    btnComecar:'▶️ START DRAWING',
+    toolPencil:'Pencil', toolEraser:'Eraser', toolBucket:'Paint bucket', toolEyedrop:'Eyedropper',
+    toolLine:'Line', toolSquare:'Square', toolCircle:'Circle', toolGrid:'Show/hide grid', toolUndo:'Undo (Ctrl+Z)',
+    brushLabel:'✏️ SIZE', corAtualLabel:'Current color:',
+    lblPaleta:'// PALETTE', btnEditar:'✏️ Edit', paletteEditHint:'Tap a color to erase it, or the ➕ to add a new one.',
+    lblDesafioRef:'// REFERENCE_CHALLENGE', btnAmpliar:'🔍 Zoom in', verPorCima:'👻 Show over the drawing',
+    lblImportar:'// IMPORT', btnImportarImagem:'🖼️ Import Image', btnImportarGif:'🎞️ Import Animation (GIF)',
+    coresAjustadas:'Colors are matched to the palette you picked now.',
+    lblQuadros:'// ANIMATION_FRAMES', btnDuplicar:'➕ Duplicate', btnNovoQuadro:'🆕 New', verQuadroAnterior:'🧅 Show previous frame',
+    lblPrevia:'// ANIMATION_PREVIEW', btnReproduzir:'▶️ Play',
+    btnExportarGif:'🎞️ Export GIF', btnExportarSprite:'🖼️ Export Sprite Sheet', btnExportarPng:'💾 Export PNG',
+    btnSalvarPasta:'📁 Save to Student Folder', btnLimparQuadro:'🧹 Clear Frame', btnConfiguracoes:'⚙️ Settings',
+    h3SalvarAntes:'💾 SAVE BEFORE GOING BACK?', perderDesenho:'If you go back without saving, the current drawing will be lost.',
+    btnSalvarAntes:'💾 Save before going back', btnVoltarSemSalvar:'➡️ Go back without saving', btnCancelar:'✕ Cancel',
+    h3ComoSalvar:'💾 HOW DO YOU WANT TO SAVE?', btnBaixarComputador:'⬇️ Download to Computer',
+    h3SalvarPastaAluno:'📁 SAVE TO STUDENT FOLDER', codigoTurmaLabel:'Class code:', codigoTurmaPlaceholder:'Class code', btnBuscarTurma:'🔎 Find Class',
+    turmaLabel:'Class:', cliqueSeuNome:'Click your name:', btnTrocarTurma:'← Change class', btnFechar:'✕ Close',
+    h3TraceLinha:'// TRACE THE ROW AND COLUMN TO FIND THE COORDINATE',
+    parar:'⏸️ Pause', reproduzir:'▶️ Play', gerandoGif:'⏳ Generating GIF...', gifBaixado:'✅ GIF downloaded!',
+    digiteCodigoTurma:'👉 Type in the class code.', buscando:'⏳ Searching...', turmaNaoEncontrada:'❌ Class not found. Check the code.',
+    nenhumAluno:'No students registered in this class yet.', trocar:'change',
+    vinculadoSalvando:"✅ Linked! I'll save automatically for ", enviandoPasta:'⏳ Sending to the folder of ',
+    salvoPasta:'✅ Saved to the folder of ', erroPrefix:'❌ Error: ', xy:'X: – &nbsp; Y: –'
+  }
+};
+function toggleLang(){
+  currentLang = currentLang === 'pt' ? 'en' : 'pt';
+  applyLang();
+}
+function applyLang(){
+  const t = UI_STRINGS[currentLang];
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    if(t[key] !== undefined) el.innerHTML = t[key];
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    const key = el.dataset.i18nTitle;
+    if(t[key] !== undefined) el.title = t[key];
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.dataset.i18nPlaceholder;
+    if(t[key] !== undefined) el.placeholder = t[key];
+  });
+  document.title = currentLang==='pt' ? 'Editor de Pixel Art — Overcast Realm' : 'Pixel Art Editor — Overcast Realm';
+  document.getElementById('lang-toggle-btn').textContent = currentLang==='pt' ? '🇺🇸' : '🇧🇷';
+  document.getElementById('lang-toggle-btn').title = currentLang==='pt' ? 'English' : 'Português';
+  if(typeof buildSetupScreen === 'function') buildSetupScreen();
+}
+
+/* ======================================================
    PALETAS PRÉ-DEFINIDAS
 ====================================================== */
 const PALETTES = {
-  retro:  { name:'🕹️ Retrô Arcade', colors:['#000000','#ffffff','#ff5fa2','#4be8ff','#ffd23f','#4be08f','#a06bff','#ff9a3c'] },
-  doces:  { name:'🍬 Doces (Pastel)', colors:['#ffd1e8','#c9f2ff','#fff3b0','#d4f7dc','#e6d4ff','#ffe0c2','#ffffff','#5a4a6a'] },
-  natureza: { name:'🌿 Natureza', colors:['#2e5d32','#6b8f3c','#a3d977','#8b5a2b','#c9a876','#4a90c4','#f4e3c1','#3a2f28'] },
-  neon: { name:'🌃 Neon Noturno', colors:['#0d0221','#ff0abe','#00f0ff','#faff00','#7b2ff7','#ff5e00','#00ff87','#ffffff'] },
+  retro:  { name:'🕹️ Retrô Arcade', nameEn:'🕹️ Retro Arcade', colors:['#000000','#ffffff','#ff5fa2','#4be8ff','#ffd23f','#4be08f','#a06bff','#ff9a3c'] },
+  doces:  { name:'🍬 Doces (Pastel)', nameEn:'🍬 Candy (Pastel)', colors:['#ffd1e8','#c9f2ff','#fff3b0','#d4f7dc','#e6d4ff','#ffe0c2','#ffffff','#5a4a6a'] },
+  natureza: { name:'🌿 Natureza', nameEn:'🌿 Nature', colors:['#2e5d32','#6b8f3c','#a3d977','#8b5a2b','#c9a876','#4a90c4','#f4e3c1','#3a2f28'] },
+  neon: { name:'🌃 Neon Noturno', nameEn:'🌃 Night Neon', colors:['#0d0221','#ff0abe','#00f0ff','#faff00','#7b2ff7','#ff5e00','#00ff87','#ffffff'] },
   // ---- paletas clássicas do estilo Lospec (indexador de paletas de pixel art) ----
-  pico8: { name:'🎮 PICO-8 (Lospec)', colors:['#000000','#1D2B53','#7E2553','#008751','#AB5236','#5F574F','#C2C3C7','#FFF1E8','#FF004D','#FFA300','#FFEC27','#00E436','#29ADFF','#83769C','#FF77A8','#FFCCAA'] },
-  sweetie16: { name:'🍭 Sweetie 16 (Lospec)', colors:['#1a1c2c','#5d275d','#b13e53','#ef7d57','#ffcd75','#a7f070','#38b764','#257179','#29366f','#3b5dc9','#41a6f6','#73eff7','#f4f4f4','#94b0c2','#566c86','#333c57'] },
-  icecream: { name:'🍦 Ice Cream GB (Lospec)', colors:['#7c3f58','#eb6b6f','#f9a875','#fff6d3'] },
-  demichrome: { name:'🌑 2-Bit Demichrome (Lospec)', colors:['#211e20','#555568','#a0a08b','#e9efec'] },
-  nyx8: { name:'🌙 Nyx8 (Lospec)', colors:['#08141e','#0f2a3f','#20394f','#f6d6bd','#c3a38a','#997577','#816271','#4e495f'] }
+  pico8: { name:'🎮 PICO-8 (Lospec)', nameEn:'🎮 PICO-8 (Lospec)', colors:['#000000','#1D2B53','#7E2553','#008751','#AB5236','#5F574F','#C2C3C7','#FFF1E8','#FF004D','#FFA300','#FFEC27','#00E436','#29ADFF','#83769C','#FF77A8','#FFCCAA'] },
+  sweetie16: { name:'🍭 Sweetie 16 (Lospec)', nameEn:'🍭 Sweetie 16 (Lospec)', colors:['#1a1c2c','#5d275d','#b13e53','#ef7d57','#ffcd75','#a7f070','#38b764','#257179','#29366f','#3b5dc9','#41a6f6','#73eff7','#f4f4f4','#94b0c2','#566c86','#333c57'] },
+  icecream: { name:'🍦 Ice Cream GB (Lospec)', nameEn:'🍦 Ice Cream GB (Lospec)', colors:['#7c3f58','#eb6b6f','#f9a875','#fff6d3'] },
+  demichrome: { name:'🌑 2-Bit Demichrome (Lospec)', nameEn:'🌑 2-Bit Demichrome (Lospec)', colors:['#211e20','#555568','#a0a08b','#e9efec'] },
+  nyx8: { name:'🌙 Nyx8 (Lospec)', nameEn:'🌙 Nyx8 (Lospec)', colors:['#08141e','#0f2a3f','#20394f','#f6d6bd','#c3a38a','#997577','#816271','#4e495f'] }
 };
 
 /* ---- paleta ampla, gerada por HSL (roda de cores + cinzas) — pra quem quer bastante opção ---- */
@@ -748,14 +845,14 @@ function makeStarPolygon(outerR, innerR, points){
 const STAR_POLY = makeStarPolygon(0.95, 0.4, 5);
 
 const CHALLENGES = {
-  none: { name:'🎨 Livre (sem desafio)' },
-  heart: { name:'❤️ Coração', fn:(nx,ny) => {
+  none: { name:'🎨 Livre (sem desafio)', nameEn:'🎨 Free (no challenge)' },
+  heart: { name:'❤️ Coração', nameEn:'❤️ Heart', fn:(nx,ny) => {
     const x=nx*1.25, y=ny*1.3+0.05;
     const f = Math.pow(x*x+y*y-1,3) - x*x*Math.pow(y,3);
     return f<=0 ? '#ff5fa2' : null;
   }},
-  star: { name:'⭐ Estrela', fn:(nx,ny) => pointInPolygon(nx,ny,STAR_POLY) ? '#ffd23f' : null },
-  smiley: { name:'😊 Carinha Feliz', fn:(nx,ny) => {
+  star: { name:'⭐ Estrela', nameEn:'⭐ Star', fn:(nx,ny) => pointInPolygon(nx,ny,STAR_POLY) ? '#ffd23f' : null },
+  smiley: { name:'😊 Carinha Feliz', nameEn:'😊 Happy Face', fn:(nx,ny) => {
     const faceR = Math.sqrt(nx*nx+ny*ny);
     if(faceR > 0.92) return null;
     const leftEye = Math.sqrt((nx+0.32)**2+(ny-0.25)**2) < 0.13;
@@ -765,7 +862,7 @@ const CHALLENGES = {
     if(mouth) return '#241c3d';
     return '#ffd23f';
   }},
-  mushroom: { name:'🍄 Cogumelo', fn:(nx,ny) => {
+  mushroom: { name:'🍄 Cogumelo', nameEn:'🍄 Mushroom', fn:(nx,ny) => {
     const inCap = (ny>0.05) && ((nx*nx)/(0.85*0.85) + ((ny-0.35)*(ny-0.35))/(0.5*0.5) <= 1);
     if(inCap){
       const spots = [[-0.35,0.5],[0.3,0.55],[0,0.25],[-0.15,0.15]];
@@ -777,7 +874,7 @@ const CHALLENGES = {
     if(nx>-0.28 && nx<0.28 && ny>-0.9 && ny<0.05) return '#f4e3c1';
     return null;
   }},
-  tree: { name:'🌳 Árvore', fn:(nx,ny) => {
+  tree: { name:'🌳 Árvore', nameEn:'🌳 Tree', fn:(nx,ny) => {
     if(nx>-0.15 && nx<0.15 && ny>-0.9 && ny<-0.05) return '#8b5a2b';
     if(Math.sqrt(nx*nx+(ny-0.35)**2) < 0.58) return '#2e5d32';
     return null;
@@ -827,11 +924,14 @@ function setPixels(newArr){
    TELA DE SETUP
 ====================================================== */
 function buildSetupScreen(){
+  const sizeLabels = currentLang==='pt'
+    ? {8:'bem simples',16:'equilibrado',32:'mais detalhe',64:'avançado'}
+    : {8:'very simple',16:'balanced',32:'more detail',64:'advanced'};
   const sizeEl = document.getElementById('size-choices');
   sizeEl.innerHTML = [8,16,32,64].map(n => `
     <div class="choice-card ${n===gridSize?'selected':''}" data-size="${n}" onclick="pickSize(${n})">
       <div class="title">${n}×${n}</div>
-      <div class="sub">${n<=8?'bem simples':n<=16?'equilibrado':n<=32?'mais detalhe':'avançado'}</div>
+      <div class="sub">${sizeLabels[n]}</div>
     </div>
   `).join('');
 
@@ -839,17 +939,19 @@ function buildSetupScreen(){
   palEl.innerHTML = Object.entries(PALETTES).map(([key,p]) => `
     <div class="choice-card ${key===selectedPaletteKey?'selected':''}" data-pal="${key}" onclick="pickPalette('${key}')">
       <div class="mini-swatches">${p.colors.map(c=>`<div class="mini-swatch" style="background:${c}"></div>`).join('')}</div>
-      <div class="sub">${p.name}</div>
+      <div class="sub">${currentLang==='pt' ? p.name : p.nameEn}</div>
     </div>
   `).join('');
 
   const chEl = document.getElementById('challenge-choices');
-  chEl.innerHTML = Object.entries(CHALLENGES).map(([key,c]) => `
+  chEl.innerHTML = Object.entries(CHALLENGES).map(([key,c]) => {
+    const nome = currentLang==='pt' ? c.name : c.nameEn;
+    return `
     <div class="choice-card ${key===selectedChallengeKey?'selected':''}" data-ch="${key}" onclick="pickChallenge('${key}')">
-      <div class="title" style="font-size:26px;">${c.name.split(' ')[0]}</div>
-      <div class="sub">${c.name.split(' ').slice(1).join(' ')}</div>
-    </div>
-  `).join('');
+      <div class="title" style="font-size:26px;">${nome.split(' ')[0]}</div>
+      <div class="sub">${nome.split(' ').slice(1).join(' ')}</div>
+    </div>`;
+  }).join('');
 }
 function pickSize(n){
   gridSize = n;
@@ -1542,7 +1644,7 @@ function startPreviewPlay(){
     alert('Crie pelo menos 2 quadros pra ver a animação rodando!');
     return;
   }
-  document.getElementById('preview-play-btn').textContent = '⏸️ Pausar';
+  document.getElementById('preview-play-btn').textContent = UI_STRINGS[currentLang].parar;
   previewFrameIdx = 0;
   const fps = parseInt(document.getElementById('fps-input').value,10) || 6;
   const canvas = document.getElementById('preview-canvas');
@@ -1555,7 +1657,7 @@ function startPreviewPlay(){
 function stopPreviewPlay(){
   if(previewTimer){ clearInterval(previewTimer); previewTimer=null; }
   const btn = document.getElementById('preview-play-btn');
-  if(btn) btn.textContent = '▶️ Reproduzir';
+  if(btn) btn.textContent = UI_STRINGS[currentLang].reproduzir;
 }
 
 /* ======================================================
@@ -1739,7 +1841,7 @@ function exportGIF(){
     return;
   }
   const status = document.getElementById('export-status');
-  status.textContent = '⏳ Gerando GIF...';
+  status.textContent = UI_STRINGS[currentLang].gerandoGif;
   setTimeout(() => {
     const bytes = buildGIFBytes();
     const blob = new Blob([bytes], {type:'image/gif'});
@@ -1749,7 +1851,7 @@ function exportGIF(){
     link.href = url;
     link.click();
     URL.revokeObjectURL(url);
-    status.textContent = '✅ GIF baixado!';
+    status.textContent = UI_STRINGS[currentLang].gifBaixado;
     setTimeout(() => { status.textContent=''; }, 2500);
   }, 30);
 }
@@ -1806,12 +1908,12 @@ function backToTurmaStep(){
 async function lookupTurmaForSave(){
   const code = document.getElementById('save-turma-code').value.trim().toLowerCase();
   const errEl = document.getElementById('save-turma-error');
-  if(!code){ errEl.textContent = '👉 Digite o código da turma.'; return; }
-  errEl.textContent = '⏳ Buscando...';
+  if(!code){ errEl.textContent = UI_STRINGS[currentLang].digiteCodigoTurma; return; }
+  errEl.textContent = UI_STRINGS[currentLang].buscando;
 
   const { data: turma, error } = await sb.from('turmas').select('*').eq('codigo_acesso', code).maybeSingle();
   if(error || !turma){
-    errEl.textContent = '❌ Turma não encontrada. Confira o código.';
+    errEl.textContent = UI_STRINGS[currentLang].turmaNaoEncontrada;
     return;
   }
   errEl.textContent = '';
@@ -1822,7 +1924,7 @@ async function lookupTurmaForSave(){
   document.getElementById('save-turma-name').textContent = turma.nome;
   const listEl = document.getElementById('save-aluno-list');
   if(!alunos || alunos.length === 0){
-    listEl.innerHTML = '<p style="font-family:\'Baloo 2\',sans-serif;color:var(--ink-soft);font-size:12px;">Nenhum aluno cadastrado nessa turma ainda.</p>';
+    listEl.innerHTML = '<p style="font-family:\'Baloo 2\',sans-serif;color:var(--ink-soft);font-size:12px;">' + UI_STRINGS[currentLang].nenhumAluno + '</p>';
   } else {
     listEl.innerHTML = alunos.map((a,i) => `<button class="btn purple" style="justify-content:center;" onclick="saveToAlunoIndex(${i})">${a.nome}</button>`).join('');
   }
@@ -1840,7 +1942,7 @@ async function saveToAlunoIndex(i){
     linkedTurmaCode = saveTurmaData.codigoTurma;
     updateLinkBadge();
     const status = document.getElementById('save-status');
-    status.textContent = '✅ Vinculado! Vou salvar automaticamente pra ' + aluno.nome + '.';
+    status.textContent = UI_STRINGS[currentLang].vinculadoSalvando + aluno.nome + '.';
     autosaveNow();
     setTimeout(closeSaveStudentModal, 1400);
     return;
@@ -1870,7 +1972,7 @@ async function uploadToStudent(aluno, blob, baseFilename, mimeType){
 
 async function saveToAluno(aluno){
   const status = document.getElementById('save-status');
-  status.textContent = '⏳ Enviando pra pasta de ' + aluno.nome + '...';
+  status.textContent = UI_STRINGS[currentLang].enviandoPasta + aluno.nome + '...';
   try{
     if(frames.length > 1){
       const bytes = buildGIFBytes();
@@ -1881,10 +1983,10 @@ async function saveToAluno(aluno){
       const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
       await uploadToStudent(aluno, blob, 'pixel-art.png', 'image/png');
     }
-    status.textContent = '✅ Salvo na pasta de ' + aluno.nome + '!';
+    status.textContent = UI_STRINGS[currentLang].salvoPasta + aluno.nome + '!';
     setTimeout(closeSaveStudentModal, 1600);
   } catch(e){
-    status.textContent = '❌ Erro: ' + e.message;
+    status.textContent = UI_STRINGS[currentLang].erroPrefix + e.message;
   }
 }
 
@@ -1914,7 +2016,7 @@ function updateLinkBadge(extra){
   const badges = document.querySelectorAll('.link-badge');
   badges.forEach(el => {
     if(linkedAluno){
-      el.innerHTML = `👤 Salvando como <b>${linkedAluno.nome}</b>${extra ? ' — '+extra : ''} <button class="link-unlink" onclick="unlinkAluno()">trocar</button>`;
+      el.innerHTML = `👤 ${currentLang==='pt'?'Salvando como':'Saving as'} <b>${linkedAluno.nome}</b>${extra ? ' — '+extra : ''} <button class="link-unlink" onclick="unlinkAluno()">${UI_STRINGS[currentLang].trocar}</button>`;
       el.style.display = 'flex';
     } else {
       el.style.display = 'none';
@@ -2292,6 +2394,7 @@ function handleImportGIF(event){
 initTheme();
 buildSetupScreen();
 checkAutosaveOnLoad();
+applyLang();
 window.addEventListener('beforeunload', () => {
   if(document.getElementById('editor-screen').style.display === 'flex') autosaveNow();
 });
