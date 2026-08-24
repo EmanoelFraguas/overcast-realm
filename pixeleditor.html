@@ -911,7 +911,7 @@ let sessionPaletteColors = [];
 let paletteEditMode = false;
 let linkedAluno = null;
 let linkedTurmaCode = null;
-let cloudSessionId = null;
+let cloudVersionedNames = {}; // baseFilename -> nome_v1.ext já sorteado nesta sessão de desenho
 let cloudRegisteredPaths = new Set();
 let selectedChallengeKey = 'none';
 let currentColor = '#000000';
@@ -989,7 +989,7 @@ function confirmBackNoSave(){
   stopAutosaveTimer();
   clearAutosave();
   // nova sessão de desenho: mantém o aluno vinculado, mas o próximo desenho vira um arquivo novo
-  cloudSessionId = null;
+  cloudVersionedNames = {};
   cloudRegisteredPaths = new Set();
   document.getElementById('editor-screen').style.display = 'none';
   document.getElementById('setup-screen').style.display = 'flex';
@@ -1962,13 +1962,32 @@ async function saveToAlunoIndex(i){
   await saveToAluno(aluno);
 }
 
-function ensureCloudSessionId(){
-  if(!cloudSessionId) cloudSessionId = Date.now();
-  return cloudSessionId;
+// Descobre o próximo número de versão pra um arquivo, olhando o que já existe
+// na pasta 'envios/{codigo}' do aluno. "pixel-art.png" -> "pixel-art_v1.png",
+// depois "pixel-art_v2.png", etc — nunca sobrescreve, sempre soma 1.
+async function proximoNomeVersionado(codigoAluno, nomeOriginal) {
+  const pontoIdx = nomeOriginal.lastIndexOf('.');
+  const nome = pontoIdx > -1 ? nomeOriginal.slice(0, pontoIdx) : nomeOriginal;
+  const ext = pontoIdx > -1 ? nomeOriginal.slice(pontoIdx) : '';
+  const escapar = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const padrao = new RegExp('^' + escapar(nome) + '_v(\\d+)' + escapar(ext) + '$', 'i');
+
+  let maiorVersao = 0;
+  try {
+    const { data: arquivos } = await sb.storage.from('submissoes').list(`envios/${codigoAluno}`);
+    (arquivos || []).forEach(f => {
+      const m = f.name.match(padrao);
+      if (m) maiorVersao = Math.max(maiorVersao, parseInt(m[1], 10));
+    });
+  } catch (e) { /* pasta pode não existir ainda — começa do v1 mesmo */ }
+
+  return `${nome}_v${maiorVersao + 1}${ext}`;
 }
 async function uploadToStudent(aluno, blob, baseFilename, mimeType){
-  ensureCloudSessionId();
-  const filename = `${cloudSessionId}_${baseFilename}`;
+  if(!cloudVersionedNames[baseFilename]){
+    cloudVersionedNames[baseFilename] = await proximoNomeVersionado(aluno.codigo, baseFilename);
+  }
+  const filename = cloudVersionedNames[baseFilename];
   const path = `envios/${aluno.codigo}/${filename}`;
   const { error: upErr } = await sb.storage.from('submissoes').upload(path, blob, { upsert:true, contentType:mimeType });
   if(upErr) throw new Error(upErr.message);
@@ -2038,6 +2057,7 @@ function updateLinkBadge(extra){
 function unlinkAluno(){
   linkedAluno = null;
   linkedTurmaCode = null;
+  cloudVersionedNames = {};
   cloudRegisteredPaths = new Set();
   updateLinkBadge();
   autosaveNow();
@@ -2072,7 +2092,7 @@ function autosaveNow(){
     const payload = {
       gridSize, selectedPaletteKey, selectedChallengeKey,
       sessionPaletteColors, frames, currentFrameIndex,
-      linkedAluno, linkedTurmaCode, cloudSessionId, cloudRegisteredPaths: [...cloudRegisteredPaths],
+      linkedAluno, linkedTurmaCode, cloudVersionedNames, cloudRegisteredPaths: [...cloudRegisteredPaths],
       savedAt: Date.now()
     };
     localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(payload));
@@ -2111,7 +2131,7 @@ function restoreAutosave(){
   currentColor = sessionPaletteColors[0];
   linkedAluno = data.linkedAluno || null;
   linkedTurmaCode = data.linkedTurmaCode || null;
-  cloudSessionId = data.cloudSessionId || null;
+  cloudVersionedNames = data.cloudVersionedNames || {};
   cloudRegisteredPaths = new Set(data.cloudRegisteredPaths || []);
   startEditor(true);
   updateLinkBadge();
