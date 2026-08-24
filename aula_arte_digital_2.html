@@ -87,7 +87,7 @@
     background:#140f24; border:4px solid var(--border); border-radius:14px;
     padding:10px; display:inline-block;
   }
-  #sphere-grid, #sphere-grid-m2, #sphere-grid-m3{ display:grid; line-height:0; }
+  .sph-grid{ display:grid; line-height:0; }
   .sph-cell{ width:100%; height:100%; }
   .sph-cell.pulse{ animation:pulseCell 1s infinite; box-shadow:0 0 0 2px #fff inset; }
   @keyframes pulseCell{ 0%,100%{ filter:brightness(1); } 50%{ filter:brightness(1.6); } }
@@ -137,6 +137,8 @@
     background:var(--bg-card); border:2px dashed var(--yellow); border-radius:12px; padding:10px 14px;
   }
   .ref-label{ font-family:'Baloo 2', sans-serif; font-weight:800; font-size:12px; color:var(--ink-soft); margin:0 0 6px; text-align:center; }
+  .ref-stage-caption{ font-family:'Baloo 2', sans-serif; font-weight:800; font-size:12px; color:var(--yellow); text-align:center; margin:8px 0 4px; min-height:16px; }
+  .ref-stage-nav{ display:flex; align-items:center; justify-content:center; gap:8px; }
   .m4-actions{ display:flex; flex-direction:column; gap:8px; }
 
   @media (max-width:640px){ .dir-pad{ grid-template-columns:repeat(3,44px); grid-template-rows:repeat(2,44px);} }
@@ -176,7 +178,7 @@
           <button class="dir-btn dir-l" onclick="setLightDir('esquerda', this)">⬅️</button>
           <button class="dir-btn dir-r" onclick="setLightDir('direita', this)">➡️</button>
         </div>
-        <div class="sphere-stage"><div id="sphere-grid"></div></div>
+        <div class="sphere-stage"><div class="sph-grid" id="sphere-grid"></div></div>
       </div>
     </div>
   </section>
@@ -190,7 +192,7 @@
       <div class="m2-layout">
         <div class="term-list" id="term-list"></div>
         <div>
-          <div class="sphere-stage"><div id="sphere-grid-m2"></div></div>
+          <div class="sphere-stage"><div class="sph-grid" id="sphere-grid-m2"></div></div>
           <p class="term-desc" id="term-desc">👈 Clique num termo pra começar.</p>
         </div>
       </div>
@@ -204,7 +206,7 @@
       <p class="desc">É assim que se constrói uma sombra, uma camada de cada vez. Vá passando pra frente e repare o que muda a cada etapa.</p>
 
       <div class="m3-layout">
-        <div class="sphere-stage"><div id="sphere-grid-m3"></div></div>
+        <div class="sphere-stage"><div class="sph-grid" id="sphere-grid-m3"></div></div>
         <p class="stage-caption" id="stage-caption"></p>
         <div class="stage-dots" id="stage-dots"></div>
         <div class="stage-nav">
@@ -228,8 +230,14 @@
         </div>
 
         <div>
-          <p class="ref-label">👀 REFERÊNCIA</p>
-          <div class="sphere-stage"><div id="sphere-grid-m4-ref"></div></div>
+          <p class="ref-label">👀 REFERÊNCIA (por etapas)</p>
+          <div class="sphere-stage"><div class="sph-grid" id="sphere-grid-m4-ref"></div></div>
+          <p class="ref-stage-caption" id="ref-stage-caption"></p>
+          <div class="ref-stage-nav">
+            <button class="btn gray" onclick="prevM4RefStage()">⬅️</button>
+            <div class="stage-dots" id="ref-stage-dots"></div>
+            <button class="btn purple" onclick="nextM4RefStage()">➡️</button>
+          </div>
         </div>
 
         <div class="m4-side">
@@ -496,40 +504,28 @@ function clearDrawing(){
   drawGrid = new Array(DRAW_N*DRAW_N).fill(null);
   paintAllDrawCells();
 }
+let m4RefStageIdx = STAGES.length - 1;
+
 function renderM4Reference(){
-  const N = 20;
-  const lightDir = LIGHT_DIRS['cima-esquerda'];
+  // usa a MESMA esfera e as MESMAS etapas do Módulo 3 (não uma versão simplificada) —
+  // só que em resolução bem mais alta, pra não parecer um grid de pixel editável,
+  // e sim a imagem-objetivo de verdade.
+  const N = 48;
+  const cellPx = 5;
   const el = document.getElementById('sphere-grid-m4-ref');
-  const cellPx = 18;
   el.style.gridTemplateColumns = `repeat(${N}, ${cellPx}px)`;
   el.style.gridTemplateRows = `repeat(${N}, ${cellPx}px)`;
-  // usa exatamente as 4 cores disponíveis no desafio (contorno aqui = o traço
-  // escuro ao redor, não a "luz de contorno" dos módulos 2/3 — são coisas diferentes)
-  const M4_COLORS = { contorno:'#2a1a1a', sombra:'#7a4632', base:'#c97f56', luz:'#f5d9ab' };
-  let html = '';
-  for(let gy=0; gy<N; gy++){
-    for(let gx=0; gx<N; gx++){
-      const cx = (gx+0.5)/N*2-1;
-      const cy = (gy+0.5)/N*2-1;
-      const r2 = cx*cx+cy*cy;
-      if(r2 > 1){ html += `<div class="sph-cell" style="background:transparent"></div>`; continue; }
-      const r = Math.sqrt(r2);
-      let region;
-      if(r > 0.88){
-        region = 'contorno';
-      } else {
-        const z = Math.sqrt(1-r2);
-        const nx = cx, ny = -cy, nz = z;
-        const dot = Math.max(0, nx*lightDir[0] + ny*lightDir[1] + nz*lightDir[2]);
-        if(dot > 0.55) region = 'luz';
-        else if(dot > 0.22) region = 'base';
-        else region = 'sombra';
-      }
-      html += `<div class="sph-cell" style="background:${M4_COLORS[region]}"></div>`;
-    }
-  }
-  el.innerHTML = html;
+  const stage = STAGES[m4RefStageIdx];
+  const cells = sphereCells(N, LIGHT_DIRS['cima-esquerda']);
+  renderSphereGrid('sphere-grid-m4-ref', N, cellPx, cells, stage.map);
+
+  document.getElementById('ref-stage-caption').textContent = stage.caption;
+  const dotsEl = document.getElementById('ref-stage-dots');
+  dotsEl.innerHTML = STAGES.map((_,i) => `<div class="stage-dot ${i===m4RefStageIdx?'active':''}" onclick="goToM4RefStage(${i})"></div>`).join('');
 }
+function goToM4RefStage(i){ m4RefStageIdx = i; renderM4Reference(); }
+function nextM4RefStage(){ if(m4RefStageIdx < STAGES.length-1) m4RefStageIdx++; renderM4Reference(); }
+function prevM4RefStage(){ if(m4RefStageIdx > 0) m4RefStageIdx--; renderM4Reference(); }
 
 buildM4Palette();
 buildDrawGrid();
