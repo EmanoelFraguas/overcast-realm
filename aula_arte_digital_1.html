@@ -615,12 +615,12 @@ function setContraste(tipo){
   atualizarPreview();
 }
 
-/* ============ MÓDULO 4: FRAMES DE ANIMAÇÃO ============ */
-const CHAR_BASE = ["001100","001100","011110","001100","011110","001100"];
+/* ============ MÓDULO 4: FRAMES DE ANIMAÇÃO (bolinha quicando) ============ */
 const FRAMES = [
-  CHAR_BASE.concat(["010010","010010"]),
-  CHAR_BASE.concat(["100001","001100"]),
-  CHAR_BASE.concat(["001100","100001"])
+  ["000000","001100","011110","011110","001100","000000","000000","000000"], // 1. no alto, redonda
+  ["000000","000000","001100","011110","011110","011110","001100","000000"], // 2. caindo, esticada
+  ["000000","000000","000000","000000","000000","011110","111111","011110"], // 3. impacto, achatada
+  ["000000","000000","001100","011110","011110","011110","001100","000000"]  // 4. subindo, esticada de novo
 ];
 let frameAtual = 0;
 let animPlaying = false;
