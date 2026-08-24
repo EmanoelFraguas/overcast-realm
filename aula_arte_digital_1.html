@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🕹️ Laboratório de Pixel Art — Aula 1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#1a1230;
+    --bg-panel:#251a42;
+    --bg-panel-2:#2e2050;
+    --border:#4a3a7a;
+    --neon-cyan:#4de8ff;
+    --neon-pink:#ff4de0;
+    --neon-yellow:#ffe14d;
+    --neon-green:#4dffa0;
+    --neon-orange:#ff9a4d;
+    --text:#f2eeff;
+    --text-soft:#b9adde;
+    --ok:#4dffa0;
+    --bad:#ff5c7a;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 15% 10%, rgba(77,232,255,0.08) 0%, transparent 45%),
+      radial-gradient(circle at 85% 90%, rgba(255,77,224,0.08) 0%, transparent 45%),
+      var(--bg-deep);
+    color:var(--text);
+    font-family:'Baloo 2', sans-serif;
+    min-height:100vh;
+    padding:14px;
+  }
+  .pixel{ font-family:'Press Start 2P', 'Courier New', monospace; }
+
+  .wrap{ max-width:1100px; margin:0 auto; }
+
+  /* ===== Cabeçalho ===== */
+  header{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:16px;
+  }
+  h1{
+    font-size:clamp(14px,2.4vw,20px);
+    color:var(--neon-cyan);
+    text-shadow:2px 2px 0 #000;
+    margin:0;
+  }
+  .timer-box{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:var(--bg-panel);
+    border:3px solid var(--border);
+    border-radius:10px;
+    padding:8px 12px;
+  }
+  #timer-display{
+    font-size:20px;
+    color:var(--neon-yellow);
+    min-width:70px;
+    text-align:center;
+  }
+  .mini-btn{
+    font-family:'Press Start 2P', monospace;
+    font-size:11px;
+    padding:8px 10px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    background:var(--bg-panel-2);
+    color:var(--text);
+    border:2px solid var(--border);
+  }
+  .mini-btn:active{ transform:translateY(2px); }
+
+  /* ===== Navegação de módulos ===== */
+  nav.modules{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:8px;
+    margin-bottom:20px;
+  }
+  .mod-tab{
+    font-family:'Press Start 2P', monospace;
+    font-size:clamp(9px,1.6vw,12px);
+    padding:14px 6px;
+    text-align:center;
+    background:var(--bg-panel);
+    border:3px solid var(--border);
+    border-radius:12px;
+    color:var(--text-soft);
+    cursor:pointer;
+    line-height:1.6;
+  }
+  .mod-tab .num{
+    display:block;
+    font-size:18px;
+    color:var(--neon-pink);
+    margin-bottom:4px;
+  }
+  .mod-tab.active{
+    border-color:var(--neon-cyan);
+    color:var(--text);
+    background:var(--bg-panel-2);
+    box-shadow:0 0 0 3px rgba(77,232,255,0.25);
+  }
+  .mod-tab.active .num{ color:var(--neon-cyan); }
+
+  /* ===== Painel de módulo ===== */
+  .module{ display:none; }
+  .module.active{ display:block; animation:fadein .25s ease; }
+  @keyframes fadein{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+
+  .panel{
+    background:var(--bg-panel);
+    border:3px solid var(--border);
+    border-radius:18px;
+    padding:20px;
+    margin-bottom:16px;
+  }
+  .panel h2{
+    font-size:clamp(13px,2.2vw,17px);
+    color:var(--neon-yellow);
+    margin:0 0 6px;
+    font-family:'Press Start 2P', monospace;
+  }
+  .panel .sub{
+    color:var(--text-soft);
+    font-size:15px;
+    margin:0 0 16px;
+    font-weight:700;
+  }
+  .time-hint{
+    display:inline-block;
+    font-size:11px;
+    font-family:'Press Start 2P', monospace;
+    color:var(--neon-green);
+    background:rgba(77,255,160,0.1);
+    border:2px solid var(--neon-green);
+    border-radius:999px;
+    padding:4px 10px;
+    margin-bottom:10px;
+  }
+
+  button.big{
+    font-family:'Press Start 2P', monospace;
+    font-size:12px;
+    padding:12px 18px;
+    border:none;
+    border-radius:12px;
+    cursor:pointer;
+    color:#1a1230;
+    box-shadow:0 5px 0 rgba(0,0,0,0.3);
+  }
+  button.big:active{ transform:translateY(4px); box-shadow:none; }
+  .b-cyan{ background:var(--neon-cyan); }
+  .b-pink{ background:var(--neon-pink); }
+  .b-yellow{ background:var(--neon-yellow); }
+  .b-green{ background:var(--neon-green); }
+  .b-orange{ background:var(--neon-orange); }
+  .btn-row{ display:flex; flex-wrap:wrap; gap:10px; margin:14px 0; }
+
+  /* ===== Módulo 1: grade de coordenadas ===== */
+  .coord-area{ display:flex; flex-wrap:wrap; gap:24px; align-items:flex-start; }
+  .grid-wrap{ display:inline-block; }
+  .x-axis{ display:flex; margin-left:28px; }
+  .x-axis span{ width:36px; text-align:center; font-size:11px; color:var(--neon-cyan); font-family:'Press Start 2P',monospace; }
+  .grid-row{ display:flex; align-items:center; }
+  .y-label{ width:24px; text-align:center; font-size:11px; color:var(--neon-cyan); font-family:'Press Start 2P',monospace; }
+  #coord-grid{ display:grid; grid-template-columns:repeat(8, 36px); grid-template-rows:repeat(8, 36px); gap:2px; background:#0f0a1e; padding:4px; border-radius:8px; }
+  .cell{
+    width:36px; height:36px;
+    background:#3a2c60;
+    border-radius:4px;
+    cursor:pointer;
+    transition:transform .08s;
+  }
+  .cell:hover{ transform:scale(1.1); }
+
+  .palette-row{ display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+  .swatch{
+    width:38px; height:38px;
+    border-radius:8px;
+    cursor:pointer;
+    border:3px solid transparent;
+  }
+  .swatch.selected{ border-color:#fff; transform:scale(1.12); }
+
+  .challenge-box{
+    background:var(--bg-panel-2);
+    border:3px dashed var(--neon-pink);
+    border-radius:12px;
+    padding:14px;
+    min-width:220px;
+    flex:1;
+  }
+  #challenge-text{ font-size:16px; font-weight:800; min-height:44px; }
+  #challenge-feedback{ font-family:'Press Start 2P',monospace; font-size:12px; margin-top:10px; min-height:20px; }
+  #challenge-feedback.ok{ color:var(--ok); }
+  #challenge-feedback.bad{ color:var(--bad); }
+
+  /* ===== Módulo 2: resolução ===== */
+  .res-compare{ display:flex; gap:30px; flex-wrap:wrap; align-items:flex-end; justify-content:center; }
+  .res-block{ text-align:center; }
+  .res-block .label{ font-family:'Press Start 2P',monospace; font-size:11px; color:var(--neon-yellow); margin-bottom:10px; }
+  .pixel-grid{ display:inline-grid; gap:1px; background:#0f0a1e; padding:6px; border-radius:8px; }
+  .pixel-grid .px{ background:transparent; }
+  .pixel-grid .px.on{ background:var(--neon-pink); }
+
+  /* ===== Módulo 3: paleta e contraste ===== */
+  .palette-section{ display:flex; gap:26px; flex-wrap:wrap; }
+  .palette-col h3{ font-family:'Press Start 2P',monospace; font-size:11px; color:var(--neon-cyan); margin:0 0 10px; }
+  .preview-screen{
+    width:220px; height:220px;
+    border-radius:14px;
+    border:4px solid #0f0a1e;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:background .2s;
+    flex-shrink:0;
+  }
+  .preview-char{
+    width:80px; height:80px;
+    border-radius:50%;
+    transition:background .2s;
+    box-shadow:0 0 0 4px rgba(0,0,0,0.15);
+  }
+
+  /* ===== Módulo 4: frames de animação ===== */
+  .frames-row{ display:flex; gap:14px; margin-bottom:18px; flex-wrap:wrap; }
+  .frame-thumb{
+    background:var(--bg-panel-2);
+    border:3px solid var(--border);
+    border-radius:12px;
+    padding:10px;
+    cursor:pointer;
+    text-align:center;
+  }
+  .frame-thumb.active{ border-color:var(--neon-green); box-shadow:0 0 0 3px rgba(77,255,160,.25); }
+  .frame-thumb .lbl{ font-family:'Press Start 2P',monospace; font-size:10px; color:var(--text-soft); margin-top:6px; display:block; }
+  .anim-screen{
+    width:220px; height:220px;
+    background:#0f0a1e;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-bottom:14px;
+  }
+  .char-grid{ display:inline-grid; gap:1px; }
+  .char-grid .px{ background:transparent; }
+  .char-grid .px.on{ background:var(--neon-cyan); }
+  .speed-row{ display:flex; align-items:center; gap:10px; font-size:13px; color:var(--text-soft); }
+  input[type=range]{ accent-color:var(--neon-pink); }
+
+  @media (max-width:640px){
+    nav.modules{ grid-template-columns:repeat(2,1fr); }
+    .cell{ width:28px; height:28px; }
+    .x-axis span{ width:28px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1 class="pixel">🕹️ LABORATÓRIO DE PIXEL ART</h1>
+    <div class="timer-box">
+      <span class="pixel" style="font-size:11px;color:var(--text-soft);">⏱</span>
+      <span id="timer-display" class="pixel">60:00</span>
+      <button class="mini-btn" onclick="toggleTimer()" id="timer-btn">▶</button>
+      <button class="mini-btn" onclick="resetTimer()">🔄</button>
+    </div>
+  </header>
+
+  <nav class="modules">
+    <div class="mod-tab active" id="tab-1" onclick="showModule(1)"><span class="num">1</span>Mapa dos Pixels</div>
+    <div class="mod-tab" id="tab-2" onclick="showModule(2)"><span class="num">2</span>Resolução</div>
+    <div class="mod-tab" id="tab-3" onclick="showModule(3)"><span class="num">3</span>Cores e Contraste</div>
+    <div class="mod-tab" id="tab-4" onclick="showModule(4)"><span class="num">4</span>Frames de Animação</div>
+  </nav>
+
+  <!-- ===================== MÓDULO 1 ===================== -->
+  <section class="module active" id="module-1">
+    <div class="panel">
+      <span class="time-hint">⏱ ~15 min</span>
+      <h2>🗺️ O MAPA DOS PIXELS</h2>
+      <p class="sub">Toda imagem de jogo é um mapa de quadradinhos! Cada um tem um endereço: coluna (X) e linha (Y).</p>
+
+      <div class="palette-row" id="m1-palette"></div>
+
+      <div class="coord-area">
+        <div class="grid-wrap">
+          <div class="x-axis" id="m1-xaxis"></div>
+          <div id="m1-rows"></div>
+        </div>
+
+        <div class="challenge-box">
+          <div id="challenge-text" class="pixel" style="font-family:'Baloo 2',sans-serif;">Clique em "Novo Desafio" pra começar! 👇</div>
+          <div class="btn-row">
+            <button class="big b-pink" onclick="novoDesafio()">🎯 Novo Desafio</button>
+            <button class="big b-cyan" onclick="verificarDesafio()">✅ Verificar</button>
+            <button class="big b-yellow" onclick="limparGrade()">🧹 Limpar</button>
+          </div>
+          <div id="challenge-feedback"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== MÓDULO 2 ===================== -->
+  <section class="module" id="module-2">
+    <div class="panel">
+      <span class="time-hint">⏱ ~10 min</span>
+      <h2>🔍 O QUE É UM PIXEL?</h2>
+      <p class="sub">Quanto mais quadradinhos (pixels) uma imagem tem, mais detalhes ela mostra. Olha o mesmo coração nas duas versões:</p>
+
+      <div class="res-compare">
+        <div class="res-block">
+          <div class="label">😵 POUCOS PIXELS (4×4)</div>
+          <div class="pixel-grid" id="res-low"></div>
+        </div>
+        <div class="res-block">
+          <div class="label">✨ MUITOS PIXELS (12×12)</div>
+          <div class="pixel-grid" id="res-high"></div>
+        </div>
+      </div>
+      <p class="sub" style="margin-top:18px;">👉 Jogos retrô antigos usavam poucos pixels de propósito — era tudo que os computadores da época conseguiam desenhar!</p>
+    </div>
+  </section>
+
+  <!-- ===================== MÓDULO 3 ===================== -->
+  <section class="module" id="module-3">
+    <div class="panel">
+      <span class="time-hint">⏱ ~15 min</span>
+      <h2>🎨 PALETA DE CORES E CONTRASTE</h2>
+      <p class="sub">Escolha a cor do fundo e a cor do personagem. Se as cores forem parecidas, o personagem some!</p>
+
+      <div class="palette-section">
+        <div class="palette-col">
+          <h3>🖼️ COR DO FUNDO</h3>
+          <div class="palette-row" id="bg-palette"></div>
+        </div>
+        <div class="palette-col">
+          <h3>🧑 COR DO PERSONAGEM</h3>
+          <div class="palette-row" id="char-palette"></div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="big b-green" onclick="setContraste('bom')">✨ Ver Contraste Bom</button>
+        <button class="big b-pink" onclick="setContraste('ruim')">😵 Ver Contraste Ruim</button>
+      </div>
+
+      <div class="preview-screen" id="preview-screen">
+        <div class="preview-char" id="preview-char"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== MÓDULO 4 ===================== -->
+  <section class="module" id="module-4">
+    <div class="panel">
+      <span class="time-hint">⏱ ~15 min</span>
+      <h2>🎬 A MÁGICA DOS FRAMES</h2>
+      <p class="sub">Movimento no jogo é uma ilusão! São só desenhos paradinhos (frames) trocando rápido. Clique em cada um:</p>
+
+      <div class="frames-row" id="frames-row"></div>
+
+      <div class="anim-screen">
+        <div class="char-grid" id="anim-char"></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="big b-cyan" id="play-btn" onclick="toggleAnim()">▶️ Animar!</button>
+      </div>
+      <div class="speed-row">
+        🐢 Devagar
+        <input type="range" id="speed-slider" min="150" max="600" value="350">
+        🐇 Rápido
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* ============ TROCA DE MÓDULOS ============ */
+function showModule(n){
+  document.querySelectorAll('.module').forEach(m=>m.classList.remove('active'));
+  document.querySelectorAll('.mod-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('module-'+n).classList.add('active');
+  document.getElementById('tab-'+n).classList.add('active');
+}
+
+/* ============ CRONÔMETRO (60 min regressivo) ============ */
+let timerSeconds = 60*60;
+let timerRunning = false;
+let timerInterval = null;
+function formatTime(s){
+  const m = Math.floor(s/60), sec = s%60;
+  return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
+}
+function tickTimer(){
+  if(timerSeconds > 0){ timerSeconds--; document.getElementById('timer-display').textContent = formatTime(timerSeconds); }
+}
+function toggleTimer(){
+  timerRunning = !timerRunning;
+  document.getElementById('timer-btn').textContent = timerRunning ? '⏸' : '▶';
+  if(timerRunning){ timerInterval = setInterval(tickTimer, 1000); }
+  else{ clearInterval(timerInterval); }
+}
+function resetTimer(){
+  timerSeconds = 60*60;
+  document.getElementById('timer-display').textContent = formatTime(timerSeconds);
+  timerRunning = false;
+  document.getElementById('timer-btn').textContent = '▶';
+  clearInterval(timerInterval);
+}
+
+/* ============ FERRAMENTA GENÉRICA: renderiza um pixel-grid a partir de um array de strings 0/1 ============ */
+function renderPixelGrid(containerEl, pattern, cellSize, color){
+  const rows = pattern.length, cols = pattern[0].length;
+  containerEl.style.gridTemplateColumns = `repeat(${cols}, ${cellSize}px)`;
+  containerEl.style.gridTemplateRows = `repeat(${rows}, ${cellSize}px)`;
+  containerEl.innerHTML = '';
+  for(let y=0;y<rows;y++){
+    for(let x=0;x<cols;x++){
+      const px = document.createElement('div');
+      px.className = 'px' + (pattern[y][x]==='1' ? ' on' : '');
+      px.style.width = cellSize+'px';
+      px.style.height = cellSize+'px';
+      if(pattern[y][x]==='1' && color) px.style.background = color;
+      containerEl.appendChild(px);
+    }
+  }
+}
+
+/* ============ MÓDULO 1: MAPA DOS PIXELS ============ */
+const PALETTE_M1 = [
+  {name:'Azul', value:'#4de8ff'},
+  {name:'Rosa', value:'#ff4de0'},
+  {name:'Amarelo', value:'#ffe14d'},
+  {name:'Verde', value:'#4dffa0'},
+  {name:'Laranja', value:'#ff9a4d'}
+];
+let corSelecionada = PALETTE_M1[0];
+const GRID_SIZE = 8;
+let gridState = Array.from({length:GRID_SIZE}, () => Array(GRID_SIZE).fill(null));
+let desafioAtual = null;
+
+function initModulo1(){
+  const paletteEl = document.getElementById('m1-palette');
+  paletteEl.innerHTML = '';
+  PALETTE_M1.forEach((c,i)=>{
+    const sw = document.createElement('div');
+    sw.className = 'swatch' + (i===0 ? ' selected' : '');
+    sw.style.background = c.value;
+    sw.onclick = () => {
+      corSelecionada = c;
+      document.querySelectorAll('#m1-palette .swatch').forEach(s=>s.classList.remove('selected'));
+      sw.classList.add('selected');
+    };
+    paletteEl.appendChild(sw);
+  });
+
+  const xaxis = document.getElementById('m1-xaxis');
+  xaxis.innerHTML = '';
+  for(let x=0;x<GRID_SIZE;x++){
+    const s = document.createElement('span');
+    s.textContent = x;
+    xaxis.appendChild(s);
+  }
+
+  const rowsEl = document.getElementById('m1-rows');
+  rowsEl.innerHTML = '';
+  for(let y=0;y<GRID_SIZE;y++){
+    const rowDiv = document.createElement('div');
+    rowDiv.className = 'grid-row';
+    const yLabel = document.createElement('div');
+    yLabel.className = 'y-label';
+    yLabel.textContent = y;
+    rowDiv.appendChild(yLabel);
+
+    const gridInner = document.createElement('div');
+    gridInner.style.display = 'grid';
+    gridInner.style.gridTemplateColumns = `repeat(${GRID_SIZE}, 36px)`;
+    gridInner.style.gap = '2px';
+    for(let x=0;x<GRID_SIZE;x++){
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.id = `m1-${x}-${y}`;
+      cell.onclick = () => {
+        gridState[x][y] = corSelecionada;
+        cell.style.background = corSelecionada.value;
+      };
+      gridInner.appendChild(cell);
+    }
+    rowDiv.appendChild(gridInner);
+    rowsEl.appendChild(rowDiv);
+  }
+}
+
+function limparGrade(){
+  gridState = Array.from({length:GRID_SIZE}, () => Array(GRID_SIZE).fill(null));
+  document.querySelectorAll('#m1-rows .cell').forEach(c => c.style.background = '#3a2c60');
+  document.getElementById('challenge-feedback').textContent = '';
+}
+
+function novoDesafio(){
+  const x = Math.floor(Math.random()*GRID_SIZE);
+  const y = Math.floor(Math.random()*GRID_SIZE);
+  const cor = PALETTE_M1[Math.floor(Math.random()*PALETTE_M1.length)];
+  desafioAtual = {x,y,cor};
+  document.getElementById('challenge-text').innerHTML =
+    `Pinte de <b style="color:${cor.value}">${cor.name.toUpperCase()}</b> a coordenada<br><span class="pixel" style="font-size:18px;">X:${x} Y:${y}</span>`;
+  document.getElementById('challenge-feedback').textContent = '';
+  document.getElementById('challenge-feedback').className = '';
+}
+
+function verificarDesafio(){
+  const fb = document.getElementById('challenge-feedback');
+  if(!desafioAtual){ fb.textContent = '👉 Clique em "Novo Desafio" primeiro!'; fb.className=''; return; }
+  const pintado = gridState[desafioAtual.x][desafioAtual.y];
+  if(pintado && pintado.value === desafioAtual.cor.value){
+    fb.textContent = '🎉 ACERTOU!';
+    fb.className = 'ok';
+  } else {
+    fb.textContent = '❌ Tenta de novo!';
+    fb.className = 'bad';
+  }
+}
+
+/* ============ MÓDULO 2: RESOLUÇÃO ============ */
+const HEART_LOW = [
+  "0110",
+  "1111",
+  "0110",
+  "0000"
+];
+const HEART_HIGH = [
+  "001100000011000000",
+  "011110000001111000",
+  "111111111111111111",
+  "111111111111111111",
+  "111111111111111111",
+  "111111111111111111",
+  "011111111111111110",
+  "011111111111111110",
+  "001111111111111100",
+  "000111111111111000",
+  "000011111111110000",
+  "000001111111100000"
+].map(r => r.slice(0,12)); // garante 12 colunas
+
+function initModulo2(){
+  renderPixelGrid(document.getElementById('res-low'), HEART_LOW, 26, '#ff4de0');
+  renderPixelGrid(document.getElementById('res-high'), HEART_HIGH, 14, '#ff4de0');
+}
+
+/* ============ MÓDULO 3: PALETA E CONTRASTE ============ */
+const PALETTE_M3 = [
+  {name:'Preto', value:'#1a1230'},
+  {name:'Branco', value:'#f2eeff'},
+  {name:'Azul', value:'#4de8ff'},
+  {name:'Laranja', value:'#ff9a4d'},
+  {name:'Roxo', value:'#a06bff'},
+  {name:'Amarelo', value:'#ffe14d'},
+  {name:'Verde', value:'#4dffa0'},
+  {name:'Vermelho', value:'#ff5c7a'}
+];
+let corFundo = PALETTE_M3[2];
+let corPersonagem = PALETTE_M3[3];
+
+function initModulo3(){
+  const bgEl = document.getElementById('bg-palette');
+  const charEl = document.getElementById('char-palette');
+  bgEl.innerHTML = ''; charEl.innerHTML = '';
+
+  PALETTE_M3.forEach(c=>{
+    const sw1 = document.createElement('div');
+    sw1.className = 'swatch';
+    sw1.style.background = c.value;
+    sw1.onclick = () => { corFundo = c; atualizarPreview(); marcarSelecionado(bgEl, sw1); };
+    bgEl.appendChild(sw1);
+
+    const sw2 = document.createElement('div');
+    sw2.className = 'swatch';
+    sw2.style.background = c.value;
+    sw2.onclick = () => { corPersonagem = c; atualizarPreview(); marcarSelecionado(charEl, sw2); };
+    charEl.appendChild(sw2);
+  });
+  atualizarPreview();
+}
+function marcarSelecionado(container, el){
+  container.querySelectorAll('.swatch').forEach(s=>s.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function atualizarPreview(){
+  document.getElementById('preview-screen').style.background = corFundo.value;
+  document.getElementById('preview-char').style.background = corPersonagem.value;
+}
+function setContraste(tipo){
+  if(tipo==='bom'){ corFundo = PALETTE_M3[2]; corPersonagem = PALETTE_M3[3]; }
+  else { corFundo = PALETTE_M3[2]; corPersonagem = {name:'Azul Clarinho', value:'#7fd9ff'}; }
+  atualizarPreview();
+}
+
+/* ============ MÓDULO 4: FRAMES DE ANIMAÇÃO ============ */
+const CHAR_BASE = ["001100","001100","011110","001100","011110","001100"];
+const FRAMES = [
+  CHAR_BASE.concat(["010010","010010"]),
+  CHAR_BASE.concat(["100001","001100"]),
+  CHAR_BASE.concat(["001100","100001"])
+];
+let frameAtual = 0;
+let animPlaying = false;
+let animInterval = null;
+
+function initModulo4(){
+  const row = document.getElementById('frames-row');
+  row.innerHTML = '';
+  FRAMES.forEach((f,i)=>{
+    const thumb = document.createElement('div');
+    thumb.className = 'frame-thumb' + (i===0 ? ' active' : '');
+    thumb.id = 'frame-thumb-'+i;
+    const g = document.createElement('div');
+    g.className = 'char-grid';
+    thumb.appendChild(g);
+    const lbl = document.createElement('span');
+    lbl.className = 'lbl';
+    lbl.textContent = 'Frame ' + (i+1);
+    thumb.appendChild(lbl);
+    thumb.onclick = () => selecionarFrame(i);
+    row.appendChild(thumb);
+    renderPixelGrid(g, f, 8, '#4de8ff');
+  });
+  selecionarFrame(0);
+}
+function selecionarFrame(i){
+  frameAtual = i;
+  document.querySelectorAll('.frame-thumb').forEach(t=>t.classList.remove('active'));
+  document.getElementById('frame-thumb-'+i).classList.add('active');
+  renderPixelGrid(document.getElementById('anim-char'), FRAMES[i], 18, '#4de8ff');
+}
+function toggleAnim(){
+  animPlaying = !animPlaying;
+  const btn = document.getElementById('play-btn');
+  if(animPlaying){
+    btn.textContent = '⏸ Parar';
+    const speed = () => 750 - parseInt(document.getElementById('speed-slider').value);
+    const loop = () => {
+      selecionarFrame((frameAtual+1) % FRAMES.length);
+      animInterval = setTimeout(loop, speed());
+    };
+    loop();
+  } else {
+    btn.textContent = '▶️ Animar!';
+    clearTimeout(animInterval);
+  }
+}
+
+/* ============ INICIALIZAÇÃO ============ */
+initModulo1();
+initModulo2();
+initModulo3();
+initModulo4();
+</script>
+</body>
+</html>

@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aula 2: Luz e Sombra — Overcast Realm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Baloo+2:wght@500;700;800&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#181229;
+    --bg-panel:#241c3d;
+    --bg-card:#2c2350;
+    --border:#4a3a7c;
+    --pink:#ff5fa2;
+    --cyan:#4be8ff;
+    --yellow:#ffd23f;
+    --green:#4be08f;
+    --purple:#a06bff;
+    --orange:#ff9a3c;
+    --ink:#ffffff;
+    --ink-soft:#c9bfe8;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 10% 10%, #2e2258 0%, transparent 45%),
+      radial-gradient(circle at 90% 20%, #1e3a52 0%, transparent 40%),
+      radial-gradient(circle at 80% 90%, #35204a 0%, transparent 45%),
+      var(--bg-deep);
+    color:var(--ink);
+    font-family:'Nunito', sans-serif;
+    min-height:100vh;
+    padding:14px;
+  }
+  .wrap{max-width:1100px;margin:0 auto;}
+  h1,h2,h3, .pixel{ font-family:'Press Start 2P', monospace; }
+
+  .back-row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+  .back-home{
+    display:inline-flex; align-items:center; gap:5px;
+    font-family:'Baloo 2', sans-serif; font-weight:700; font-size:12px;
+    color:var(--ink-soft); background:var(--bg-card); border:2px solid var(--border);
+    border-radius:999px; padding:8px 14px; text-decoration:none;
+  }
+
+  header{ text-align:center; margin-bottom:16px; }
+  header h1{ font-size:clamp(16px,3vw,26px); color:var(--cyan); text-shadow:3px 3px 0 #000; margin:0 0 8px; }
+  header p{ font-family:'Baloo 2', sans-serif; font-weight:700; color:var(--ink-soft); font-size:15px; margin:0; }
+
+  .tabs{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:16px 0; }
+  .tab-btn{
+    font-family:'Press Start 2P', monospace; font-size:10px; color:var(--ink-soft);
+    background:var(--bg-panel); border:3px solid var(--border); border-radius:14px;
+    padding:12px 14px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px; min-width:110px;
+  }
+  .tab-btn .n{ font-size:18px; }
+  .tab-btn.active{ color:#fff; background:linear-gradient(160deg,var(--purple),#6a3fd6); border-color:var(--purple); }
+
+  .module{ display:none; }
+  .module.active{ display:block; animation:fadein .25s ease; }
+  @keyframes fadein{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+
+  .panel{
+    background:var(--bg-panel); border:3px solid var(--border); border-radius:22px;
+    box-shadow:0 8px 0 #120c22; padding:22px; margin-bottom:16px;
+  }
+  .panel h2{ font-size:15px; color:var(--yellow); margin:0 0 6px; }
+  .panel .desc{ font-family:'Baloo 2', sans-serif; font-weight:700; color:var(--ink-soft); font-size:15px; margin:0 0 18px; line-height:1.4; }
+
+  .btn{
+    font-family:'Press Start 2P', monospace; font-size:11px; color:#fff; border:none;
+    border-radius:999px; padding:12px 20px; cursor:pointer; box-shadow:0 4px 0 rgba(0,0,0,0.3);
+    display:inline-flex; align-items:center; gap:8px;
+  }
+  .btn:active{ transform:translateY(3px); box-shadow:none; }
+  .btn.pink{ background:var(--pink); } .btn.cyan{ background:#0891b2; } .btn.green{ background:#0d9b6c; }
+  .btn.purple{ background:var(--purple); } .btn.gray{ background:#4a3a7c; }
+  .btn.selected{ outline:3px solid #fff; }
+  .btn:disabled{ opacity:.35; cursor:default; }
+
+  .flow-nav{ display:flex; justify-content:space-between; max-width:1100px; margin:0 auto 30px; }
+
+  /* ---- esfera renderizada em pixels (mesma técnica nos módulos 1-3) ---- */
+  .sphere-stage{
+    background:#140f24; border:4px solid var(--border); border-radius:14px;
+    padding:10px; display:inline-block;
+  }
+  #sphere-grid, #sphere-grid-m2, #sphere-grid-m3{ display:grid; line-height:0; }
+  .sph-cell{ width:100%; height:100%; }
+  .sph-cell.pulse{ animation:pulseCell 1s infinite; box-shadow:0 0 0 2px #fff inset; }
+  @keyframes pulseCell{ 0%,100%{ filter:brightness(1); } 50%{ filter:brightness(1.6); } }
+
+  /* módulo 1 */
+  .m1-layout{ display:flex; flex-wrap:wrap; gap:24px; align-items:center; justify-content:center; }
+  .dir-pad{ display:grid; grid-template-columns:repeat(3,54px); grid-template-rows:repeat(2,54px); gap:8px; }
+  .dir-btn{
+    font-size:22px; border:3px solid var(--border); background:var(--bg-card); border-radius:12px;
+    cursor:pointer; color:#fff;
+  }
+  .dir-btn.active{ border-color:var(--yellow); background:#4a3a10; }
+  .dir-tl{grid-column:1;grid-row:1;} .dir-t{grid-column:2;grid-row:1;} .dir-tr{grid-column:3;grid-row:1;}
+  .dir-l{grid-column:1;grid-row:2;} .dir-r{grid-column:3;grid-row:2;}
+
+  /* módulo 2 */
+  .m2-layout{ display:flex; flex-wrap:wrap; gap:24px; align-items:flex-start; justify-content:center; }
+  .term-list{ display:flex; flex-direction:column; gap:8px; min-width:230px; }
+  .term-btn{
+    font-family:'Baloo 2', sans-serif; font-weight:800; font-size:14px; text-align:left;
+    border:3px solid var(--border); background:var(--bg-card); color:var(--ink-soft);
+    border-radius:12px; padding:10px 14px; cursor:pointer;
+  }
+  .term-btn .dot{ display:inline-block; width:12px; height:12px; border-radius:50%; margin-right:8px; vertical-align:middle; }
+  .term-btn.active{ border-color:var(--yellow); color:#fff; background:#3a2f10; }
+  .term-desc{ font-family:'Baloo 2', sans-serif; font-weight:700; color:var(--ink-soft); font-size:13px; margin-top:10px; max-width:230px; min-height:40px; }
+
+  /* módulo 3 */
+  .m3-layout{ display:flex; flex-direction:column; align-items:center; gap:14px; }
+  .stage-caption{ font-family:'Baloo 2', sans-serif; font-weight:800; font-size:16px; color:var(--yellow); text-align:center; }
+  .stage-dots{ display:flex; gap:6px; }
+  .stage-dot{ width:14px; height:14px; border-radius:50%; background:var(--bg-card); border:2px solid var(--border); cursor:pointer; }
+  .stage-dot.active{ background:var(--yellow); border-color:var(--yellow); }
+  .stage-nav{ display:flex; gap:10px; }
+
+  /* módulo 4: desafio */
+  .m4-layout{ display:flex; flex-wrap:wrap; gap:26px; align-items:flex-start; justify-content:center; }
+  #draw-grid{ display:grid; gap:1px; background:#0e0a1c; border:4px solid var(--border); border-radius:12px; padding:6px; line-height:0; }
+  .draw-cell{ background:transparent; cursor:pointer; }
+  .draw-cell.guide{ box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12); }
+  .m4-side{ display:flex; flex-direction:column; gap:14px; min-width:220px; }
+  .m4-palette{ display:flex; gap:10px; }
+  .m4-swatch{ width:42px; height:42px; border-radius:10px; border:3px solid transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; }
+  .m4-swatch.selected{ border-color:#fff; transform:scale(1.1); }
+  .light-hint{
+    font-family:'Baloo 2', sans-serif; font-weight:800; font-size:13px; color:var(--ink-soft);
+    background:var(--bg-card); border:2px dashed var(--yellow); border-radius:12px; padding:10px 14px;
+  }
+  .ref-label{ font-family:'Baloo 2', sans-serif; font-weight:800; font-size:12px; color:var(--ink-soft); margin:0 0 6px; text-align:center; }
+  .m4-actions{ display:flex; flex-direction:column; gap:8px; }
+
+  @media (max-width:640px){ .dir-pad{ grid-template-columns:repeat(3,44px); grid-template-rows:repeat(2,44px);} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="back-row">
+    <a href="./index.html" class="back-home">← Voltar</a>
+    <a href="./aula_arte_digital_1.html" class="back-home">🕹️ Aula 1</a>
+  </div>
+
+  <header>
+    <h1>🔦 AULA 2: LUZ E SOMBRA</h1>
+    <p>Overcast Realm — de onde vem a luz, o vocabulário da sombra, e um desafio com paleta limitada</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab-btn active" id="tabbtn-1" onclick="goToModule(1)"><span class="n">1️⃣</span>Direção da Luz</button>
+    <button class="tab-btn" id="tabbtn-2" onclick="goToModule(2)"><span class="n">2️⃣</span>Vocabulário</button>
+    <button class="tab-btn" id="tabbtn-3" onclick="goToModule(3)"><span class="n">3️⃣</span>Passo a Passo</button>
+    <button class="tab-btn" id="tabbtn-4" onclick="goToModule(4)"><span class="n">4️⃣</span>Desafio</button>
+  </div>
+
+  <!-- ================= MÓDULO 1 ================= -->
+  <section class="module active" id="module-1">
+    <div class="panel">
+      <h2>🔦 DE ONDE VEM A LUZ?</h2>
+      <p class="desc">Antes de sombrear qualquer coisa, escolha de onde a luz está vindo. Isso decide onde fica o brilho e onde fica a sombra. Clique numa seta e observe a esfera.</p>
+
+      <div class="m1-layout">
+        <div class="dir-pad">
+          <button class="dir-btn dir-tl" onclick="setLightDir('cima-esquerda', this)">↖️</button>
+          <button class="dir-btn dir-t active" onclick="setLightDir('cima', this)">⬆️</button>
+          <button class="dir-btn dir-tr" onclick="setLightDir('cima-direita', this)">↗️</button>
+          <button class="dir-btn dir-l" onclick="setLightDir('esquerda', this)">⬅️</button>
+          <button class="dir-btn dir-r" onclick="setLightDir('direita', this)">➡️</button>
+        </div>
+        <div class="sphere-stage"><div id="sphere-grid"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= MÓDULO 2 ================= -->
+  <section class="module" id="module-2">
+    <div class="panel">
+      <h2>🏷️ VOCABULÁRIO DA SOMBRA</h2>
+      <p class="desc">Toda sombra bem feita tem essas partes. Clique em cada termo pra ver onde ele fica na esfera.</p>
+
+      <div class="m2-layout">
+        <div class="term-list" id="term-list"></div>
+        <div>
+          <div class="sphere-stage"><div id="sphere-grid-m2"></div></div>
+          <p class="term-desc" id="term-desc">👈 Clique num termo pra começar.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= MÓDULO 3 ================= -->
+  <section class="module" id="module-3">
+    <div class="panel">
+      <h2>🪜 PASSO A PASSO</h2>
+      <p class="desc">É assim que se constrói uma sombra, uma camada de cada vez. Vá passando pra frente e repare o que muda a cada etapa.</p>
+
+      <div class="m3-layout">
+        <div class="sphere-stage"><div id="sphere-grid-m3"></div></div>
+        <p class="stage-caption" id="stage-caption"></p>
+        <div class="stage-dots" id="stage-dots"></div>
+        <div class="stage-nav">
+          <button class="btn gray" onclick="prevStage()">⬅️ Anterior</button>
+          <button class="btn purple" onclick="nextStage()">Próxima ➡️</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= MÓDULO 4 ================= -->
+  <section class="module" id="module-4">
+    <div class="panel">
+      <h2>🎨 DESAFIO: SOMBRA COM PALETA LIMITADA</h2>
+      <p class="desc">Só 4 cores: contorno, sombra, base e luz. A luz vem do canto ↖️ — pinte a sombra do lado oposto e a luz perto de onde ela bate. Use a linha pontilhada como guia.</p>
+
+      <div class="m4-layout">
+        <div>
+          <p class="ref-label">✏️ SEU DESENHO</p>
+          <div class="sphere-stage"><div id="draw-grid"></div></div>
+        </div>
+
+        <div>
+          <p class="ref-label">👀 REFERÊNCIA</p>
+          <div class="sphere-stage"><div id="sphere-grid-m4-ref"></div></div>
+        </div>
+
+        <div class="m4-side">
+          <div class="light-hint">↖️ A luz vem daqui!</div>
+          <div>
+            <p style="font-family:'Baloo 2',sans-serif;font-weight:700;color:var(--ink-soft);font-size:13px;margin:0 0 8px;">Cor atual:</p>
+            <div class="m4-palette" id="m4-palette"></div>
+          </div>
+          <div class="m4-actions">
+            <button class="btn gray" onclick="toggleGuide()">👻 Ver/Ocultar Guia</button>
+            <button class="btn gray" onclick="clearDrawing()">🧹 Limpar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="flow-nav">
+    <button class="btn gray" id="prev-btn" onclick="prevModule()">⬅️ Voltar</button>
+    <button class="btn purple" id="next-btn" onclick="nextModule()">Avançar ➡️</button>
+  </div>
+
+</div>
+
+<script>
+/* ======================================================
+   NAVEGAÇÃO ENTRE MÓDULOS
+====================================================== */
+let currentModule = 1;
+function goToModule(n){
+  currentModule = n;
+  document.querySelectorAll('.module').forEach(m => m.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+  document.getElementById('module-'+n).classList.add('active');
+  document.getElementById('tabbtn-'+n).classList.add('active');
+  document.getElementById('prev-btn').disabled = (n === 1);
+  document.getElementById('next-btn').textContent = (n === 4) ? '🏁 Fim da aula' : 'Avançar ➡️';
+  document.getElementById('next-btn').disabled = (n === 4);
+}
+function nextModule(){ if(currentModule < 4) goToModule(currentModule+1); }
+function prevModule(){ if(currentModule > 1) goToModule(currentModule-1); }
+
+/* ======================================================
+   MATEMÁTICA DA ESFERA (usada nos módulos 1, 2 e 3)
+====================================================== */
+function normalize(v){ const m = Math.hypot(...v); return v.map(x=>x/m); }
+const LIGHT_DIRS = {
+  'cima-esquerda': normalize([-0.55, 0.65, 0.55]),
+  'cima':          normalize([0, 0.7, 0.6]),
+  'cima-direita':  normalize([0.55, 0.65, 0.55]),
+  'direita':       normalize([0.75, 0.15, 0.55]),
+  'esquerda':      normalize([-0.75, 0.15, 0.55])
+};
+const REGION_COLORS = {
+  bg: 'transparent',
+  brilho:   '#fff3d6',
+  luz:      '#f0b88c',
+  base:     '#c97f56',
+  sombra:   '#7a4632',
+  contorno: '#bcdcef',
+  reflexo:  '#8a5a42',
+  castshadow: 'rgba(0,0,0,0.35)'
+};
+function sphereCells(N, lightDir){
+  const cells = [];
+  for(let gy=0; gy<N; gy++){
+    for(let gx=0; gx<N; gx++){
+      const cx = (gx+0.5)/N*2-1;
+      const cy = (gy+0.5)/N*2-1;
+      const r2 = cx*cx+cy*cy;
+      if(r2 > 1){ cells.push({region:'bg'}); continue; }
+      const r = Math.sqrt(r2);
+      const z = Math.sqrt(1-r2);
+      const nx = cx, ny = -cy, nz = z;
+      let dot = nx*lightDir[0] + ny*lightDir[1] + nz*lightDir[2];
+      dot = Math.max(0, dot);
+      let region;
+      if(dot > 0.90) region = 'brilho';
+      else if(dot > 0.55) region = 'luz';
+      else if(dot > 0.25) region = 'base';
+      else {
+        const oppDot = -(nx*lightDir[0]+ny*lightDir[1]);
+        if(r > 0.85 && oppDot > 0.3) region = 'contorno';
+        else if(cy > 0.35 && dot < 0.12) region = 'reflexo';
+        else region = 'sombra';
+      }
+      cells.push({region});
+    }
+  }
+  return cells;
+}
+function renderSphereGrid(containerId, N, cellPx, cells, regionMap, highlightRegion){
+  const el = document.getElementById(containerId);
+  el.style.gridTemplateColumns = `repeat(${N}, ${cellPx}px)`;
+  el.style.gridTemplateRows = `repeat(${N}, ${cellPx}px)`;
+  let html = '';
+  cells.forEach((c,i) => {
+    let region = c.region;
+    if(region !== 'bg' && regionMap){
+      region = regionMap[region] || region;
+    }
+    const color = REGION_COLORS[region] || 'transparent';
+    const pulse = (highlightRegion && c.region === highlightRegion) ? ' pulse' : '';
+    html += `<div class="sph-cell${pulse}" style="background:${color}"></div>`;
+  });
+  el.innerHTML = html;
+}
+
+/* ======================================================
+   MÓDULO 1 — direção da luz
+====================================================== */
+let currentDir = 'cima';
+function setLightDir(dir, btn){
+  currentDir = dir;
+  document.querySelectorAll('.dir-btn').forEach(b => b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  const cells = sphereCells(26, LIGHT_DIRS[dir]);
+  renderSphereGrid('sphere-grid', 26, 12, cells);
+}
+setLightDir('cima', document.querySelector('.dir-t'));
+
+/* ======================================================
+   MÓDULO 2 — vocabulário
+====================================================== */
+const TERMS = [
+  { key:'luz',        label:'Brilho / Luz',      color:REGION_COLORS.luz,       desc:'A área virada direto pra fonte de luz. É a parte mais clara do objeto.' },
+  { key:'brilho',      label:'Reflexo Especular', color:REGION_COLORS.brilho,    desc:'Um pontinho bem branco e pequeno, o "brilho" — normalmente só uma ou duas casinhas.' },
+  { key:'base',        label:'Tom Base',          color:REGION_COLORS.base,      desc:'A cor "normal" do objeto, nem clara nem escura — o meio-tom.' },
+  { key:'sombra',       label:'Sombra de Volume',  color:REGION_COLORS.sombra,    desc:'O lado que a luz não alcança, porque a própria forma do objeto bloqueia.' },
+  { key:'contorno',   label:'Luz de Contorno',   color:REGION_COLORS.contorno,  desc:'Uma linha fina e clara na borda, do lado oposto à luz — dá a sensação de profundidade.' },
+  { key:'reflexo',     label:'Luz Refletida',     color:REGION_COLORS.reflexo,   desc:'Um pouco de luz que "quica" do chão e ilumina de leve a parte de baixo da sombra.' }
+];
+function buildTermList(){
+  const el = document.getElementById('term-list');
+  el.innerHTML = TERMS.map(t => `
+    <button class="term-btn" data-key="${t.key}" onclick="selectTerm('${t.key}', this)">
+      <span class="dot" style="background:${t.color}"></span>${t.label}
+    </button>
+  `).join('');
+}
+function selectTerm(key, btn){
+  document.querySelectorAll('.term-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const term = TERMS.find(t => t.key === key);
+  document.getElementById('term-desc').textContent = term.desc;
+  const cells = sphereCells(26, LIGHT_DIRS['cima-esquerda']);
+  renderSphereGrid('sphere-grid-m2', 26, 12, cells, null, key);
+}
+buildTermList();
+(function initM2(){
+  const cells = sphereCells(26, LIGHT_DIRS['cima-esquerda']);
+  renderSphereGrid('sphere-grid-m2', 26, 12, cells);
+})();
+
+/* ======================================================
+   MÓDULO 3 — passo a passo
+====================================================== */
+const STAGES = [
+  { caption: '1. Cor base — sem sombra nenhuma ainda', map: { luz:'base', brilho:'base', contorno:'base', reflexo:'base', sombra:'base', base:'base' } },
+  { caption: '2. Sombra simples — só claro e escuro', map: { luz:'base', brilho:'base', contorno:'sombra', reflexo:'sombra', sombra:'sombra', base:'base' } },
+  { caption: '3. Realce — a luz mais forte aparece', map: { luz:'luz', brilho:'luz', contorno:'sombra', reflexo:'sombra', sombra:'sombra', base:'base' } },
+  { caption: '4. Brilho especular — o pontinho branco', map: { luz:'luz', brilho:'brilho', contorno:'sombra', reflexo:'sombra', sombra:'sombra', base:'base' } },
+  { caption: '5. Luz de contorno — uma linha na borda oposta', map: { luz:'luz', brilho:'brilho', contorno:'contorno', reflexo:'sombra', sombra:'sombra', base:'base' } },
+  { caption: '6. Luz refletida — um toque de claro na sombra', map: { luz:'luz', brilho:'brilho', contorno:'contorno', reflexo:'reflexo', sombra:'sombra', base:'base' } },
+  { caption: '7. Sombra completa — tudo junto', map: { luz:'luz', brilho:'brilho', contorno:'contorno', reflexo:'reflexo', sombra:'sombra', base:'base' } },
+  { caption: '8. Pronto! ✨', map: { luz:'luz', brilho:'brilho', contorno:'contorno', reflexo:'reflexo', sombra:'sombra', base:'base' } }
+];
+let stageIdx = 0;
+function renderStage(){
+  const stage = STAGES[stageIdx];
+  document.getElementById('stage-caption').textContent = stage.caption;
+  const cells = sphereCells(26, LIGHT_DIRS['cima-esquerda']);
+  renderSphereGrid('sphere-grid-m3', 26, 12, cells, stage.map);
+  document.querySelectorAll('.stage-dot').forEach((d,i) => d.classList.toggle('active', i===stageIdx));
+}
+function buildStageDots(){
+  const el = document.getElementById('stage-dots');
+  el.innerHTML = STAGES.map((_,i) => `<div class="stage-dot" onclick="goToStage(${i})"></div>`).join('');
+}
+function goToStage(i){ stageIdx = i; renderStage(); }
+function nextStage(){ if(stageIdx < STAGES.length-1) stageIdx++; renderStage(); }
+function prevStage(){ if(stageIdx > 0) stageIdx--; renderStage(); }
+buildStageDots();
+renderStage();
+
+/* ======================================================
+   MÓDULO 4 — desafio com paleta limitada
+====================================================== */
+const M4_PALETTE = [
+  { key:'contorno', label:'Contorno', color:'#2a1a1a' },
+  { key:'sombra',   label:'Sombra',   color:'#7a4632' },
+  { key:'base',     label:'Base',     color:'#c97f56' },
+  { key:'luz',      label:'Luz',      color:'#f5d9ab' }
+];
+const DRAW_N = 14;
+let drawColor = M4_PALETTE[2].color;
+let drawGrid = new Array(DRAW_N*DRAW_N).fill(null);
+let showGuide = true;
+let isDrawingM4 = false;
+
+function buildM4Palette(){
+  const el = document.getElementById('m4-palette');
+  el.innerHTML = M4_PALETTE.map((p,i) => `
+    <div class="m4-swatch ${i===2?'selected':''}" style="background:${p.color}" title="${p.label}" onclick="pickM4Color('${p.color}', this)"></div>
+  `).join('');
+}
+function pickM4Color(color, el){
+  drawColor = color;
+  document.querySelectorAll('.m4-swatch').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function isInsideGuide(gx, gy){
+  const cx = (gx+0.5)/DRAW_N*2-1;
+  const cy = (gy+0.5)/DRAW_N*2-1;
+  return (cx*cx+cy*cy) <= 1;
+}
+function buildDrawGrid(){
+  const el = document.getElementById('draw-grid');
+  const cellPx = 26;
+  el.style.gridTemplateColumns = `repeat(${DRAW_N}, ${cellPx}px)`;
+  el.style.gridTemplateRows = `repeat(${DRAW_N}, ${cellPx}px)`;
+  let html = '';
+  for(let i=0;i<DRAW_N*DRAW_N;i++){
+    html += `<div class="draw-cell" id="dc-${i}"></div>`;
+  }
+  el.innerHTML = html;
+  paintAllDrawCells();
+
+  el.onmousedown = e => { const i = dcIndex(e.target); if(i>=0){ isDrawingM4=true; paintDrawCell(i); } };
+  el.onmouseover = e => { const i = dcIndex(e.target); if(i>=0 && isDrawingM4) paintDrawCell(i); };
+  window.addEventListener('mouseup', () => { isDrawingM4=false; });
+  el.ontouchstart = e => { const i = dcTouchIndex(e); if(i>=0){ isDrawingM4=true; paintDrawCell(i); } e.preventDefault(); };
+  el.ontouchmove = e => { const i = dcTouchIndex(e); if(i>=0) paintDrawCell(i); e.preventDefault(); };
+  el.ontouchend = () => { isDrawingM4=false; };
+}
+function dcIndex(el){
+  if(!el || !el.id || !el.id.startsWith('dc-')) return -1;
+  return parseInt(el.id.slice(3),10);
+}
+function dcTouchIndex(e){
+  const t = e.touches[0]; if(!t) return -1;
+  return dcIndex(document.elementFromPoint(t.clientX, t.clientY));
+}
+function paintDrawCell(i){
+  drawGrid[i] = drawColor;
+  paintOneDrawCell(i);
+}
+function paintOneDrawCell(i){
+  const el = document.getElementById('dc-'+i);
+  if(!el) return;
+  el.style.background = drawGrid[i] || 'transparent';
+  const gx = i % DRAW_N, gy = Math.floor(i/DRAW_N);
+  el.classList.toggle('guide', showGuide && isInsideGuide(gx,gy) && !drawGrid[i]);
+}
+function paintAllDrawCells(){
+  for(let i=0;i<drawGrid.length;i++) paintOneDrawCell(i);
+}
+function toggleGuide(){
+  showGuide = !showGuide;
+  paintAllDrawCells();
+}
+function clearDrawing(){
+  if(!confirm('Limpar o desenho e recomeçar?')) return;
+  drawGrid = new Array(DRAW_N*DRAW_N).fill(null);
+  paintAllDrawCells();
+}
+function renderM4Reference(){
+  const N = 20;
+  const lightDir = LIGHT_DIRS['cima-esquerda'];
+  const el = document.getElementById('sphere-grid-m4-ref');
+  const cellPx = 18;
+  el.style.gridTemplateColumns = `repeat(${N}, ${cellPx}px)`;
+  el.style.gridTemplateRows = `repeat(${N}, ${cellPx}px)`;
+  // usa exatamente as 4 cores disponíveis no desafio (contorno aqui = o traço
+  // escuro ao redor, não a "luz de contorno" dos módulos 2/3 — são coisas diferentes)
+  const M4_COLORS = { contorno:'#2a1a1a', sombra:'#7a4632', base:'#c97f56', luz:'#f5d9ab' };
+  let html = '';
+  for(let gy=0; gy<N; gy++){
+    for(let gx=0; gx<N; gx++){
+      const cx = (gx+0.5)/N*2-1;
+      const cy = (gy+0.5)/N*2-1;
+      const r2 = cx*cx+cy*cy;
+      if(r2 > 1){ html += `<div class="sph-cell" style="background:transparent"></div>`; continue; }
+      const r = Math.sqrt(r2);
+      let region;
+      if(r > 0.88){
+        region = 'contorno';
+      } else {
+        const z = Math.sqrt(1-r2);
+        const nx = cx, ny = -cy, nz = z;
+        const dot = Math.max(0, nx*lightDir[0] + ny*lightDir[1] + nz*lightDir[2]);
+        if(dot > 0.55) region = 'luz';
+        else if(dot > 0.22) region = 'base';
+        else region = 'sombra';
+      }
+      html += `<div class="sph-cell" style="background:${M4_COLORS[region]}"></div>`;
+    }
+  }
+  el.innerHTML = html;
+}
+
+buildM4Palette();
+buildDrawGrid();
+renderM4Reference();
+</script>
+</body>
+</html>
