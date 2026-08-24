@@ -273,28 +273,29 @@
 <div class="wrap">
 
   <header>
-    <h1 class="pixel">🕹️ LABORATÓRIO DE PIXEL ART</h1>
+    <h1 class="pixel" id="t-h1">🕹️ LABORATÓRIO DE PIXEL ART</h1>
     <div class="timer-box">
       <span class="pixel" style="font-size:11px;color:var(--text-soft);">⏱</span>
       <span id="timer-display" class="pixel">60:00</span>
       <button class="mini-btn" onclick="toggleTimer()" id="timer-btn">▶</button>
       <button class="mini-btn" onclick="resetTimer()">🔄</button>
     </div>
+    <button id="lang-toggle-btn" style="position:fixed;top:10px;right:10px;z-index:999;font-size:20px;background:#fff;border:2px solid #ddd;border-radius:50%;width:38px;height:38px;cursor:pointer;" onclick="toggleLang()" title="English">🇺🇸</button>
   </header>
 
   <nav class="modules">
-    <div class="mod-tab active" id="tab-1" onclick="showModule(1)"><span class="num">1</span>Mapa dos Pixels</div>
-    <div class="mod-tab" id="tab-2" onclick="showModule(2)"><span class="num">2</span>Resolução</div>
-    <div class="mod-tab" id="tab-3" onclick="showModule(3)"><span class="num">3</span>Cores e Contraste</div>
-    <div class="mod-tab" id="tab-4" onclick="showModule(4)"><span class="num">4</span>Frames de Animação</div>
+    <div class="mod-tab active" id="tab-1" onclick="showModule(1)"><span class="num">1</span><span id="t-tab-1">Mapa dos Pixels</span></div>
+    <div class="mod-tab" id="tab-2" onclick="showModule(2)"><span class="num">2</span><span id="t-tab-2">Resolução</span></div>
+    <div class="mod-tab" id="tab-3" onclick="showModule(3)"><span class="num">3</span><span id="t-tab-3">Cores e Contraste</span></div>
+    <div class="mod-tab" id="tab-4" onclick="showModule(4)"><span class="num">4</span><span id="t-tab-4">Frames de Animação</span></div>
   </nav>
 
   <!-- ===================== MÓDULO 1 ===================== -->
   <section class="module active" id="module-1">
     <div class="panel">
       <span class="time-hint">⏱ ~15 min</span>
-      <h2>🗺️ O MAPA DOS PIXELS</h2>
-      <p class="sub">Toda imagem de jogo é um mapa de quadradinhos! Cada um tem um endereço: coluna (X) e linha (Y).</p>
+      <h2 id="t-m1-h2">🗺️ O MAPA DOS PIXELS</h2>
+      <p class="sub" id="t-m1-sub">Toda imagem de jogo é um mapa de quadradinhos! Cada um tem um endereço: coluna (X) e linha (Y).</p>
 
       <div class="palette-row" id="m1-palette"></div>
 
@@ -307,9 +308,9 @@
         <div class="challenge-box">
           <div id="challenge-text" class="pixel" style="font-family:'Baloo 2',sans-serif;">Clique em "Novo Desafio" pra começar! 👇</div>
           <div class="btn-row">
-            <button class="big b-pink" onclick="novoDesafio()">🎯 Novo Desafio</button>
-            <button class="big b-cyan" onclick="verificarDesafio()">✅ Verificar</button>
-            <button class="big b-yellow" onclick="limparGrade()">🧹 Limpar</button>
+            <button class="big b-pink" id="t-btn-novo" onclick="novoDesafio()">🎯 Novo Desafio</button>
+            <button class="big b-cyan" id="t-btn-verificar" onclick="verificarDesafio()">✅ Verificar</button>
+            <button class="big b-yellow" id="t-btn-limpar1" onclick="limparGrade()">🧹 Limpar</button>
           </div>
           <div id="challenge-feedback"></div>
         </div>
@@ -321,20 +322,20 @@
   <section class="module" id="module-2">
     <div class="panel">
       <span class="time-hint">⏱ ~10 min</span>
-      <h2>🔍 O QUE É UM PIXEL?</h2>
-      <p class="sub">Quanto mais quadradinhos (pixels) uma imagem tem, mais detalhes ela mostra. Olha o mesmo coração nas duas versões:</p>
+      <h2 id="t-m2-h2">🔍 O QUE É UM PIXEL?</h2>
+      <p class="sub" id="t-m2-sub">Quanto mais quadradinhos (pixels) uma imagem tem, mais detalhes ela mostra. Olha o mesmo coração nas duas versões:</p>
 
       <div class="res-compare">
         <div class="res-block">
-          <div class="label">😵 POUCOS PIXELS (4×4)</div>
+          <div class="label" id="t-res-low">😵 POUCOS PIXELS (4×4)</div>
           <div class="pixel-grid" id="res-low"></div>
         </div>
         <div class="res-block">
-          <div class="label">✨ MUITOS PIXELS (12×12)</div>
+          <div class="label" id="t-res-high">✨ MUITOS PIXELS (12×12)</div>
           <div class="pixel-grid" id="res-high"></div>
         </div>
       </div>
-      <p class="sub" style="margin-top:18px;">👉 Jogos retrô antigos usavam poucos pixels de propósito — era tudo que os computadores da época conseguiam desenhar!</p>
+      <p class="sub" style="margin-top:18px;" id="t-m2-sub2">👉 Jogos retrô antigos usavam poucos pixels de propósito — era tudo que os computadores da época conseguiam desenhar!</p>
     </div>
   </section>
 
@@ -342,23 +343,23 @@
   <section class="module" id="module-3">
     <div class="panel">
       <span class="time-hint">⏱ ~15 min</span>
-      <h2>🎨 PALETA DE CORES E CONTRASTE</h2>
-      <p class="sub">Escolha a cor do fundo e a cor do personagem. Se as cores forem parecidas, o personagem some!</p>
+      <h2 id="t-m3-h2">🎨 PALETA DE CORES E CONTRASTE</h2>
+      <p class="sub" id="t-m3-sub">Escolha a cor do fundo e a cor do personagem. Se as cores forem parecidas, o personagem some!</p>
 
       <div class="palette-section">
         <div class="palette-col">
-          <h3>🖼️ COR DO FUNDO</h3>
+          <h3 id="t-h3-fundo">🖼️ COR DO FUNDO</h3>
           <div class="palette-row" id="bg-palette"></div>
         </div>
         <div class="palette-col">
-          <h3>🧑 COR DO PERSONAGEM</h3>
+          <h3 id="t-h3-personagem">🧑 COR DO PERSONAGEM</h3>
           <div class="palette-row" id="char-palette"></div>
         </div>
       </div>
 
       <div class="btn-row">
-        <button class="big b-green" onclick="setContraste('bom')">✨ Ver Contraste Bom</button>
-        <button class="big b-pink" onclick="setContraste('ruim')">😵 Ver Contraste Ruim</button>
+        <button class="big b-green" id="t-btn-bom" onclick="setContraste('bom')">✨ Ver Contraste Bom</button>
+        <button class="big b-pink" id="t-btn-ruim" onclick="setContraste('ruim')">😵 Ver Contraste Ruim</button>
       </div>
 
       <div class="preview-screen" id="preview-screen">
@@ -371,8 +372,8 @@
   <section class="module" id="module-4">
     <div class="panel">
       <span class="time-hint">⏱ ~15 min</span>
-      <h2>🎬 A MÁGICA DOS FRAMES</h2>
-      <p class="sub">Movimento no jogo é uma ilusão! São só desenhos paradinhos (frames) trocando rápido. Clique em cada um:</p>
+      <h2 id="t-m4-h2">🎬 A MÁGICA DOS FRAMES</h2>
+      <p class="sub" id="t-m4-sub">Movimento no jogo é uma ilusão! São só desenhos paradinhos (frames) trocando rápido. Clique em cada um:</p>
 
       <div class="frames-row" id="frames-row"></div>
 
@@ -384,9 +385,9 @@
         <button class="big b-cyan" id="play-btn" onclick="toggleAnim()">▶️ Animar!</button>
       </div>
       <div class="speed-row">
-        🐢 Devagar
+        🐢 <span id="t-devagar">Devagar</span>
         <input type="range" id="speed-slider" min="150" max="600" value="350">
-        🐇 Rápido
+        🐇 <span id="t-rapido">Rápido</span>
       </div>
     </div>
   </section>
@@ -394,6 +395,79 @@
 </div>
 
 <script>
+/* ============ IDIOMA (PT/EN) ============ */
+let currentLang = 'pt';
+const UI_STRINGS = {
+  pt: {
+    h1:'🕹️ LABORATÓRIO DE PIXEL ART',
+    tab1:'Mapa dos Pixels', tab2:'Resolução', tab3:'Cores e Contraste', tab4:'Frames de Animação',
+    m1h2:'🗺️ O MAPA DOS PIXELS', m1sub:'Toda imagem de jogo é um mapa de quadradinhos! Cada um tem um endereço: coluna (X) e linha (Y).',
+    challengeInicial:'Clique em "Novo Desafio" pra começar! 👇',
+    btnNovo:'🎯 Novo Desafio', btnVerificar:'✅ Verificar', btnLimpar:'🧹 Limpar',
+    cliqueNovoDesafio:'👉 Clique em "Novo Desafio" primeiro!', acertou:'🎉 ACERTOU!', tentaDeNovo:'❌ Tenta de novo!',
+    m2h2:'🔍 O QUE É UM PIXEL?', m2sub:'Quanto mais quadradinhos (pixels) uma imagem tem, mais detalhes ela mostra. Olha o mesmo coração nas duas versões:',
+    resLow:'😵 POUCOS PIXELS (4×4)', resHigh:'✨ MUITOS PIXELS (12×12)',
+    m2sub2:'👉 Jogos retrô antigos usavam poucos pixels de propósito — era tudo que os computadores da época conseguiam desenhar!',
+    m3h2:'🎨 PALETA DE CORES E CONTRASTE', m3sub:'Escolha a cor do fundo e a cor do personagem. Se as cores forem parecidas, o personagem some!',
+    h3Fundo:'🖼️ COR DO FUNDO', h3Personagem:'🧑 COR DO PERSONAGEM',
+    btnBom:'✨ Ver Contraste Bom', btnRuim:'😵 Ver Contraste Ruim',
+    m4h2:'🎬 A MÁGICA DOS FRAMES', m4sub:'Movimento no jogo é uma ilusão! São só desenhos paradinhos (frames) trocando rápido. Clique em cada um:',
+    devagar:'Devagar', rapido:'Rápido', animar:'▶️ Animar!', parar:'⏸ Parar'
+  },
+  en: {
+    h1:'🕹️ PIXEL ART LAB',
+    tab1:'Pixel Map', tab2:'Resolution', tab3:'Colors and Contrast', tab4:'Animation Frames',
+    m1h2:'🗺️ THE PIXEL MAP', m1sub:'Every game image is a map of little squares! Each one has an address: column (X) and row (Y).',
+    challengeInicial:'Click "New Challenge" to start! 👇',
+    btnNovo:'🎯 New Challenge', btnVerificar:'✅ Check', btnLimpar:'🧹 Clear',
+    cliqueNovoDesafio:'👉 Click "New Challenge" first!', acertou:'🎉 CORRECT!', tentaDeNovo:'❌ Try again!',
+    m2h2:'🔍 WHAT IS A PIXEL?', m2sub:'The more little squares (pixels) an image has, the more detail it shows. Look at the same heart in both versions:',
+    resLow:'😵 FEW PIXELS (4×4)', resHigh:'✨ MANY PIXELS (12×12)',
+    m2sub2:'👉 Old retro games used few pixels on purpose — that was all the computers of that time could draw!',
+    m3h2:'🎨 COLOR PALETTE AND CONTRAST', m3sub:'Choose the background color and the character color. If the colors are too similar, the character disappears!',
+    h3Fundo:'🖼️ BACKGROUND COLOR', h3Personagem:'🧑 CHARACTER COLOR',
+    btnBom:'✨ See Good Contrast', btnRuim:'😵 See Bad Contrast',
+    m4h2:'🎬 THE MAGIC OF FRAMES', m4sub:"Movement in games is an illusion! It's just still drawings (frames) swapping quickly. Click each one:",
+    devagar:'Slow', rapido:'Fast', animar:'▶️ Animate!', parar:'⏸ Stop'
+  }
+};
+function toggleLang(){
+  currentLang = currentLang === 'pt' ? 'en' : 'pt';
+  applyLang();
+}
+function applyLang(){
+  const t = UI_STRINGS[currentLang];
+  document.getElementById('t-h1').textContent = t.h1;
+  document.getElementById('t-tab-1').textContent = t.tab1;
+  document.getElementById('t-tab-2').textContent = t.tab2;
+  document.getElementById('t-tab-3').textContent = t.tab3;
+  document.getElementById('t-tab-4').textContent = t.tab4;
+  document.getElementById('t-m1-h2').textContent = t.m1h2;
+  document.getElementById('t-m1-sub').textContent = t.m1sub;
+  document.getElementById('t-btn-novo').textContent = t.btnNovo;
+  document.getElementById('t-btn-verificar').textContent = t.btnVerificar;
+  document.getElementById('t-btn-limpar1').textContent = t.btnLimpar;
+  document.getElementById('t-m2-h2').textContent = t.m2h2;
+  document.getElementById('t-m2-sub').textContent = t.m2sub;
+  document.getElementById('t-res-low').textContent = t.resLow;
+  document.getElementById('t-res-high').textContent = t.resHigh;
+  document.getElementById('t-m2-sub2').textContent = t.m2sub2;
+  document.getElementById('t-m3-h2').textContent = t.m3h2;
+  document.getElementById('t-m3-sub').textContent = t.m3sub;
+  document.getElementById('t-h3-fundo').textContent = t.h3Fundo;
+  document.getElementById('t-h3-personagem').textContent = t.h3Personagem;
+  document.getElementById('t-btn-bom').textContent = t.btnBom;
+  document.getElementById('t-btn-ruim').textContent = t.btnRuim;
+  document.getElementById('t-m4-h2').textContent = t.m4h2;
+  document.getElementById('t-m4-sub').textContent = t.m4sub;
+  document.getElementById('t-devagar').textContent = t.devagar;
+  document.getElementById('t-rapido').textContent = t.rapido;
+  if(!desafioAtual) document.getElementById('challenge-text').textContent = t.challengeInicial;
+  document.getElementById('play-btn').textContent = animPlaying ? t.parar : t.animar;
+  document.getElementById('lang-toggle-btn').textContent = currentLang==='pt' ? '🇺🇸' : '🇧🇷';
+  document.getElementById('lang-toggle-btn').title = currentLang==='pt' ? 'English' : 'Português';
+}
+
 /* ============ TROCA DE MÓDULOS ============ */
 function showModule(n){
   document.querySelectorAll('.module').forEach(m=>m.classList.remove('active'));
@@ -447,11 +521,11 @@ function renderPixelGrid(containerEl, pattern, cellSize, color){
 
 /* ============ MÓDULO 1: MAPA DOS PIXELS ============ */
 const PALETTE_M1 = [
-  {name:'Azul', value:'#4de8ff'},
-  {name:'Rosa', value:'#ff4de0'},
-  {name:'Amarelo', value:'#ffe14d'},
-  {name:'Verde', value:'#4dffa0'},
-  {name:'Laranja', value:'#ff9a4d'}
+  {name:'Azul', en:'Blue', value:'#4de8ff'},
+  {name:'Rosa', en:'Pink', value:'#ff4de0'},
+  {name:'Amarelo', en:'Yellow', value:'#ffe14d'},
+  {name:'Verde', en:'Green', value:'#4dffa0'},
+  {name:'Laranja', en:'Orange', value:'#ff9a4d'}
 ];
 let corSelecionada = PALETTE_M1[0];
 const GRID_SIZE = 8;
@@ -521,21 +595,23 @@ function novoDesafio(){
   const y = Math.floor(Math.random()*GRID_SIZE);
   const cor = PALETTE_M1[Math.floor(Math.random()*PALETTE_M1.length)];
   desafioAtual = {x,y,cor};
+  const nomeCor = currentLang==='pt' ? cor.name : cor.en;
+  const pintarDe = currentLang==='pt' ? 'Pinte de' : 'Paint';
   document.getElementById('challenge-text').innerHTML =
-    `Pinte de <b style="color:${cor.value}">${cor.name.toUpperCase()}</b> a coordenada<br><span class="pixel" style="font-size:18px;">X:${x} Y:${y}</span>`;
+    `${pintarDe} <b style="color:${cor.value}">${nomeCor.toUpperCase()}</b> ${currentLang==='pt'?'a coordenada':'coordinate'}<br><span class="pixel" style="font-size:18px;">X:${x} Y:${y}</span>`;
   document.getElementById('challenge-feedback').textContent = '';
   document.getElementById('challenge-feedback').className = '';
 }
 
 function verificarDesafio(){
   const fb = document.getElementById('challenge-feedback');
-  if(!desafioAtual){ fb.textContent = '👉 Clique em "Novo Desafio" primeiro!'; fb.className=''; return; }
+  if(!desafioAtual){ fb.textContent = UI_STRINGS[currentLang].cliqueNovoDesafio; fb.className=''; return; }
   const pintado = gridState[desafioAtual.x][desafioAtual.y];
   if(pintado && pintado.value === desafioAtual.cor.value){
-    fb.textContent = '🎉 ACERTOU!';
+    fb.textContent = UI_STRINGS[currentLang].acertou;
     fb.className = 'ok';
   } else {
-    fb.textContent = '❌ Tenta de novo!';
+    fb.textContent = UI_STRINGS[currentLang].tentaDeNovo;
     fb.className = 'bad';
   }
 }
@@ -656,7 +732,7 @@ function toggleAnim(){
   animPlaying = !animPlaying;
   const btn = document.getElementById('play-btn');
   if(animPlaying){
-    btn.textContent = '⏸ Parar';
+    btn.textContent = UI_STRINGS[currentLang].parar;
     const speed = () => 750 - parseInt(document.getElementById('speed-slider').value);
     const loop = () => {
       selecionarFrame((frameAtual+1) % FRAMES.length);
@@ -664,7 +740,7 @@ function toggleAnim(){
     };
     loop();
   } else {
-    btn.textContent = '▶️ Animar!';
+    btn.textContent = UI_STRINGS[currentLang].animar;
     clearTimeout(animInterval);
   }
 }
@@ -674,6 +750,7 @@ initModulo1();
 initModulo2();
 initModulo3();
 initModulo4();
+applyLang();
 </script>
 </body>
 </html>
