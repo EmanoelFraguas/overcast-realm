@@ -453,6 +453,28 @@ function applyLang(){
 /* ======================================================
    PALETAS (mesmas do editor de pixel art)
 ====================================================== */
+// Descobre o próximo número de versão pra um arquivo, olhando o que já existe
+// na pasta 'envios/{codigo}' do aluno. "meu-mapa.png" -> "meu-mapa_v1.png",
+// depois "meu-mapa_v2.png", etc — nunca sobrescreve, sempre soma 1.
+async function proximoNomeVersionado(codigoAluno, nomeOriginal) {
+  const pontoIdx = nomeOriginal.lastIndexOf('.');
+  const nome = pontoIdx > -1 ? nomeOriginal.slice(0, pontoIdx) : nomeOriginal;
+  const ext = pontoIdx > -1 ? nomeOriginal.slice(pontoIdx) : '';
+  const escapar = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const padrao = new RegExp('^' + escapar(nome) + '_v(\\d+)' + escapar(ext) + '$', 'i');
+
+  let maiorVersao = 0;
+  try {
+    const { data: arquivos } = await sb.storage.from('submissoes').list(`envios/${codigoAluno}`);
+    (arquivos || []).forEach(f => {
+      const m = f.name.match(padrao);
+      if (m) maiorVersao = Math.max(maiorVersao, parseInt(m[1], 10));
+    });
+  } catch (e) { /* pasta pode não existir ainda — começa do v1 mesmo */ }
+
+  return `${nome}_v${maiorVersao + 1}${ext}`;
+}
+
 const PALETTES = {
   retro:  { name:'🕹️ Retrô Arcade', nameEn:'🕹️ Retro Arcade', colors:['#000000','#ffffff','#ff5fa2','#4be8ff','#ffd23f','#4be08f','#a06bff','#ff9a3c'] },
   doces:  { name:'🍬 Doces (Pastel)', nameEn:'🍬 Candy (Pastel)', colors:['#ffd1e8','#c9f2ff','#fff3b0','#d4f7dc','#e6d4ff','#ffe0c2','#ffffff','#5a4a6a'] },
@@ -1119,15 +1141,16 @@ async function saveToAlunoIndex(i){
   try{
     const jsonBlob = new Blob([JSON.stringify({tileSize,mapCols,mapRows,tiles,map:mapGrid},null,2)], {type:'application/json'});
     const pngBlob = await mapCanvasBlob();
-    const base = 'meu-mapa';
-    const pathPng = `envios/${aluno.codigo}/${base}.png`;
-    const pathJson = `envios/${aluno.codigo}/${base}.json`;
+    const nomePng = await proximoNomeVersionado(aluno.codigo, 'meu-mapa.png');
+    const nomeJson = await proximoNomeVersionado(aluno.codigo, 'meu-mapa.json');
+    const pathPng = `envios/${aluno.codigo}/${nomePng}`;
+    const pathJson = `envios/${aluno.codigo}/${nomeJson}`;
     let { error: e1 } = await sb.storage.from('submissoes').upload(pathPng, pngBlob, { upsert:true, contentType:'image/png' });
     if(e1) throw new Error(e1.message);
     let { error: e2 } = await sb.storage.from('submissoes').upload(pathJson, jsonBlob, { upsert:true, contentType:'application/json' });
     if(e2) throw new Error(e2.message);
-    await sb.rpc('registrar_envio', { p_codigo: aluno.codigo, p_nome_arquivo: base+'.png', p_storage_path: pathPng, p_tipo:'envio', p_tamanho_bytes: pngBlob.size });
-    await sb.rpc('registrar_envio', { p_codigo: aluno.codigo, p_nome_arquivo: base+'.json', p_storage_path: pathJson, p_tipo:'envio', p_tamanho_bytes: jsonBlob.size });
+    await sb.rpc('registrar_envio', { p_codigo: aluno.codigo, p_nome_arquivo: nomePng, p_storage_path: pathPng, p_tipo:'envio', p_tamanho_bytes: pngBlob.size });
+    await sb.rpc('registrar_envio', { p_codigo: aluno.codigo, p_nome_arquivo: nomeJson, p_storage_path: pathJson, p_tipo:'envio', p_tamanho_bytes: jsonBlob.size });
     status.textContent = UI_STRINGS[currentLang].salvoPasta + aluno.nome + '!';
     setTimeout(closeSaveStudentModal, 1600);
   }catch(e){
