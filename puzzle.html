@@ -324,12 +324,14 @@
   }
   .back-home:hover { color: var(--sky-dark); }
 </style>
+<script src="./progress.js"></script>
 </head>
 <body>
 <div class="wrap">
 
   <a href="./index.html" class="back-home">← Voltar pro Overcast Realm</a>
   <a href="./puzzle2.html" class="back-home" style="margin-left:10px;">Nível 2 →</a>
+  <span id="progress-badge-mount" style="margin-left:10px;"></span>
 
   <header>
     <div class="eyebrow">OVERCAST REALM · TURMA DE LÓGICA</div>
@@ -467,6 +469,39 @@ exercises.forEach((ex, idx)=>{
 
 let dragged = null;
 const solved = new Set();
+const STORAGE_KEY = 'overcast_puzzle1_v1';
+
+function saveProgress(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ solved:[...solved] }));
+  if(window.OvercastProgress){
+    OvercastProgress.saveProgress('puzzle1', { solved:[...solved] });
+  }
+}
+function loadProgress(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+    const data = JSON.parse(raw);
+    (data.solved||[]).forEach(n => solved.add(n));
+  }catch(e){}
+}
+async function syncCloudProgress(){
+  if(!window.OvercastProgress) return;
+  const cloud = await OvercastProgress.loadProgress('puzzle1');
+  if(cloud && Array.isArray(cloud.solved)){
+    let changed = false;
+    cloud.solved.forEach(n => { if(!solved.has(n)){ solved.add(n); changed = true; } });
+    if(changed){
+      solved.forEach(n => {
+        const board = document.querySelector('.board[data-exercise="'+n+'"]');
+        const fb = document.getElementById('fb-'+n);
+        if(fb){ fb.textContent = '🎉 Certinho! (salvo antes)'; fb.className = 'feedback ok'; }
+      });
+      updateProgress();
+      saveProgress();
+    }
+  }
+}
 
 function attachHandlers(){
   document.querySelectorAll('.block').forEach(block=>{
@@ -550,6 +585,7 @@ function checkExercise(n){
     solved.delete(n);
   }
   updateProgress();
+  saveProgress();
 }
 
 function resetExercise(n){
@@ -566,9 +602,17 @@ function resetExercise(n){
   fb.className = 'feedback';
   solved.delete(n);
   updateProgress();
+  saveProgress();
 }
 
+loadProgress();
 updateProgress();
+
+if(window.OvercastProgress){
+  OvercastProgress.mountBadge(document.getElementById('progress-badge-mount'));
+  OvercastProgress.onLink(identity => { if(identity) syncCloudProgress(); });
+  if(OvercastProgress.getIdentity()) syncCloudProgress();
+}
 </script>
 </body>
 </html>
