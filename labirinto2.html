@@ -305,6 +305,7 @@
 <body>
 <div class="wrap">
 
+  <button id="lang-toggle-btn" style="position:fixed;top:10px;right:10px;z-index:999;font-size:20px;background:var(--card);border:2px solid var(--card-edge);border-radius:50%;width:38px;height:38px;cursor:pointer;box-shadow:0 3px 0 var(--card-edge);" onclick="toggleLang()" title="English">🇺🇸</button>
   <div class="back-row">
     <a href="./index.html" class="back-home">← Voltar</a>
     <span id="progress-badge-mount"></span>
@@ -312,12 +313,12 @@
 
   <header>
     <h1>🤖 → ⭐</h1>
-    <p class="subtitle">Cada seta desliza até parar! Chegue na estrela.</p>
+    <p class="subtitle" id="t-subtitle">Cada seta desliza até parar! Chegue na estrela.</p>
   </header>
 
   <div class="legend">
-    <div class="li">⬆️⬇️⬅️➡️ <small>DESLIZAR</small></div>
-    <div class="li">🔁 <small>REPETIR</small></div>
+    <div class="li">⬆️⬇️⬅️➡️ <small id="t-legend-deslizar">DESLIZAR</small></div>
+    <div class="li">🔁 <small id="t-legend-repetir">REPETIR</small></div>
   </div>
 
   <div class="levels-strip" id="levels-strip"></div>
@@ -341,8 +342,8 @@
 
         <div class="action-buttons">
           <button class="big-btn btn-run" id="btn-run" onclick="runProgram()">▶️ Play</button>
-          <button class="big-btn btn-reset" onclick="reiniciarTentativa()">🔁 Reiniciar</button>
-          <button class="big-btn btn-clear" onclick="clearProgram()">🗑️ Limpar</button>
+          <button class="big-btn btn-reset" id="t-btn-reset" onclick="reiniciarTentativa()">🔁 Reiniciar</button>
+          <button class="big-btn btn-clear" id="t-btn-clear" onclick="clearProgram()">🗑️ Limpar</button>
           <button class="big-btn btn-next" id="btn-next-inline" onclick="irProximaFase()">➡️ Próximo</button>
         </div>
 
@@ -421,6 +422,31 @@ const levels = rawLevels.map(l => ({
   start:l.wp[0], goal:l.wp[l.wp.length-1],
   path: buildPath(l.wp)
 }));
+
+let currentLang = 'pt';
+const UI_STRINGS = {
+  pt: { subtitle:'Cada seta desliza até parar! Chegue na estrela.', deslizar:'DESLIZAR', repetir:'REPETIR',
+        reiniciar:'🔁 Reiniciar', limpar:'🗑️ Limpar', proximo:'➡️ Próximo', fim:'🏆 Fim!',
+        naoDeslizou:'❌ Esse bloco não deslizou', chegou:'🎉 Você chegou!', quaseEstrela:'🤔 Quase! Faltou chegar na estrela' },
+  en: { subtitle:'Each arrow slides until it stops! Reach the star.', deslizar:'SLIDE', repetir:'REPEAT',
+        reiniciar:'🔁 Reset', limpar:'🗑️ Clear', proximo:'➡️ Next', fim:'🏆 Done!',
+        naoDeslizou:"❌ That block didn't slide", chegou:'🎉 You made it!', quaseEstrela:"🤔 Almost! Didn't reach the star" }
+};
+function toggleLang(){
+  currentLang = currentLang === 'pt' ? 'en' : 'pt';
+  applyLang();
+}
+function applyLang(){
+  const t = UI_STRINGS[currentLang];
+  document.getElementById('t-subtitle').textContent = t.subtitle;
+  document.getElementById('t-legend-deslizar').textContent = t.deslizar;
+  document.getElementById('t-legend-repetir').textContent = t.repetir;
+  document.getElementById('t-btn-reset').textContent = t.reiniciar;
+  document.getElementById('t-btn-clear').textContent = t.limpar;
+  document.getElementById('btn-next-inline').textContent = t.proximo;
+  document.getElementById('lang-toggle-btn').textContent = currentLang==='pt' ? '🇺🇸' : '🇧🇷';
+  document.getElementById('lang-toggle-btn').title = currentLang==='pt' ? 'English' : 'Português';
+}
 
 const STORAGE_KEY = 'overcast_labirinto2_v1';
 let currentLevel = 0;
@@ -613,7 +639,7 @@ async function runProgram(){
       const cell = document.getElementById(`cell-${pos[0]}-${pos[1]}`);
       if(cell) cell.classList.add('bump');
       if(stepEl) stepEl.classList.add('fail');
-      msg.textContent = '❌ Esse bloco não deslizou';
+      msg.textContent = UI_STRINGS[currentLang].naoDeslizou;
       runBtn.disabled = false;
       return;
     }
@@ -635,7 +661,7 @@ async function runProgram(){
       completed.add(currentLevel);
       saveProgress();
       buildLevelsStrip();
-      msg.textContent = '🎉 Você chegou!';
+      msg.textContent = UI_STRINGS[currentLang].chegou;
       document.getElementById('btn-next-inline').style.display = 'inline-flex';
       await sleep(300);
       showWinOverlay();
@@ -644,13 +670,13 @@ async function runProgram(){
     }
   }
 
-  msg.textContent = '🤔 Quase! Faltou chegar na estrela';
+  msg.textContent = UI_STRINGS[currentLang].quaseEstrela;
   runBtn.disabled = false;
 }
 
 function showWinOverlay(){
   const isLast = currentLevel >= levels.length - 1;
-  document.getElementById('win-btn').innerHTML = isLast ? '🏆 Fim!' : '➡️ Próximo';
+  document.getElementById('win-btn').innerHTML = isLast ? UI_STRINGS[currentLang].fim : UI_STRINGS[currentLang].proximo;
   document.getElementById('win-overlay').classList.add('show');
 }
 function irProximaFase(){ closeWinOverlay(); }
@@ -670,6 +696,7 @@ loadProgress();
 if(currentLevel > maxUnlocked()) currentLevel = maxUnlocked();
 buildLevelsStrip();
 loadLevel();
+applyLang();
 
 if(window.OvercastProgress){
   OvercastProgress.mountBadge(document.getElementById('progress-badge-mount'));
