@@ -126,6 +126,7 @@
 </style>
 </head>
 <body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <div class="wrap">
 
   <div class="back-row">
@@ -137,7 +138,15 @@
     <p>Overcast Realm — escolha um cartucho e jogue direto na telinha</p>
   </header>
 
-  <div class="arcade-layout">
+  <div id="bloqueado-screen" style="display:none; text-align:center; padding:60px 20px;">
+    <div style="font-size:60px; margin-bottom:16px;">🔒</div>
+    <h2 class="pixel" style="font-size:16px; color:var(--pink); margin-bottom:12px;">ARCADE BLOQUEADO</h2>
+    <p style="color:var(--ink-soft); font-weight:700; font-size:14px; max-width:420px; margin:0 auto;">
+      O professor bloqueou o acesso aos jogos agora. Volta pra atividade da aula — o arcade libera de novo assim que ele permitir. 😉
+    </p>
+  </div>
+
+  <div class="arcade-layout" id="arcade-content" style="display:none;">
     <div>
       <div class="monitor-stand">
         <div class="monitor-vents"><span></span><span></span><span></span><span></span><span></span></div>
@@ -183,6 +192,19 @@
 </div>
 
 <script>
+const SUPABASE_URL = "https://kezlmecrxhjahhoekybs.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlemxtZWNyeGhqYWhob2VreWJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5MDkwNjAsImV4cCI6MjEwMjQ4NTA2MH0.-TcsKrFxRMeiqKrzXk57E8-60eobk3fJ0Crn7ci0MW8";
+const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+async function checarJogosLiberados(){
+  if(!sb) return true; // se não conseguir checar, não trava o aluno por causa disso
+  try{
+    const { data: row, error } = await sb.from('config_site').select('valor').eq('chave', 'jogos_liberados').maybeSingle();
+    if(error || !row) return true;
+    return row.valor === true;
+  }catch(e){ return true; }
+}
+
 let overcastData = { jogos: [] };
 let jogoAtual = null;
 let jogoRodando = false;
@@ -311,7 +333,16 @@ window.addEventListener('keydown', (e) => {
   }
 }, { passive: false });
 
-loadData().then(() => renderCartuchos(''));
+(async function init(){
+  const liberado = await checarJogosLiberados();
+  if(!liberado){
+    document.getElementById('bloqueado-screen').style.display = 'block';
+    return;
+  }
+  document.getElementById('arcade-content').style.display = 'grid';
+  await loadData();
+  renderCartuchos('');
+})();
 </script>
 </body>
 </html>
