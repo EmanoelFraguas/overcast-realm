@@ -303,7 +303,7 @@
 <script src="./progress.js"></script>
 </head>
 <body>
-<div class="wrap">
+<div class="wrap" id="page-content" style="display:none;">
 
   <button id="lang-toggle-btn" style="position:fixed;top:10px;right:10px;z-index:999;font-size:20px;background:var(--card);border:2px solid var(--card-edge);border-radius:50%;width:38px;height:38px;cursor:pointer;box-shadow:0 3px 0 var(--card-edge);" onclick="toggleLang()" title="English">🇺🇸</button>
   <div class="back-row">
@@ -361,6 +361,7 @@
   </div>
 </div>
 
+<script src="./course-gate.js"></script>
 <script>
 // Cada fase é definida por "esquinas" (waypoints). O caminho é a linha reta
 // entre cada par de esquinas seguidas. O robô sempre desliza até a próxima esquina.
@@ -703,6 +704,8 @@ if(window.OvercastProgress){
   OvercastProgress.onLink(identity => { if(identity) syncCloudProgress(); });
   if(OvercastProgress.getIdentity()) syncCloudProgress();
 }
+
+CourseGate.protect({ cursos: ['games'], contentSelector: '#page-content' });
 </script>
 </body>
 </html>
