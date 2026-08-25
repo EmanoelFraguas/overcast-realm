@@ -196,7 +196,7 @@
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="wrap" id="page-content" style="display:none;">
 
   <header>
     <a href="./index.html" class="back-home">← Voltar</a>
@@ -363,6 +363,7 @@
 
 </div>
 
+<script src="./course-gate.js"></script>
 <script>
 /* ======================================================
    IDIOMA (PT/EN)
@@ -1165,6 +1166,8 @@ initTheme();
 buildSetupScreen();
 checkAutosaveOnLoad();
 applyLang();
+
+CourseGate.protect({ cursos: ['games','arte'], contentSelector: '#page-content' });
 </script>
 </body>
 </html>
