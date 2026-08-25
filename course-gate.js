@@ -112,6 +112,8 @@ window.CourseGate = (function(){
     esconderOverlay();
   }
 
+  const LINK_VOLTAR = `<a href="./index.html" style="display:block;color:#8f88a8;font-size:12px;font-weight:700;text-decoration:none;margin-top:10px;">← Voltar pro Overcast Realm</a>`;
+
   function telaVincular(mensagemExtra){
     mostrarOverlay(`
       <div id="cg-icon">🔒</div>
@@ -126,8 +128,9 @@ window.CourseGate = (function(){
         <p style="color:#ffd23f;font-weight:800;" id="cg-turma-nome"></p>
         <p style="font-size:12px;">Clique no seu nome:</p>
         <div id="cg-aluno-list"></div>
-        <button class="cg-btn-gray" id="cg-voltar-btn">← Trocar turma</button>
+        <button class="cg-btn-gray" id="cg-trocar-turma-btn">← Trocar turma</button>
       </div>
+      ${LINK_VOLTAR}
     `);
     document.getElementById('cg-buscar-btn').onclick = buscarTurma;
     document.getElementById('cg-turma-code').addEventListener('keydown', e => { if(e.key === 'Enter') buscarTurma(); });
@@ -154,7 +157,7 @@ window.CourseGate = (function(){
     });
     document.getElementById('cg-step-turma').style.display = 'none';
     document.getElementById('cg-step-aluno').style.display = 'block';
-    document.getElementById('cg-voltar-btn').onclick = () => {
+    document.getElementById('cg-trocar-turma-btn').onclick = () => {
       document.getElementById('cg-step-turma').style.display = 'block';
       document.getElementById('cg-step-aluno').style.display = 'none';
     };
@@ -179,6 +182,7 @@ window.CourseGate = (function(){
       <h2>NÃO É DA SUA TURMA</h2>
       <p>Oi, ${nomeAluno}! Essa atividade é do curso <b>${nomesExigidos}</b>, mas sua turma é de <b>${nomeCursoAtual}</b>.</p>
       <button class="cg-btn-gray" id="cg-trocar-btn">🔁 Vincular com outro nome</button>
+      ${LINK_VOLTAR}
     `);
     document.getElementById('cg-trocar-btn').onclick = () => { clearIdentity(); telaVincular(); };
   }
