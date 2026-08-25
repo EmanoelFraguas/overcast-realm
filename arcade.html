@@ -13,7 +13,7 @@
     --ink:#ffffff; --ink-soft:#9691b0; --monitor-body:#3a2f4d; --monitor-body-dark:#2a2138;
   }
   *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
+  html,body{margin:0;padding:0; overflow-x:hidden;}
   body{
     background:
       radial-gradient(circle at 15% 15%, #241a3a 0%, transparent 45%),
@@ -34,7 +34,7 @@
   header h1{ font-size:clamp(16px,3vw,24px); color:var(--pink); text-shadow:3px 3px 0 #000; margin:0 0 6px; }
   header p{ font-weight:700; color:var(--ink-soft); font-size:13px; margin:0; }
 
-  .arcade-layout{ display:grid; grid-template-columns:1fr 300px; gap:20px; align-items:start; }
+  .arcade-layout{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,300px); gap:20px; align-items:start; }
   @media (max-width:900px){ .arcade-layout{ grid-template-columns:1fr; } }
 
   /* ===== MONITOR RETRÔ ===== */
@@ -110,18 +110,18 @@
     width:100%; padding:9px 12px; border-radius:8px; border:2px solid var(--border); background:#150f24;
     color:#fff; font-family:'Baloo 2',sans-serif; font-weight:700; margin-bottom:12px;
   }
-  .cart-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; max-height:640px; overflow-y:auto; padding-right:4px; }
-  @media (max-width:900px){ .cart-grid{ grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); max-height:none; } }
+  .cart-grid{ display:flex; flex-direction:column; gap:8px; max-height:640px; overflow-y:auto; padding-right:4px; }
   .cart{
-    background:linear-gradient(180deg,#2c2447,#1c1730); border:2px solid var(--border); border-radius:10px 10px 4px 4px;
-    padding:6px; cursor:pointer; position:relative; transition:transform .1s;
+    display:flex; align-items:center; gap:10px;
+    background:linear-gradient(135deg,#2c2447,#1c1730); border:2px solid var(--border); border-radius:10px;
+    padding:8px; cursor:pointer; transition:border-color .1s;
   }
-  .cart:hover{ transform:translateY(-3px); border-color:var(--yellow); }
+  .cart:hover{ border-color:var(--yellow); }
   .cart.active{ border-color:var(--pink); box-shadow:0 0 0 2px var(--pink); }
-  .cart .cart-cover{ width:100%; aspect-ratio:315/250; object-fit:cover; border-radius:6px; display:block; background:#0e0a1a; }
-  .cart .cart-notch{ width:26px; height:6px; background:var(--bg-deep); border-radius:0 0 4px 4px; margin:0 auto; }
-  .cart .cart-title{ font-family:'Press Start 2P',monospace; font-size:8px; color:#fff; text-align:center; margin:6px 0 2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .cart .cart-dev{ font-size:9px; color:var(--ink-soft); text-align:center; font-weight:700; }
+  .cart .cart-cover{ width:64px; aspect-ratio:315/250; object-fit:cover; border-radius:6px; flex-shrink:0; display:block; background:#0e0a1a; }
+  .cart .cart-info{ min-width:0; flex:1; }
+  .cart .cart-title{ font-family:'Press Start 2P',monospace; font-size:9px; color:#fff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:4px; }
+  .cart .cart-dev{ font-size:11px; color:var(--ink-soft); font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .cart-empty{ text-align:center; color:var(--ink-soft); font-weight:700; font-size:12px; padding:20px; }
 </style>
 </head>
@@ -235,9 +235,10 @@ function renderCartuchos(filtro){
   grid.innerHTML = jogos.map((jogo, i) => `
     <div class="cart ${jogoAtual===jogo ? 'active':''}" onclick="carregarCartucho(${overcastData.jogos.indexOf(jogo)})">
       <img class="cart-cover" src="${jogo.capa}" alt="${jogo.titulo}" loading="lazy" onerror="this.onerror=null; this.src='https://placehold.co/300x200/1c1730/9691b0?text=🎮';">
-      <div class="cart-notch"></div>
-      <p class="cart-title">${jogo.titulo.toUpperCase()}</p>
-      <p class="cart-dev">${jogo.autor||''}</p>
+      <div class="cart-info">
+        <p class="cart-title">${jogo.titulo.toUpperCase()}</p>
+        <p class="cart-dev">${jogo.autor||''}</p>
+      </div>
     </div>
   `).join('');
 }
