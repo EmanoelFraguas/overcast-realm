@@ -234,7 +234,7 @@ function renderCartuchos(filtro){
 
   grid.innerHTML = jogos.map((jogo, i) => `
     <div class="cart ${jogoAtual===jogo ? 'active':''}" onclick="carregarCartucho(${overcastData.jogos.indexOf(jogo)})">
-      <img class="cart-cover" src="${jogo.capa}" alt="${jogo.titulo}" loading="lazy">
+      <img class="cart-cover" src="${jogo.capa}" alt="${jogo.titulo}" loading="lazy" onerror="this.onerror=null; this.src='https://placehold.co/300x200/1c1730/9691b0?text=🎮';">
       <div class="cart-notch"></div>
       <p class="cart-title">${jogo.titulo.toUpperCase()}</p>
       <p class="cart-dev">${jogo.autor||''}</p>
