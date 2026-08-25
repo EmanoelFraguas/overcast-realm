@@ -424,7 +424,9 @@
               <input type="text" id="jogo-url" placeholder="URL EMBED-UPLOAD DO ITCH.IO" class="input-field" />
               <p class="text-[10px] text-gray-500 leading-relaxed">
                 💡 No itch.io: aba <b>"Distribute"</b> do jogo → seção <b>"Embed options"</b> → copie o <code>src="..."</code>
-                do código gerado (algo como <code>itch.io/embed-upload/123456</code>). <b>Não</b> é o link normal da página do jogo — esse não funciona embutido em outro site.
+                do código gerado. Precisa ser um link <b>"embed-upload"</b> (ex: <code>itch.io/embed-upload/123456</code>) —
+                o jogo roda de verdade aqui dentro. Um link <b>"embed"</b> sem "-upload" (ex: <code>itch.io/embed/123456</code>)
+                é só um cartão de propaganda com botão que abre em outra aba, não funciona pro nosso caso.
               </p>
               <textarea id="jogo-descricao" placeholder="DESCRIÇÃO DO CONTEXTO TÉCNICO" class="input-field h-20"></textarea>
               <input type="text" id="jogo-controles" placeholder="CONTROLES (EX: SETAS / ESPAÇO)" class="input-field" />
