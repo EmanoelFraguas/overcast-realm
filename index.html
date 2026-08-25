@@ -566,7 +566,12 @@
         <p class="font-pixel text-[9px] text-violet-400" data-i18n="tagRepoWeb">// REPOSITORIO_WEB</p>
         <h2 class="font-pixel text-sm text-white" data-i18n="h2Producoes">Produções Independentes</h2>
       </div>
-      <a href="./arcade.html" class="btn-primary">🕹️ Modo Arcade</a>
+      <a href="./arcade.html" class="btn-primary" id="btn-modo-arcade">🕹️ Modo Arcade</a>
+    </div>
+    <div id="jogos-bloqueado" class="hidden text-center py-16">
+      <div style="font-size:44px;">🔒</div>
+      <p class="font-display text-sm text-gray-300 mt-3">O professor bloqueou o acesso aos jogos agora.</p>
+      <p class="text-xs text-gray-500 mt-1">Volta quando ele liberar de novo 😉</p>
     </div>
     <div id="jogos-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
     <div id="jogos-empty" class="hidden text-center py-16 text-gray-500">
@@ -953,11 +958,34 @@ function switchTabByName(tabName) {
   window.scrollTo({ top: 0 });
 }
 
+let jogosLiberados = true;
+async function checarJogosLiberados(){
+  if(!sb) return true;
+  try{
+    const { data: row, error } = await sb.from('config_site').select('valor').eq('chave', 'jogos_liberados').maybeSingle();
+    if(error || !row) return true;
+    return row.valor === true;
+  }catch(e){ return true; }
+}
+
 function renderJogos() {
   const grid = document.getElementById('jogos-grid');
   const homeGrid = document.getElementById('home-jogos-grid');
   const empty = document.getElementById('jogos-empty');
+  const bloqueado = document.getElementById('jogos-bloqueado');
+  const btnArcade = document.getElementById('btn-modo-arcade');
   const jogos = overcastData.jogos || [];
+
+  if (!jogosLiberados) {
+    grid.innerHTML = '';
+    if (empty) empty.classList.add('hidden');
+    if (bloqueado) bloqueado.classList.remove('hidden');
+    if (btnArcade) btnArcade.style.display = 'none';
+    if (homeGrid) homeGrid.innerHTML = '<p class="text-xs text-gray-500 col-span-full">🔒 O professor bloqueou o acesso aos jogos agora.</p>';
+    return;
+  }
+  if (bloqueado) bloqueado.classList.add('hidden');
+  if (btnArcade) btnArcade.style.display = '';
 
   if (jogos.length === 0) {
     grid.innerHTML = '';
@@ -1341,6 +1369,7 @@ async function uploadProjetoFinal() {
 
 async function init() {
   await loadData();
+  jogosLiberados = await checarJogosLiberados();
   renderJogos();
   renderTutoriais('Todos');
   renderLinks('');
