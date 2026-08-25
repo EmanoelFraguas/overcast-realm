@@ -114,7 +114,7 @@
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="wrap" id="page-content" style="display:none;">
 
   <div class="back-row">
     <a href="./index.html" class="back-home">← Voltar</a>
@@ -229,6 +229,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="./course-gate.js"></script>
 <script>
 const SUPABASE_URL = "https://kezlmecrxhjahhoekybs.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlemxtZWNyeGhqYWhob2VreWJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5MDkwNjAsImV4cCI6MjEwMjQ4NTA2MH0.-TcsKrFxRMeiqKrzXk57E8-60eobk3fJ0Crn7ci0MW8";
@@ -606,6 +607,8 @@ buildPresetGrid();
 buildWaveRow();
 syncControlsFromState();
 attachControlListeners();
+
+CourseGate.protect({ cursos: ['games'], contentSelector: '#page-content' });
 </script>
 </body>
 </html>
