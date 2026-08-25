@@ -330,34 +330,6 @@
 </head>
 <body>
 
-<div id="game-modal" class="modal-overlay" style="display:none;" onclick="closeModal(event)">
-  <div class="modal-box">
-    <div class="modal-header">
-      <span id="modal-game-title" class="font-display text-sm tracking-wide"></span>
-      <button class="modal-close" onclick="closeGameModal()" data-i18n="btnFecharModal">✕ Fechar</button>
-    </div>
-    
-    <div class="modal-body-scroll flex-1 overflow-y-auto bg-[#0e0a1a]">
-      <div class="w-full relative aspect-video bg-[#0e0a1a] border-b border-[#322c47] flex flex-col items-center justify-center p-6 text-center">
-        <p class="font-display text-base text-white mb-3" data-i18n="prontoParaJogar">🎮 Pronto pra jogar?</p>
-        <p class="text-xs text-gray-400 max-w-md mb-6 leading-relaxed" data-i18n="rodarLisoSemTravar">Pra rodar liso e sem travar, o jogo abre numa aba separada.</p>
-        <a id="modal-game-btn-link" href="#" target="_blank" class="btn-primary" onclick="closeGameModal()" data-i18n="abrirJogoNovaAba">Abrir jogo em nova aba</a>
-      </div>
-      
-      <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6 bg-[#1e1a2e]">
-        <div class="md:col-span-2">
-          <h4 class="font-display text-sm mb-3 text-violet-300" data-i18n="sobreOProjeto">Sobre o projeto</h4>
-          <p id="modal-game-description" class="text-xs leading-relaxed text-gray-400"></p>
-        </div>
-        <div>
-          <h4 class="font-display text-sm mb-3 text-sky-300" data-i18n="controles">Controles</h4>
-          <p id="modal-game-controls" class="text-xs leading-relaxed bg-[#150f24] rounded-xl p-4 border border-[#322c47] font-mono text-gray-400"></p>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-top">
@@ -371,7 +343,6 @@
     <div class="sidebar-group">
       <p class="sidebar-group-title" data-i18n="navSalaDeAula">🏫 Sala de Aula</p>
       <button class="nav-tab active" data-tab="home" onclick="switchTab('home', this)" data-i18n="navHome">🏠 Home</button>
-      <button class="nav-tab" data-tab="jogos" onclick="switchTab('jogos', this)" data-i18n="navJogos">🎮 Jogos</button>
       <a href="./arcade.html" class="nav-tab">🕹️ Arcade</a>
       <button class="nav-tab" data-tab="tutoriais" onclick="switchTab('tutoriais', this)" data-i18n="navTutoriais">🎬 Tutoriais</button>
       <button class="nav-tab" data-tab="links" onclick="switchTab('links', this)" data-i18n="navLinks">🔗 Links</button>
@@ -553,30 +524,15 @@
       </div>
     </div>
 
-    <div class="mb-4 flex items-center justify-between">
-      <h2 class="font-pixel text-[10px] uppercase tracking-wider text-white" data-i18n="compiladosRecentes">// COMPILADOS_RECENTES</h2>
-      <button class="btn-secondary text-[8px]" onclick="switchTabByName('jogos')" data-i18n="verTodos">VER_TODOS_&gt;</button>
-    </div>
-    <div id="home-jogos-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
-  </section>
-
-  <section id="section-jogos" class="section">
-    <div class="mb-6 flex items-center justify-between flex-wrap gap-3">
-      <div>
-        <p class="font-pixel text-[9px] text-violet-400" data-i18n="tagRepoWeb">// REPOSITORIO_WEB</p>
-        <h2 class="font-pixel text-sm text-white" data-i18n="h2Producoes">Produções Independentes</h2>
+    <a href="./arcade.html" class="card p-6 mb-8 flex flex-col sm:flex-row items-center gap-5 bg-gradient-to-r from-[#241a30] to-[#1e1a2e] hover:no-underline">
+      <span class="text-4xl shrink-0">🕹️</span>
+      <div class="flex-1">
+        <p class="font-pixel text-[9px] text-pink-400 mb-2">// REPOSITORIO_WEB</p>
+        <h3 class="font-display text-lg text-white mb-1">Arcade</h3>
+        <p class="text-xs text-gray-400">Escolha um cartucho e jogue direto na telinha — produções independentes feitas pela turma no Construct 3.</p>
       </div>
-      <a href="./arcade.html" class="btn-primary" id="btn-modo-arcade">🕹️ Modo Arcade</a>
-    </div>
-    <div id="jogos-bloqueado" class="hidden text-center py-16">
-      <div style="font-size:44px;">🔒</div>
-      <p class="font-display text-sm text-gray-300 mt-3">O professor bloqueou o acesso aos jogos agora.</p>
-      <p class="text-xs text-gray-500 mt-1">Volta quando ele liberar de novo 😉</p>
-    </div>
-    <div id="jogos-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
-    <div id="jogos-empty" class="hidden text-center py-16 text-gray-500">
-      <p class="font-display text-sm text-gray-400" data-i18n="semJogos">Nenhum jogo por aqui ainda 🎮</p>
-    </div>
+      <span class="btn-primary shrink-0">Abrir arcade</span>
+    </a>
   </section>
 
   <section id="section-tutoriais" class="section">
@@ -958,94 +914,6 @@ function switchTabByName(tabName) {
   window.scrollTo({ top: 0 });
 }
 
-let jogosLiberados = true;
-async function checarJogosLiberados(){
-  if(!sb) return true;
-  try{
-    const { data: row, error } = await sb.from('config_site').select('valor').eq('chave', 'jogos_liberados').maybeSingle();
-    if(error || !row) return true;
-    return row.valor === true;
-  }catch(e){ return true; }
-}
-
-function renderJogos() {
-  const grid = document.getElementById('jogos-grid');
-  const homeGrid = document.getElementById('home-jogos-grid');
-  const empty = document.getElementById('jogos-empty');
-  const bloqueado = document.getElementById('jogos-bloqueado');
-  const btnArcade = document.getElementById('btn-modo-arcade');
-  const jogos = overcastData.jogos || [];
-
-  if (!jogosLiberados) {
-    grid.innerHTML = '';
-    if (empty) empty.classList.add('hidden');
-    if (bloqueado) bloqueado.classList.remove('hidden');
-    if (btnArcade) btnArcade.style.display = 'none';
-    if (homeGrid) homeGrid.innerHTML = '<p class="text-xs text-gray-500 col-span-full">🔒 O professor bloqueou o acesso aos jogos agora.</p>';
-    return;
-  }
-  if (bloqueado) bloqueado.classList.add('hidden');
-  if (btnArcade) btnArcade.style.display = '';
-
-  if (jogos.length === 0) {
-    grid.innerHTML = '';
-    if (empty) empty.classList.remove('hidden');
-    if (homeGrid) homeGrid.innerHTML = '';
-    return;
-  }
-  if (empty) empty.classList.add('hidden');
-
-  const makeCard = (jogo) => {
-    const desc = jogo.descricao || "Sem metadados descritivos.";
-    const ctrl = jogo.controles || "Não mapeados.";
-    return `
-      <div class="card overflow-hidden cursor-pointer group" onclick="openGame('${encodeURIComponent(jogo.url)}', '${encodeURIComponent(jogo.titulo)}', '${encodeURIComponent(jogo.autor)}', '${encodeURIComponent(desc)}', '${encodeURIComponent(ctrl)}')">
-        <div class="relative overflow-hidden border-b border-[#322c47]" style="aspect-ratio:315/250;">
-          <img src="${jogo.capa}" alt="${jogo.titulo}" class="w-full h-full object-cover filter brightness-90 group-hover:brightness-100" />
-          <div class="absolute inset-0 bg-[#0e0a1a]/40 opacity-0 group-hover:opacity-100 flex items-center justify-center">
-            <span class="font-display text-[10px] text-white bg-indigo-600 rounded-full px-3 py-1.5">▶ Jogar</span>
-          </div>
-        </div>
-        <div class="p-3 bg-[#1e1a2e]">
-          <p class="font-pixel text-[9px] tracking-wide text-white truncate">${jogo.titulo.toUpperCase()}</p>
-          <p class="text-[9px] uppercase font-mono mt-1 text-gray-500">// DEV: ${jogo.autor}</p>
-        </div>
-      </div>
-    `;
-  };
-
-  grid.innerHTML = jogos.map(makeCard).join('');
-  if (homeGrid) homeGrid.innerHTML = jogos.slice(0, 4).map(makeCard).join('');
-}
-
-function openGame(encodedUrl, encodedTitle, encodedAuthor, encodedDesc, encodedCtrl) {
-  const url = decodeURIComponent(encodedUrl);
-  const title = decodeURIComponent(encodedTitle);
-  const author = decodeURIComponent(encodedAuthor);
-  const desc = decodeURIComponent(encodedDesc);
-  const ctrl = decodeURIComponent(encodedCtrl);
-  
-  document.getElementById('modal-game-title').innerHTML = `
-    <span class="text-white">${title}</span> 
-    <span class="text-gray-500 text-[9px] ml-2">// DEV: ${author}</span>
-  `;
-  document.getElementById('modal-game-description').innerHTML = desc;
-  document.getElementById('modal-game-controls').innerHTML = ctrl;
-  document.getElementById('modal-game-btn-link').href = url;
-  
-  document.getElementById('game-modal').style.display = 'flex';
-  document.body.style.overflow = 'hidden';
-}
-
-function closeGameModal() {
-  document.getElementById('game-modal').style.display = 'none';
-  document.body.style.overflow = '';
-}
-
-function closeModal(event) {
-  if (event.target === document.getElementById('game-modal')) closeGameModal();
-}
-
 function getYoutubeId(url) {
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
   const match = url.match(regExp);
@@ -1369,8 +1237,6 @@ async function uploadProjetoFinal() {
 
 async function init() {
   await loadData();
-  jogosLiberados = await checarJogosLiberados();
-  renderJogos();
   renderTutoriais('Todos');
   renderLinks('');
   checkPersistedLogin();
