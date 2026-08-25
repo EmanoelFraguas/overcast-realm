@@ -247,15 +247,27 @@ function carregarCartucho(idx){
   renderCartuchos(document.getElementById('cart-search').value);
 }
 
-function pareceLinkDeEmbed(url){
-  // links de embed do itch.io contêm "itch.io/embed" (embed-upload, embed, etc);
-  // o link normal da página do jogo (usuario.itch.io/nome-do-jogo) NÃO funciona num iframe.
-  return /itch\.io\/embed/i.test(url || '');
+function tipoDeLinkItch(url){
+  const u = url || '';
+  if(/itch\.io\/embed-upload\//i.test(u)) return 'embed-upload'; // jogo de verdade, jogável no iframe
+  if(/itch\.io\/embed\//i.test(u)) return 'embed-card'; // só o cartão/propaganda com botão que abre em outra aba
+  return 'invalido';
 }
 function iniciarJogoAtual(){
   if(!jogoAtual) return;
   const screenArea = document.getElementById('screen-area');
-  if(!pareceLinkDeEmbed(jogoAtual.url)){
+  const tipo = tipoDeLinkItch(jogoAtual.url);
+  if(tipo === 'embed-card'){
+    screenArea.innerHTML = `
+      <div class="screen-empty" style="color:#ffd23f;">
+        ⚠️<br><br>
+        ESSE É O LINK DO CARTÃO<br>(SÓ ABRE EM OUTRA ABA)<br><br>
+        <span style="font-size:8px;color:#8f88a8;">Precisa do link "embed-upload", não "embed". No itch.io: Distribute → Embed options.</span>
+      </div>
+    `;
+    return;
+  }
+  if(tipo === 'invalido'){
     screenArea.innerHTML = `
       <div class="screen-empty" style="color:#ffb4b4;">
         ⚠️<br><br>
