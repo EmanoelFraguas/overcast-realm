@@ -270,7 +270,7 @@
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="wrap" id="page-content" style="display:none;">
 
   <header>
     <h1 class="pixel" id="t-h1">🕹️ LABORATÓRIO DE PIXEL ART</h1>
@@ -394,6 +394,7 @@
 
 </div>
 
+<script src="./course-gate.js"></script>
 <script>
 /* ============ IDIOMA (PT/EN) ============ */
 let currentLang = 'pt';
@@ -751,6 +752,8 @@ initModulo2();
 initModulo3();
 initModulo4();
 applyLang();
+
+CourseGate.protect({ cursos: ['arte'], contentSelector: '#page-content' });
 </script>
 </body>
 </html>
