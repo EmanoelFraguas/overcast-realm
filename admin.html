@@ -386,6 +386,17 @@
         <p class="text-xs font-mono mt-2 text-gray-500">Jogos, tutoriais e links (sincronizado via GitHub)</p>
       </header>
 
+      <div class="card p-5 mb-6" style="border:2px solid #f59e0b;">
+        <div class="flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <h2 class="font-pixel text-[10px] text-amber-600 mb-2">// CONTROLE_DE_ACESSO</h2>
+            <p class="text-sm font-bold text-gray-900" id="jogos-status-label">Carregando...</p>
+            <p class="text-xs font-mono text-gray-500 mt-1">Controla o acesso à seção "Jogos" e à página "Arcade" pra TODOS os alunos, de todas as turmas, ao mesmo tempo.</p>
+          </div>
+          <button class="btn-action" id="btn-toggle-jogos" onclick="toggleJogosLiberados()" style="min-width:200px;">⏳ Carregando...</button>
+        </div>
+      </div>
+
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div class="lg:col-span-5">
           <div class="card p-4">
@@ -618,7 +629,7 @@ function unlockDashboard() {
   document.getElementById('admin-auth-screen').classList.add('hidden');
   document.getElementById('admin-dashboard-content').classList.remove('hidden');
   loadFromGitHub();
-  if (initSupabase()) carregarTurmas();
+  if (initSupabase()) { carregarTurmas(); carregarStatusJogos(); }
 }
 
 function logoutAdmin() {
@@ -1265,6 +1276,43 @@ function resetStorage() {
   if(!confirm('Isso vai sobrescrever o data.json no GitHub com um banco vazio. Tem certeza?')) return;
   data = { alunos: [], videos: [], links: [], jogos: [] };
   saveToStorage();
+}
+
+// ================= CONTROLE DE ACESSO AOS JOGOS =================
+let jogosLiberadosAtual = true;
+
+async function carregarStatusJogos() {
+  const { data: row, error } = await sb.from('config_site').select('valor').eq('chave', 'jogos_liberados').maybeSingle();
+  jogosLiberadosAtual = error || !row ? true : row.valor === true;
+  atualizarUiJogosLiberados();
+}
+
+function atualizarUiJogosLiberados() {
+  const label = document.getElementById('jogos-status-label');
+  const btn = document.getElementById('btn-toggle-jogos');
+  if (jogosLiberadosAtual) {
+    label.textContent = '🔓 Jogos e Arcade: LIBERADOS';
+    label.style.color = '#0d9b6c';
+    btn.textContent = '🔒 Bloquear Jogos Agora';
+    btn.className = 'btn-action btn-edit';
+  } else {
+    label.textContent = '🔒 Jogos e Arcade: BLOQUEADOS';
+    label.style.color = '#dc2626';
+    btn.textContent = '🔓 Liberar Jogos Agora';
+    btn.className = 'btn-action btn-add';
+  }
+}
+
+async function toggleJogosLiberados() {
+  const novoValor = !jogosLiberadosAtual;
+  const btn = document.getElementById('btn-toggle-jogos');
+  btn.textContent = '⏳ Aplicando...';
+  const { error } = await sb.rpc('admin_set_config', {
+    chave: sbAdminKey, p_config_chave: 'jogos_liberados', p_valor: novoValor
+  });
+  if (error) { alert('Erro ao mudar o status: ' + error.message); atualizarUiJogosLiberados(); return; }
+  jogosLiberadosAtual = novoValor;
+  atualizarUiJogosLiberados();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
