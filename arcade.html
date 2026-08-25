@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arcade — Overcast Realm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#12101c; --bg-panel:#1e1a2e; --bg-card:#241f38; --border:#322c47;
+    --pink:#ff5fa2; --cyan:#4be8ff; --yellow:#ffd23f; --green:#4be08f; --purple:#7c3aed;
+    --ink:#ffffff; --ink-soft:#9691b0; --monitor-body:#3a2f4d; --monitor-body-dark:#2a2138;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 15% 15%, #241a3a 0%, transparent 45%),
+      radial-gradient(circle at 90% 25%, #16283a 0%, transparent 40%),
+      var(--bg-deep);
+    color:var(--ink); font-family:'Baloo 2', sans-serif; min-height:100vh; padding:14px;
+  }
+  .wrap{max-width:1300px;margin:0 auto;}
+  h1,h2,h3,.pixel{ font-family:'Press Start 2P', monospace; }
+
+  .back-row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+  .back-home{
+    display:inline-flex; align-items:center; gap:5px; font-weight:700; font-size:12px;
+    color:var(--ink-soft); background:var(--bg-card); border:2px solid var(--border);
+    border-radius:999px; padding:8px 14px; text-decoration:none;
+  }
+  header{ text-align:center; margin-bottom:16px; }
+  header h1{ font-size:clamp(16px,3vw,24px); color:var(--pink); text-shadow:3px 3px 0 #000; margin:0 0 6px; }
+  header p{ font-weight:700; color:var(--ink-soft); font-size:13px; margin:0; }
+
+  .arcade-layout{ display:grid; grid-template-columns:1fr 300px; gap:20px; align-items:start; }
+  @media (max-width:900px){ .arcade-layout{ grid-template-columns:1fr; } }
+
+  /* ===== MONITOR RETRÔ ===== */
+  .monitor-stand{
+    background:linear-gradient(180deg, var(--monitor-body), var(--monitor-body-dark));
+    border-radius:28px 28px 14px 14px; padding:26px 26px 40px; box-shadow:0 14px 0 #0e0a18, 0 14px 30px rgba(0,0,0,.5);
+    position:relative;
+  }
+  .monitor-stand::after{
+    content:''; position:absolute; left:50%; bottom:-22px; transform:translateX(-50%);
+    width:120px; height:26px; background:var(--monitor-body-dark); border-radius:0 0 14px 14px;
+  }
+  .monitor-vents{ display:flex; gap:5px; justify-content:center; margin-bottom:14px; }
+  .monitor-vents span{ width:34px; height:4px; background:rgba(255,255,255,.08); border-radius:2px; }
+  .screen-bezel{
+    background:#000; border-radius:10px; padding:14px; box-shadow:inset 0 0 30px rgba(0,0,0,.9);
+  }
+  .screen-area{
+    position:relative; width:100%; aspect-ratio:4/3; background:#000; border-radius:4px; overflow:hidden;
+  }
+  .screen-area iframe{ width:100%; height:100%; border:0; display:block; }
+  .screen-placeholder{
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
+    background:radial-gradient(circle at 50% 40%, #1a1428 0%, #060409 80%); cursor:pointer;
+  }
+  .screen-placeholder .play-icon{
+    width:70px; height:70px; border-radius:50%; background:linear-gradient(135deg, var(--pink), var(--purple));
+    display:flex; align-items:center; justify-content:center; font-size:26px; box-shadow:0 6px 0 rgba(0,0,0,.4);
+  }
+  .screen-placeholder .hint{ font-family:'Press Start 2P',monospace; font-size:10px; color:var(--ink-soft); text-align:center; padding:0 20px; }
+  .screen-placeholder .titlecard{ font-family:'Press Start 2P',monospace; font-size:13px; color:#fff; text-align:center; padding:0 16px; }
+  .screen-empty{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-family:'Press Start 2P',monospace; font-size:11px; color:#4a4260; text-align:center; padding:0 20px;
+  }
+  .screen-scanlines{
+    position:absolute; inset:0; pointer-events:none;
+    background:repeating-linear-gradient(0deg, rgba(0,0,0,.12) 0px, rgba(0,0,0,.12) 1px, transparent 1px, transparent 3px);
+    mix-blend-mode:overlay;
+  }
+  .monitor-footer{ display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding:0 6px; }
+  .monitor-brand{ font-family:'Press Start 2P',monospace; font-size:10px; color:rgba(255,255,255,.35); }
+  .monitor-led{ width:8px; height:8px; border-radius:50%; background:#3a3350; }
+  .monitor-led.on{ background:var(--green); box-shadow:0 0 6px var(--green); }
+
+  /* ===== INFO DO JOGO ATUAL ===== */
+  .game-info{
+    background:var(--bg-panel); border:3px solid var(--border); border-radius:18px; padding:18px; margin-top:16px;
+  }
+  .game-info h2{ font-size:14px; color:var(--pink); margin:0 0 4px; }
+  .game-info .dev{ font-family:'Press Start 2P',monospace; font-size:9px; color:var(--ink-soft); margin-bottom:12px; }
+  .game-info-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:600px){ .game-info-grid{ grid-template-columns:1fr; } }
+  .game-info h4{ font-size:11px; color:var(--cyan); margin:0 0 6px; }
+  .game-info p{ font-size:13px; color:var(--ink-soft); font-weight:700; line-height:1.5; margin:0; }
+  .game-info .controles-box{ background:#150f24; border:2px solid var(--border); border-radius:10px; padding:10px 12px; font-family:monospace; }
+  .btn{
+    font-family:'Press Start 2P', monospace; font-size:10px; color:#fff; border:none;
+    border-radius:999px; padding:10px 16px; cursor:pointer; box-shadow:0 4px 0 rgba(0,0,0,0.3);
+    display:inline-flex; align-items:center; gap:6px; text-decoration:none;
+  }
+  .btn:active{ transform:translateY(3px); box-shadow:none; }
+  .btn.purple{ background:var(--purple); } .btn.gray{ background:#4a3a7c; }
+
+  /* ===== BIBLIOTECA DE CARTUCHOS ===== */
+  .cart-library{
+    background:var(--bg-panel); border:3px solid var(--border); border-radius:18px; padding:16px;
+    max-height:none;
+  }
+  .cart-library h2{ font-size:12px; color:var(--yellow); margin:0 0 4px; }
+  .cart-library .desc{ font-weight:700; color:var(--ink-soft); font-size:12px; margin:0 0 14px; }
+  .cart-search{
+    width:100%; padding:9px 12px; border-radius:8px; border:2px solid var(--border); background:#150f24;
+    color:#fff; font-family:'Baloo 2',sans-serif; font-weight:700; margin-bottom:12px;
+  }
+  .cart-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; max-height:640px; overflow-y:auto; padding-right:4px; }
+  @media (max-width:900px){ .cart-grid{ grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); max-height:none; } }
+  .cart{
+    background:linear-gradient(180deg,#2c2447,#1c1730); border:2px solid var(--border); border-radius:10px 10px 4px 4px;
+    padding:6px; cursor:pointer; position:relative; transition:transform .1s;
+  }
+  .cart:hover{ transform:translateY(-3px); border-color:var(--yellow); }
+  .cart.active{ border-color:var(--pink); box-shadow:0 0 0 2px var(--pink); }
+  .cart .cart-cover{ width:100%; aspect-ratio:3/2; object-fit:cover; border-radius:6px; display:block; background:#0e0a1a; }
+  .cart .cart-notch{ width:26px; height:6px; background:var(--bg-deep); border-radius:0 0 4px 4px; margin:0 auto; }
+  .cart .cart-title{ font-family:'Press Start 2P',monospace; font-size:8px; color:#fff; text-align:center; margin:6px 0 2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .cart .cart-dev{ font-size:9px; color:var(--ink-soft); text-align:center; font-weight:700; }
+  .cart-empty{ text-align:center; color:var(--ink-soft); font-weight:700; font-size:12px; padding:20px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="back-row">
+    <a href="./index.html" class="back-home">← Voltar</a>
+  </div>
+
+  <header>
+    <h1>🕹️ ARCADE</h1>
+    <p>Overcast Realm — escolha um cartucho e jogue direto na telinha</p>
+  </header>
+
+  <div class="arcade-layout">
+    <div>
+      <div class="monitor-stand">
+        <div class="monitor-vents"><span></span><span></span><span></span><span></span><span></span></div>
+        <div class="screen-bezel">
+          <div class="screen-area" id="screen-area">
+            <div class="screen-empty" id="screen-empty">🕹️<br><br>ESCOLHA UM<br>CARTUCHO AO LADO</div>
+          </div>
+        </div>
+        <div class="monitor-footer">
+          <span class="monitor-brand">OVERCAST • CRT-1</span>
+          <span class="monitor-led" id="monitor-led"></span>
+        </div>
+      </div>
+
+      <div class="game-info" id="game-info" style="display:none;">
+        <h2 id="info-titulo"></h2>
+        <p class="dev" id="info-dev"></p>
+        <div class="game-info-grid">
+          <div>
+            <h4>// SOBRE</h4>
+            <p id="info-desc"></p>
+          </div>
+          <div>
+            <h4>// CONTROLES</h4>
+            <p class="controles-box" id="info-controles"></p>
+          </div>
+        </div>
+        <div style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn purple" onclick="reiniciarJogoAtual()">🔄 Reiniciar</button>
+          <a class="btn gray" id="info-nova-aba" href="#" target="_blank">↗️ Abrir em Nova Aba</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="cart-library">
+      <h2>📼 BIBLIOTECA</h2>
+      <p class="desc">Clique num cartucho pra carregar</p>
+      <input type="text" class="cart-search" id="cart-search" placeholder="Buscar jogo..." oninput="filtrarCartuchos(this.value)">
+      <div class="cart-grid" id="cart-grid"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let overcastData = { jogos: [] };
+let jogoAtual = null;
+
+async function loadData() {
+  try {
+    const res = await fetch('./data.json?_=' + Date.now());
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    overcastData = await res.json();
+  } catch (e) {
+    console.error("Erro ao carregar data.json:", e);
+  }
+}
+
+function renderCartuchos(filtro){
+  const grid = document.getElementById('cart-grid');
+  const termo = (filtro || '').toLowerCase().trim();
+  const jogos = (overcastData.jogos || []).filter(j =>
+    !termo || j.titulo.toLowerCase().includes(termo) || (j.autor||'').toLowerCase().includes(termo)
+  );
+
+  if(jogos.length === 0){
+    grid.innerHTML = '<div class="cart-empty">Nenhum cartucho encontrado 📼</div>';
+    return;
+  }
+
+  grid.innerHTML = jogos.map((jogo, i) => `
+    <div class="cart ${jogoAtual===jogo ? 'active':''}" onclick="carregarCartucho(${overcastData.jogos.indexOf(jogo)})">
+      <img class="cart-cover" src="${jogo.capa}" alt="${jogo.titulo}" loading="lazy">
+      <div class="cart-notch"></div>
+      <p class="cart-title">${jogo.titulo.toUpperCase()}</p>
+      <p class="cart-dev">${jogo.autor||''}</p>
+    </div>
+  `).join('');
+}
+function filtrarCartuchos(valor){
+  renderCartuchos(valor);
+}
+
+function carregarCartucho(idx){
+  const jogo = (overcastData.jogos || [])[idx];
+  if(!jogo) return;
+  jogoAtual = jogo;
+
+  document.getElementById('screen-empty').style.display = 'none';
+  const screenArea = document.getElementById('screen-area');
+  screenArea.innerHTML = `
+    <div class="screen-placeholder" id="screen-placeholder" onclick="iniciarJogoAtual()">
+      <div class="titlecard">${jogo.titulo.toUpperCase()}</div>
+      <div class="play-icon">▶</div>
+      <div class="hint">CLIQUE PRA JOGAR<br>(abre direto aqui na tela)</div>
+    </div>
+  `;
+  document.getElementById('monitor-led').classList.remove('on');
+
+  document.getElementById('game-info').style.display = 'block';
+  document.getElementById('info-titulo').textContent = jogo.titulo;
+  document.getElementById('info-dev').textContent = '// DEV: ' + (jogo.autor || '???');
+  document.getElementById('info-desc').textContent = jogo.descricao || 'Sem metadados descritivos.';
+  document.getElementById('info-controles').textContent = jogo.controles || 'Não mapeados.';
+  document.getElementById('info-nova-aba').href = jogo.url;
+
+  renderCartuchos(document.getElementById('cart-search').value);
+}
+
+function pareceLinkDeEmbed(url){
+  // links de embed do itch.io contêm "itch.io/embed" (embed-upload, embed, etc);
+  // o link normal da página do jogo (usuario.itch.io/nome-do-jogo) NÃO funciona num iframe.
+  return /itch\.io\/embed/i.test(url || '');
+}
+function iniciarJogoAtual(){
+  if(!jogoAtual) return;
+  const screenArea = document.getElementById('screen-area');
+  if(!pareceLinkDeEmbed(jogoAtual.url)){
+    screenArea.innerHTML = `
+      <div class="screen-empty" style="color:#ffb4b4;">
+        ⚠️<br><br>
+        ESTE LINK NÃO PARECE SER<br>UM LINK DE EMBED DO ITCH.IO<br><br>
+        <span style="font-size:8px;color:#8f88a8;">No itch.io: Distribute → Embed options → copie o "src" do iframe</span>
+      </div>
+    `;
+    return;
+  }
+  screenArea.innerHTML = `
+    <iframe src="${jogoAtual.url}" allow="autoplay; fullscreen; gamepad" allowfullscreen></iframe>
+    <div class="screen-scanlines"></div>
+  `;
+  document.getElementById('monitor-led').classList.add('on');
+}
+
+function reiniciarJogoAtual(){
+  if(!jogoAtual) return;
+  iniciarJogoAtual();
+}
+
+loadData().then(() => renderCartuchos(''));
+</script>
+</body>
+</html>
