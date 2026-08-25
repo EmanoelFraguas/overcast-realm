@@ -1,39 +1,33 @@
 {
   "videos": [
     {
-      "titulo": "IntroduÃÂ§ÃÂ£o ÃÂ  IDE do Construct 3",
+      "titulo": "Introdução à IDE do Construct 3",
       "url": "https://www.youtube.com/embed/dQw4w9WgXcQ",
-      "categoria": "BÃÂ¡sico"
+      "categoria": "Básico"
     }
   ],
   "links": [
     {
       "titulo": "Lospec Color Palettes",
       "url": "https://lospec.com",
-      "descricao": "Indexador de paletas cromÃÂ¡ticas restritas para pixel art tÃÂ©cnico.",
+      "descricao": "Indexador de paletas cromáticas restritas para pixel art técnico.",
       "tag": "Arte"
     },
     {
-      "titulo": "Assets GrÃÂ¡tis",
+      "titulo": "Assets Grátis",
       "url": "https://itch.io/game-assets/free",
-      "descricao": "Itch.io - Link de acesso a assets grÃÂ¡tis",
+      "descricao": "Itch.io - Link de acesso a assets grátis",
       "tag": "Assets"
-    },
-    {
-      "titulo": "Tutorial Bounce",
-      "url": "https://miro.medium.com/1*jpJ7Ubdr2wH-sFvBP79gVQ.png",
-      "descricao": "Tutorial Bounce",
-      "tag": "Tutorial"
     }
   ],
   "jogos": [
     {
-      "titulo": "Sqare Bear",
-      "autor": "Emanoel",
+      "titulo": "Sqare Bear The Game",
+      "autor": "Manolloz",
       "capa": "https://placehold.co/300x200/131317/4f46e5?text=Sqare+Bear",
-      "url": "https://itch.io/embed-upload/14462910?color=ab5237",
-      "descricao": "MecÃÂ¢nicas de colisÃÂ£o estruturadas em malha 2D. O projeto explora ciclos de pulo, gravidade simulada via blocos de eventos e polimento bÃÂ¡sico de interface no Construct 3.",
-      "controles": "Mover: SETAS / WASD<br/>Pular: ESPAÃÂO"
+      "url": "https://itch.io/embed/2919834",
+      "descricao": "Mecânicas de colisão estruturadas em malha 2D. O projeto explora ciclos de pulo, gravidade simulada via blocos de eventos e polimento básico de interface no Construct 3.",
+      "controles": "Mover: SETAS / WASD<br/>Pular: ESPAÇO"
     }
   ]
 }
