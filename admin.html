@@ -422,6 +422,10 @@
               <input type="text" id="jogo-autor" placeholder="AUTOR (ALUNO)" class="input-field" />
               <input type="text" id="jogo-capa" placeholder="URL DA IMAGEM DE CAPA" class="input-field" />
               <input type="text" id="jogo-url" placeholder="URL EMBED-UPLOAD DO ITCH.IO" class="input-field" />
+              <p class="text-[10px] text-gray-500 leading-relaxed">
+                💡 No itch.io: aba <b>"Distribute"</b> do jogo → seção <b>"Embed options"</b> → copie o <code>src="..."</code>
+                do código gerado (algo como <code>itch.io/embed-upload/123456</code>). <b>Não</b> é o link normal da página do jogo — esse não funciona embutido em outro site.
+              </p>
               <textarea id="jogo-descricao" placeholder="DESCRIÇÃO DO CONTEXTO TÉCNICO" class="input-field h-20"></textarea>
               <input type="text" id="jogo-controles" placeholder="CONTROLES (EX: SETAS / ESPAÇO)" class="input-field" />
               <button class="btn-action btn-add w-full" id="btn-save-jogo" onclick="saveJogo()">GRAVAR_JOGO</button>
