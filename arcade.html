@@ -185,6 +185,8 @@
 <script>
 let overcastData = { jogos: [] };
 let jogoAtual = null;
+let jogoRodando = false;
+let mouseSobreTela = false;
 
 async function loadData() {
   try {
@@ -225,6 +227,7 @@ function carregarCartucho(idx){
   const jogo = (overcastData.jogos || [])[idx];
   if(!jogo) return;
   jogoAtual = jogo;
+  jogoRodando = false;
 
   document.getElementById('screen-empty').style.display = 'none';
   const screenArea = document.getElementById('screen-area');
@@ -282,12 +285,31 @@ function iniciarJogoAtual(){
     <div class="screen-scanlines"></div>
   `;
   document.getElementById('monitor-led').classList.add('on');
+  jogoRodando = true;
+  // tenta focar o iframe pra o teclado ir direto pro jogo assim que ele carrega
+  const novoIframe = screenArea.querySelector('iframe');
+  if(novoIframe){
+    setTimeout(() => { try{ novoIframe.focus(); }catch(e){} }, 300);
+  }
 }
 
 function reiniciarJogoAtual(){
   if(!jogoAtual) return;
   iniciarJogoAtual();
 }
+
+// Bloqueia as setas e espaço de rolarem a página inteira enquanto o mouse
+// está em cima da tela do jogo — assim o jogo recebe as teclas sem
+// "arrastar" a página pra cima/baixo junto (setas/espaço rolam a página por padrão).
+const screenAreaEl = document.getElementById('screen-area');
+screenAreaEl.addEventListener('mouseenter', () => { mouseSobreTela = true; });
+screenAreaEl.addEventListener('mouseleave', () => { mouseSobreTela = false; });
+window.addEventListener('keydown', (e) => {
+  const teclasQueRolamAPagina = ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' ','Spacebar'];
+  if(jogoRodando && mouseSobreTela && teclasQueRolamAPagina.includes(e.key)){
+    e.preventDefault();
+  }
+}, { passive: false });
 
 loadData().then(() => renderCartuchos(''));
 </script>
