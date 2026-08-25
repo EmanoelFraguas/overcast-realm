@@ -432,6 +432,10 @@
               <input type="text" id="jogo-titulo" placeholder="NOME DO JOGO" class="input-field" />
               <input type="text" id="jogo-autor" placeholder="AUTOR (ALUNO)" class="input-field" />
               <input type="text" id="jogo-capa" placeholder="URL DA IMAGEM DE CAPA" class="input-field" />
+              <p class="text-[10px] text-gray-500 leading-relaxed">
+                💡 Pra pegar a capa do itch.io: abre a página normal do jogo (não o embed) → clica com o botão direito
+                em cima da imagem de capa → <b>"Copiar endereço da imagem"</b> → cola aqui.
+              </p>
               <input type="text" id="jogo-url" placeholder="URL EMBED-UPLOAD DO ITCH.IO" class="input-field" />
               <p class="text-[10px] text-gray-500 leading-relaxed">
                 💡 No itch.io: aba <b>"Distribute"</b> do jogo → seção <b>"Embed options"</b> → copie o <code>src="..."</code>
@@ -1308,7 +1312,7 @@ async function toggleJogosLiberados() {
   const btn = document.getElementById('btn-toggle-jogos');
   btn.textContent = '⏳ Aplicando...';
   const { error } = await sb.rpc('admin_set_config', {
-    chave: sbAdminKey, p_config_chave: 'jogos_liberados', p_valor: novoValor
+    chave_admin: sbAdminKey, p_config_chave: 'jogos_liberados', p_valor: novoValor
   });
   if (error) { alert('Erro ao mudar o status: ' + error.message); atualizarUiJogosLiberados(); return; }
   jogosLiberadosAtual = novoValor;
