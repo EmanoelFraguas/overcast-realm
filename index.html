@@ -372,6 +372,7 @@
       <p class="sidebar-group-title" data-i18n="navSalaDeAula">🏫 Sala de Aula</p>
       <button class="nav-tab active" data-tab="home" onclick="switchTab('home', this)" data-i18n="navHome">🏠 Home</button>
       <button class="nav-tab" data-tab="jogos" onclick="switchTab('jogos', this)" data-i18n="navJogos">🎮 Jogos</button>
+      <a href="./arcade.html" class="nav-tab">🕹️ Arcade</a>
       <button class="nav-tab" data-tab="tutoriais" onclick="switchTab('tutoriais', this)" data-i18n="navTutoriais">🎬 Tutoriais</button>
       <button class="nav-tab" data-tab="links" onclick="switchTab('links', this)" data-i18n="navLinks">🔗 Links</button>
     </div>
@@ -560,9 +561,12 @@
   </section>
 
   <section id="section-jogos" class="section">
-    <div class="mb-6">
-      <p class="font-pixel text-[9px] text-violet-400" data-i18n="tagRepoWeb">// REPOSITORIO_WEB</p>
-      <h2 class="font-pixel text-sm text-white" data-i18n="h2Producoes">Produções Independentes</h2>
+    <div class="mb-6 flex items-center justify-between flex-wrap gap-3">
+      <div>
+        <p class="font-pixel text-[9px] text-violet-400" data-i18n="tagRepoWeb">// REPOSITORIO_WEB</p>
+        <h2 class="font-pixel text-sm text-white" data-i18n="h2Producoes">Produções Independentes</h2>
+      </div>
+      <a href="./arcade.html" class="btn-primary">🕹️ Modo Arcade</a>
     </div>
     <div id="jogos-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
     <div id="jogos-empty" class="hidden text-center py-16 text-gray-500">
