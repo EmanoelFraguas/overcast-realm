@@ -352,6 +352,13 @@
               <label class="block mb-1 text-gray-500">CÓDIGO DE ACESSO (OS ALUNOS USAM ESSE CÓDIGO NA ABA TURMA)</label>
               <input type="text" id="turma-codigo-acesso" class="input-field" placeholder="código de acesso da turma" />
             </div>
+            <div>
+              <label class="block mb-1 text-gray-500">CURSO (CONTROLA O QUE OS ALUNOS DESSA TURMA CONSEGUEM ACESSAR)</label>
+              <select id="turma-tipo-curso" class="input-field">
+                <option value="games">🎮 Games</option>
+                <option value="arte">🎨 Arte Digital</option>
+              </select>
+            </div>
             <div class="flex gap-2">
               <button class="btn-action btn-add flex-1" onclick="criarTurma()">CRIAR_TURMA</button>
               <button class="btn-action bg-gray-200 text-gray-700" onclick="fecharFormNovaTurma()">CANCELAR</button>
@@ -822,6 +829,7 @@ function renderTurmasGrid() {
       <div class="turma-card-body">
         <p class="text-[10px] text-gray-500 font-mono">código: <span class="text-emerald-400">${t.codigo_acesso}</span></p>
         <p class="text-[10px] text-gray-500 font-mono mt-1">${t.alunos.length} aluno(s)</p>
+        <p class="text-[10px] font-mono mt-1">${t.tipo_curso === 'arte' ? '🎨 Arte Digital' : '🎮 Games'}</p>
       </div>
     </div>
   `).join('');
@@ -859,6 +867,13 @@ function renderTurmaAtiva() {
         <div>
           <p class="font-pixel text-[9px] text-gray-900">${turma.nome}</p>
           <p class="text-[10px] text-gray-500 font-mono">código de acesso: <span class="text-emerald-400">${turma.codigo_acesso}</span> · ${turma.alunos.length} aluno(s)</p>
+          <label class="text-[10px] text-gray-500 font-mono mt-1 flex items-center gap-2">
+            curso:
+            <select class="input-field" style="width:auto;padding:2px 8px;font-size:10px;" onchange="mudarTipoCursoTurma('${turma.id}', this.value)">
+              <option value="games" ${turma.tipo_curso!=='arte'?'selected':''}>🎮 Games</option>
+              <option value="arte" ${turma.tipo_curso==='arte'?'selected':''}>🎨 Arte Digital</option>
+            </select>
+          </label>
         </div>
         <div class="flex items-center gap-2">
           <button class="btn-action btn-edit" onclick="trocarCodigoTurma('${turma.id}', '${turma.codigo_acesso}')">TROCAR_CÓDIGO</button>
@@ -914,16 +929,18 @@ async function criarTurma() {
   const nome = document.getElementById('turma-nome').value.trim();
   const slug = document.getElementById('turma-slug').value.trim().toLowerCase().replace(/\s+/g, '-');
   const codigoAcesso = document.getElementById('turma-codigo-acesso').value.trim().toLowerCase().replace(/\s+/g, '');
+  const tipoCurso = document.getElementById('turma-tipo-curso').value;
   if (!nome || !slug || !codigoAcesso) { alert('Preencha nome, slug e código de acesso da turma.'); return; }
 
   const { data: nova, error } = await sb.rpc('admin_criar_turma', {
-    chave: sbAdminKey, p_nome: nome, p_slug: slug, p_codigo_acesso: codigoAcesso
+    chave: sbAdminKey, p_nome: nome, p_slug: slug, p_codigo_acesso: codigoAcesso, p_tipo_curso: tipoCurso
   });
   if (error) { alert('Erro ao criar turma: ' + error.message); return; }
 
   document.getElementById('turma-nome').value = '';
   document.getElementById('turma-slug').value = '';
   document.getElementById('turma-codigo-acesso').value = '';
+  document.getElementById('turma-tipo-curso').value = 'games';
   fecharFormNovaTurma();
   await carregarTurmas();
   abrirTurmaDetalhe(nova.id);
@@ -936,6 +953,14 @@ async function trocarCodigoTurma(turmaId, codigoAtual) {
     chave: sbAdminKey, p_turma_id: turmaId, p_novo_codigo: novo.trim().toLowerCase().replace(/\s+/g, '')
   });
   if (error) { alert('Erro: ' + error.message); return; }
+  carregarTurmas();
+}
+
+async function mudarTipoCursoTurma(turmaId, novoTipo) {
+  const { error } = await sb.rpc('admin_atualizar_tipo_curso', {
+    chave: sbAdminKey, p_turma_id: turmaId, p_tipo_curso: novoTipo
+  });
+  if (error) { alert('Erro ao mudar o curso: ' + error.message); return; }
   carregarTurmas();
 }
 
