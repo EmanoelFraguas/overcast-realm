@@ -145,7 +145,7 @@
       display:flex; align-items:center; justify-content:space-between;
       padding: 16px; border-bottom: 1px solid #322c47; flex-shrink:0;
     }
-    .sidebar-group{ padding: 14px 12px 4px; }
+    .sidebar-group{ padding: 10px 12px 4px; }
     .sidebar-group-title{
       font-family: 'Baloo 2', sans-serif;
       font-weight: 700;
@@ -153,8 +153,19 @@
       letter-spacing: 0.04em;
       text-transform: uppercase;
       color: var(--text-muted);
-      padding: 0 8px 8px;
+      padding: 8px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      border-radius: 8px;
     }
+    .sidebar-group-title:hover{ background: rgba(255,255,255,0.04); }
+    .sidebar-group-title .chevron{ font-size: 9px; transition: transform 0.15s; opacity: 0.6; }
+    .sidebar-group.collapsed .chevron{ transform: rotate(-90deg); }
+    .sidebar-group-items{ overflow: hidden; }
+    .sidebar-group.collapsed .sidebar-group-items{ display: none; }
     .sidebar-group .nav-tab{
       display: flex;
       width: 100%;
@@ -340,36 +351,46 @@
     <button onclick="closeSidebar()" class="text-gray-400 hover:text-white text-lg leading-none">✕</button>
   </div>
   <nav id="main-nav">
-    <div class="sidebar-group">
-      <p class="sidebar-group-title" data-i18n="navSalaDeAula">🏫 Sala de Aula</p>
-      <button class="nav-tab active" data-tab="home" onclick="switchTab('home', this)" data-i18n="navHome">🏠 Home</button>
-      <a href="./arcade.html" class="nav-tab">🕹️ Arcade</a>
-      <button class="nav-tab" data-tab="tutoriais" onclick="switchTab('tutoriais', this)" data-i18n="navTutoriais">🎬 Tutoriais</button>
-      <button class="nav-tab" data-tab="links" onclick="switchTab('links', this)" data-i18n="navLinks">🔗 Links</button>
+    <div class="sidebar-group" id="grp-sala">
+      <p class="sidebar-group-title" onclick="toggleSidebarGroup('grp-sala')"><span data-i18n="navSalaDeAula">🏫 Sala de Aula</span><span class="chevron">▾</span></p>
+      <div class="sidebar-group-items">
+        <button class="nav-tab active" data-tab="home" onclick="switchTab('home', this)" data-i18n="navHome">🏠 Home</button>
+        <a href="./arcade.html" class="nav-tab">🕹️ Arcade</a>
+        <button class="nav-tab" data-tab="tutoriais" onclick="switchTab('tutoriais', this)" data-i18n="navTutoriais">🎬 Tutoriais</button>
+        <button class="nav-tab" data-tab="links" onclick="switchTab('links', this)" data-i18n="navLinks">🔗 Links</button>
+      </div>
     </div>
-    <div class="sidebar-group">
-      <p class="sidebar-group-title" data-i18n="navMinhaConta">🙋 Minha Conta</p>
-      <button class="nav-tab" data-tab="aluno" onclick="switchTab('aluno', this)" data-i18n="navAreaDev">🧑‍💻 Área_Dev</button>
-      <button class="nav-tab" data-tab="turma" onclick="switchTab('turma', this)" data-i18n="navTurma">👥 Turma</button>
+    <div class="sidebar-group" id="grp-conta">
+      <p class="sidebar-group-title" onclick="toggleSidebarGroup('grp-conta')"><span data-i18n="navMinhaConta">🙋 Minha Conta</span><span class="chevron">▾</span></p>
+      <div class="sidebar-group-items">
+        <button class="nav-tab" data-tab="aluno" onclick="switchTab('aluno', this)" data-i18n="navAreaDev">🧑‍💻 Área_Dev</button>
+        <button class="nav-tab" data-tab="turma" onclick="switchTab('turma', this)" data-i18n="navTurma">👥 Turma</button>
+      </div>
     </div>
-    <div class="sidebar-group">
-      <p class="sidebar-group-title" data-i18n="navAtividadesExtras">🕹️ Atividades Extras</p>
-      <a href="./puzzle.html" class="nav-tab">🧩 Puzzle</a>
-      <a href="./puzzle2.html" class="nav-tab">🧠 Puzzle 2</a>
-      <a href="./labirinto.html" class="nav-tab">🤖 Labirinto</a>
-      <a href="./labirinto2.html" class="nav-tab">🛼 Labirinto 2</a>
+    <div class="sidebar-group collapsed" id="grp-atividades">
+      <p class="sidebar-group-title" onclick="toggleSidebarGroup('grp-atividades')"><span data-i18n="navAtividadesExtras">🕹️ Atividades Extras</span><span class="chevron">▾</span></p>
+      <div class="sidebar-group-items">
+        <a href="./puzzle.html" class="nav-tab">🧩 Puzzle</a>
+        <a href="./puzzle2.html" class="nav-tab">🧠 Puzzle 2</a>
+        <a href="./labirinto.html" class="nav-tab">🤖 Labirinto</a>
+        <a href="./labirinto2.html" class="nav-tab">🛼 Labirinto 2</a>
+      </div>
     </div>
-    <div class="sidebar-group">
-      <p class="sidebar-group-title" data-i18n="navAulas">📚 Aulas</p>
-      <a href="./aula_arte_digital_1.html" class="nav-tab">🗺️ Arte Digital 1</a>
-      <a href="./aula_arte_digital_2.html" class="nav-tab">🔦 Arte Digital 2</a>
+    <div class="sidebar-group collapsed" id="grp-aulas">
+      <p class="sidebar-group-title" onclick="toggleSidebarGroup('grp-aulas')"><span data-i18n="navAulas">📚 Aulas</span><span class="chevron">▾</span></p>
+      <div class="sidebar-group-items">
+        <a href="./aula_arte_digital_1.html" class="nav-tab">🗺️ Arte Digital 1</a>
+        <a href="./aula_arte_digital_2.html" class="nav-tab">🔦 Arte Digital 2</a>
+      </div>
     </div>
-    <div class="sidebar-group" style="padding-bottom:14px;">
-      <p class="sidebar-group-title" data-i18n="navFerramentas">🛠️ Ferramentas</p>
-      <a href="./pixeleditor.html" class="nav-tab">🎨 Pixel Art</a>
-      <a href="./tileset-editor.html" class="nav-tab">🧱 Tileset</a>
-      <a href="./gerador-audio.html" class="nav-tab">🔊 Áudio 8-bit</a>
-      <a href="./sequenciador-musica.html" class="nav-tab">🎵 Música 8-bit</a>
+    <div class="sidebar-group collapsed" id="grp-ferramentas" style="padding-bottom:14px;">
+      <p class="sidebar-group-title" onclick="toggleSidebarGroup('grp-ferramentas')"><span data-i18n="navFerramentas">🛠️ Ferramentas</span><span class="chevron">▾</span></p>
+      <div class="sidebar-group-items">
+        <a href="./pixeleditor.html" class="nav-tab">🎨 Pixel Art</a>
+        <a href="./tileset-editor.html" class="nav-tab">🧱 Tileset</a>
+        <a href="./gerador-audio.html" class="nav-tab">🔊 Áudio 8-bit</a>
+        <a href="./sequenciador-musica.html" class="nav-tab">🎵 Música 8-bit</a>
+      </div>
     </div>
   </nav>
 </aside>
@@ -397,105 +418,87 @@
       <p class="text-xs text-gray-400 mt-2" data-i18n="homeIntro">Acesso rápido pra tudo que você usa nas aulas: envio de arquivos, materiais da turma, tutoriais e links.</p>
     </div>
 
-    <a href="./puzzle.html" class="card p-6 mb-4 flex flex-col sm:flex-row items-center gap-5 bg-gradient-to-r from-[#2a2140] to-[#1e1a2e] hover:no-underline">
-      <span class="text-4xl shrink-0">🧩</span>
+    <a href="./arcade.html" class="card p-6 mb-8 flex flex-col sm:flex-row items-center gap-5 bg-gradient-to-r from-[#241a30] to-[#1e1a2e] hover:no-underline">
+      <span class="text-4xl shrink-0">🕹️</span>
       <div class="flex-1">
-        <p class="font-pixel text-[9px] text-emerald-400 mb-2" data-i18n="tagAtividadeN1">// ATIVIDADE_EXTRA · NÍVEL 1</p>
-        <h3 class="font-display text-lg text-white mb-1" data-i18n="tituloPuzzle1">Puzzle de Lógica</h3>
-        <p class="text-xs text-gray-400" data-i18n="descPuzzle1">Arraste os blocos SE / ENTÃO pro lugar certo e treine a lógica que você usa no Construct 3.</p>
+        <p class="font-pixel text-[9px] text-pink-400 mb-2">// REPOSITORIO_WEB</p>
+        <h3 class="font-display text-lg text-white mb-1">Arcade</h3>
+        <p class="text-xs text-gray-400">Escolha um cartucho e jogue direto na telinha — produções independentes feitas pela turma no Construct 3.</p>
       </div>
-      <span class="btn-primary shrink-0" data-i18n="btnJogarAgora">Jogar agora</span>
+      <span class="btn-primary shrink-0">Abrir arcade</span>
     </a>
 
-    <a href="./puzzle2.html" class="card p-6 mb-4 flex flex-col sm:flex-row items-center gap-5 bg-gradient-to-r from-[#241a3a] to-[#1e1a2e] hover:no-underline">
-      <span class="text-4xl shrink-0">🧠</span>
-      <div class="flex-1">
-        <p class="font-pixel text-[9px] text-violet-400 mb-2" data-i18n="tagAtividadeN2">// ATIVIDADE_EXTRA · NÍVEL 2</p>
-        <h3 class="font-display text-lg text-white mb-1" data-i18n="tituloPuzzle2">Puzzle de Lógica — Nível 2</h3>
-        <p class="text-xs text-gray-400" data-i18n="descPuzzle2">Agora monta Objeto → Evento/Ação → Parâmetro, igual você clica no event sheet do Construct 3.</p>
-      </div>
-      <span class="btn-primary shrink-0" data-i18n="btnJogarAgora">Jogar agora</span>
-    </a>
+    <h2 class="font-pixel text-[10px] uppercase tracking-wider text-white mb-3" data-i18n="navAtividadesExtras">🕹️ Atividades Extras</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <a href="./puzzle.html" class="card p-5 flex flex-col hover:no-underline">
+        <span class="text-3xl mb-2">🧩</span>
+        <h3 class="font-pixel text-[10px] text-white mb-2" data-i18n="tituloPuzzle1">Puzzle de Lógica</h3>
+        <p class="text-xs text-gray-400 leading-relaxed mb-3 flex-1" data-i18n="descPuzzle1">Arraste os blocos SE / ENTÃO pro lugar certo e treine a lógica que você usa no Construct 3.</p>
+        <span class="btn-primary text-center" data-i18n="btnJogarAgora">Jogar agora</span>
+      </a>
+      <a href="./puzzle2.html" class="card p-5 flex flex-col hover:no-underline">
+        <span class="text-3xl mb-2">🧠</span>
+        <h3 class="font-pixel text-[10px] text-white mb-2" data-i18n="tituloPuzzle2">Puzzle de Lógica — Nível 2</h3>
+        <p class="text-xs text-gray-400 leading-relaxed mb-3 flex-1" data-i18n="descPuzzle2">Monta Objeto → Evento/Ação → Parâmetro, igual o event sheet do Construct 3.</p>
+        <span class="btn-primary text-center" data-i18n="btnJogarAgora">Jogar agora</span>
+      </a>
+      <a href="./labirinto.html" class="card p-5 flex flex-col hover:no-underline">
+        <span class="text-3xl mb-2">🤖</span>
+        <h3 class="font-pixel text-[10px] text-white mb-2" data-i18n="tituloLabirinto1">Labirinto do Robô</h3>
+        <p class="text-xs text-gray-400 leading-relaxed mb-3 flex-1" data-i18n="descLabirinto1">Monte o caminho com as setinhas e guie o robô até a estrela.</p>
+        <span class="btn-primary text-center" data-i18n="btnJogarAgora">Jogar agora</span>
+      </a>
+      <a href="./labirinto2.html" class="card p-5 flex flex-col hover:no-underline">
+        <span class="text-3xl mb-2">🛼</span>
+        <h3 class="font-pixel text-[10px] text-white mb-2" data-i18n="tituloLabirinto2">Labirinto do Robô 2</h3>
+        <p class="text-xs text-gray-400 leading-relaxed mb-3 flex-1" data-i18n="descLabirinto2">O robô desliza até parar em cada seta — tipo o Kodable!</p>
+        <span class="btn-primary text-center" data-i18n="btnJogarAgora">Jogar agora</span>
+      </a>
+    </div>
 
-    <a href="./labirinto.html" class="card p-6 mb-4 flex flex-col sm:flex-row items-center gap-5 bg-gradient-to-r from-[#1a2e2a] to-[#1e1a2e] hover:no-underline">
-      <span class="text-4xl shrink-0">🤖</span>
-      <div class="flex-1">
-        <p class="font-pixel text-[9px] text-emerald-400 mb-2" data-i18n="tagPrimeiroAno">// ATIVIDADE_EXTRA · PRIMEIRO_ANO</p>
-        <h3 class="font-display text-lg text-white mb-1" data-i18n="tituloLabirinto1">Labirinto do Robô</h3>
-        <p class="text-xs text-gray-400" data-i18n="descLabirinto1">Bem simples e cheio de fases: monte o caminho com as setinhas e guie o robô até a estrela.</p>
-      </div>
-      <span class="btn-primary shrink-0" data-i18n="btnJogarAgora">Jogar agora</span>
-    </a>
+    <h2 class="font-pixel text-[10px] uppercase tracking-wider text-white mb-3" data-i18n="navAulas">📚 Aulas</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <a href="./aula_arte_digital_1.html" class="card p-5 flex flex-col hover:no-underline">
+        <span class="text-3xl mb-2">🗺️</span>
+        <h3 class="font-pixel text-[10px] text-white mb-2" data-i18n="tituloAula1">Aula 1: Coordenadas, Pixel e Cor</h3>
+        <p class="text-xs text-gray-400 leading-relaxed mb-3 flex-1" data-i18n="descAula1">Mapa de pixels, resolução, paleta e a mágica dos frames de animação.</p>
+        <span class="btn-primary text-center" data-i18n="btnAbrirAula">Abrir aula</span>
+      </a>
+      <a href="./aula_arte_digital_2.html" class="card p-5 flex flex-col hover:no-underline">
+        <span class="text-3xl mb-2">🔦</span>
+        <h3 class="font-pixel text-[10px] text-white mb-2" data-i18n="tituloAula2">Aula 2: Luz e Sombra</h3>
+        <p class="text-xs text-gray-400 leading-relaxed mb-3 flex-1" data-i18n="descAula2">Direção da luz, vocabulário da sombra e um desafio com paleta de 4 cores.</p>
+        <span class="btn-primary text-center" data-i18n="btnAbrirAula">Abrir aula</span>
+      </a>
+    </div>
 
-    <a href="./labirinto2.html" class="card p-6 mb-8 flex flex-col sm:flex-row items-center gap-5 bg-gradient-to-r from-[#152a38] to-[#1e1a2e] hover:no-underline">
-      <span class="text-4xl shrink-0">🛼</span>
-      <div class="flex-1">
-        <p class="font-pixel text-[9px] text-sky-400 mb-2" data-i18n="tagPrimeiroAno">// ATIVIDADE_EXTRA · PRIMEIRO_ANO</p>
-        <h3 class="font-display text-lg text-white mb-1" data-i18n="tituloLabirinto2">Labirinto do Robô 2</h3>
-        <p class="text-xs text-gray-400" data-i18n="descLabirinto2">Aqui o robô desliza até parar em cada seta — tipo o Kodable! Descubra o jeito certo de guiá-lo até a estrela.</p>
-      </div>
-      <span class="btn-primary shrink-0" data-i18n="btnJogarAgora">Jogar agora</span>
-    </a>
-
-    <a href="./pixeleditor.html" class="card p-6 mb-4 flex flex-col sm:flex-row items-center gap-5 bg-gradient-to-r from-[#2a1a38] to-[#1e1a2e] hover:no-underline">
-      <span class="text-4xl shrink-0">🎨</span>
-      <div class="flex-1">
-        <p class="font-pixel text-[9px] text-pink-400 mb-2" data-i18n="tagFerramentaArte">// FERRAMENTA · ARTE_DIGITAL</p>
-        <h3 class="font-display text-lg text-white mb-1" data-i18n="tituloPixelArt">Editor de Pixel Art</h3>
-        <p class="text-xs text-gray-400" data-i18n="descPixelArt">Desenhe pixel a pixel, escolha uma paleta, monte desafios de referência e crie animações com vários quadros — até GIF dá pra exportar!</p>
-      </div>
-      <span class="btn-primary shrink-0" data-i18n="btnAbrirEditor">Abrir editor</span>
-    </a>
-
-    <a href="./aula_arte_digital_1.html" class="card p-6 mb-4 flex flex-col sm:flex-row items-center gap-5 bg-gradient-to-r from-[#2a2140] to-[#1e1a2e] hover:no-underline">
-      <span class="text-4xl shrink-0">🗺️</span>
-      <div class="flex-1">
-        <p class="font-pixel text-[9px] text-cyan-400 mb-2" data-i18n="tagAula">// AULA · ARTE_DIGITAL</p>
-        <h3 class="font-display text-lg text-white mb-1" data-i18n="tituloAula1">Aula 1: Coordenadas, Pixel e Cor</h3>
-        <p class="text-xs text-gray-400" data-i18n="descAula1">Mapa de pixels, resolução, paleta com contraste e a mágica dos frames de animação — 4 módulos interativos.</p>
-      </div>
-      <span class="btn-primary shrink-0" data-i18n="btnAbrirAula">Abrir aula</span>
-    </a>
-
-    <a href="./aula_arte_digital_2.html" class="card p-6 mb-8 flex flex-col sm:flex-row items-center gap-5 bg-gradient-to-r from-[#2a2140] to-[#1e1a2e] hover:no-underline">
-      <span class="text-4xl shrink-0">🔦</span>
-      <div class="flex-1">
-        <p class="font-pixel text-[9px] text-cyan-400 mb-2" data-i18n="tagAula">// AULA · ARTE_DIGITAL</p>
-        <h3 class="font-display text-lg text-white mb-1" data-i18n="tituloAula2">Aula 2: Luz e Sombra</h3>
-        <p class="text-xs text-gray-400" data-i18n="descAula2">Direção da luz, vocabulário da sombra, passo a passo e um desafio prático com paleta de 4 cores.</p>
-      </div>
-      <span class="btn-primary shrink-0" data-i18n="btnAbrirAula">Abrir aula</span>
-    </a>
-
-    <a href="./tileset-editor.html" class="card p-6 mb-4 flex flex-col sm:flex-row items-center gap-5 bg-gradient-to-r from-[#1a2a2e] to-[#1e1a2e] hover:no-underline">
-      <span class="text-4xl shrink-0">🧱</span>
-      <div class="flex-1">
-        <p class="font-pixel text-[9px] text-emerald-400 mb-2" data-i18n="tagFerramentaGame">// FERRAMENTA · GAME_DESIGN</p>
-        <h3 class="font-display text-lg text-white mb-1" data-i18n="tituloTileset">Editor de Tileset</h3>
-        <p class="text-xs text-gray-400" data-i18n="descTileset">Desenhe peças pequenas (grama, parede, moeda...) e depois carimbe elas num mapa maior — o mesmo jeito que fases de jogo são montadas de verdade.</p>
-      </div>
-      <span class="btn-primary shrink-0" data-i18n="btnAbrirEditor">Abrir editor</span>
-    </a>
-
-    <a href="./gerador-audio.html" class="card p-6 mb-4 flex flex-col sm:flex-row items-center gap-5 bg-gradient-to-r from-[#241a30] to-[#1e1a2e] hover:no-underline">
-      <span class="text-4xl shrink-0">🔊</span>
-      <div class="flex-1">
-        <p class="font-pixel text-[9px] text-pink-400 mb-2">// FERRAMENTA · ÁUDIO</p>
-        <h3 class="font-display text-lg text-white mb-1">Gerador de Áudio 8-bit</h3>
-        <p class="text-xs text-gray-400">Efeitos sonoros prontos (moeda, pulo, dano, vitória...) ou ajuste do seu jeito, exportados no formato mais leve pra usar direto no Construct 3.</p>
-      </div>
-      <span class="btn-primary shrink-0">Abrir editor</span>
-    </a>
-
-    <a href="./sequenciador-musica.html" class="card p-6 mb-8 flex flex-col sm:flex-row items-center gap-5 bg-gradient-to-r from-[#2a1830] to-[#1e1a2e] hover:no-underline">
-      <span class="text-4xl shrink-0">🎵</span>
-      <div class="flex-1">
-        <p class="font-pixel text-[9px] text-pink-400 mb-2">// FERRAMENTA · ÁUDIO</p>
-        <h3 class="font-display text-lg text-white mb-1">Sequenciador de Música 8-bit</h3>
-        <p class="text-xs text-gray-400">Clique nos quadradinhos pra montar uma melodia e uma bateria em compasso — igual um beat pad — e exporte a musiquinha pronta.</p>
-      </div>
-      <span class="btn-primary shrink-0">Abrir editor</span>
-    </a>
+    <h2 class="font-pixel text-[10px] uppercase tracking-wider text-white mb-3" data-i18n="navFerramentas">🛠️ Ferramentas</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+      <a href="./pixeleditor.html" class="card p-5 flex flex-col hover:no-underline">
+        <span class="text-3xl mb-2">🎨</span>
+        <h3 class="font-pixel text-[10px] text-white mb-2" data-i18n="tituloPixelArt">Editor de Pixel Art</h3>
+        <p class="text-xs text-gray-400 leading-relaxed mb-3 flex-1" data-i18n="descPixelArt">Desenhe, escolha paleta, monte animações — até GIF dá pra exportar.</p>
+        <span class="btn-primary text-center" data-i18n="btnAbrirEditor">Abrir editor</span>
+      </a>
+      <a href="./tileset-editor.html" class="card p-5 flex flex-col hover:no-underline">
+        <span class="text-3xl mb-2">🧱</span>
+        <h3 class="font-pixel text-[10px] text-white mb-2" data-i18n="tituloTileset">Editor de Tileset</h3>
+        <p class="text-xs text-gray-400 leading-relaxed mb-3 flex-1" data-i18n="descTileset">Desenhe peças pequenas e carimbe num mapa maior, como fases de jogo de verdade.</p>
+        <span class="btn-primary text-center" data-i18n="btnAbrirEditor">Abrir editor</span>
+      </a>
+      <a href="./gerador-audio.html" class="card p-5 flex flex-col hover:no-underline">
+        <span class="text-3xl mb-2">🔊</span>
+        <h3 class="font-pixel text-[10px] text-white mb-2">Gerador de Áudio 8-bit</h3>
+        <p class="text-xs text-gray-400 leading-relaxed mb-3 flex-1">Efeitos sonoros prontos ou do seu jeito, exportados leves pro Construct 3.</p>
+        <span class="btn-primary text-center">Abrir editor</span>
+      </a>
+      <a href="./sequenciador-musica.html" class="card p-5 flex flex-col hover:no-underline">
+        <span class="text-3xl mb-2">🎵</span>
+        <h3 class="font-pixel text-[10px] text-white mb-2">Sequenciador de Música 8-bit</h3>
+        <p class="text-xs text-gray-400 leading-relaxed mb-3 flex-1">Monte uma melodia e bateria em compasso, tipo um beat pad.</p>
+        <span class="btn-primary text-center">Abrir editor</span>
+      </a>
+    </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
       <div class="card p-5 flex flex-col">
@@ -523,16 +526,6 @@
         <button class="btn-primary" onclick="switchTab('links')" data-i18n="btnVerLinks">Ver links</button>
       </div>
     </div>
-
-    <a href="./arcade.html" class="card p-6 mb-8 flex flex-col sm:flex-row items-center gap-5 bg-gradient-to-r from-[#241a30] to-[#1e1a2e] hover:no-underline">
-      <span class="text-4xl shrink-0">🕹️</span>
-      <div class="flex-1">
-        <p class="font-pixel text-[9px] text-pink-400 mb-2">// REPOSITORIO_WEB</p>
-        <h3 class="font-display text-lg text-white mb-1">Arcade</h3>
-        <p class="text-xs text-gray-400">Escolha um cartucho e jogue direto na telinha — produções independentes feitas pela turma no Construct 3.</p>
-      </div>
-      <span class="btn-primary shrink-0">Abrir arcade</span>
-    </a>
   </section>
 
   <section id="section-tutoriais" class="section">
@@ -898,6 +891,9 @@ function openSidebar(){
 function closeSidebar(){
   document.getElementById('sidebar').classList.remove('show');
   document.getElementById('sidebar-overlay').classList.remove('show');
+}
+function toggleSidebarGroup(id){
+  document.getElementById(id).classList.toggle('collapsed');
 }
 function toggleSidebar(){
   document.getElementById('sidebar').classList.contains('show') ? closeSidebar() : openSidebar();
