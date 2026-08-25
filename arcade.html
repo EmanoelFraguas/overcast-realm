@@ -157,6 +157,7 @@
         </div>
         <div class="monitor-footer">
           <span class="monitor-brand">OVERCAST • CRT-1</span>
+          <button id="btn-fechar-jogo" onclick="fecharJogoAtual()" style="display:none;font-family:'Press Start 2P',monospace;font-size:9px;color:#fff;background:var(--pink);border:none;border-radius:999px;padding:6px 12px;cursor:pointer;">✕ Fechar Jogo</button>
           <span class="monitor-led" id="monitor-led"></span>
         </div>
       </div>
@@ -246,31 +247,52 @@ function filtrarCartuchos(valor){
   renderCartuchos(valor);
 }
 
+function sairDeTelaCheiaSePreciso(){
+  try{
+    if(document.fullscreenElement) document.exitFullscreen();
+    else if(document.webkitFullscreenElement) document.webkitExitFullscreen();
+  }catch(e){ /* ignora, nem todo navegador suporta igual */ }
+}
+
 function carregarCartucho(idx){
-  const jogo = (overcastData.jogos || [])[idx];
-  if(!jogo) return;
-  jogoAtual = jogo;
+  try{
+    const jogo = (overcastData.jogos || [])[idx];
+    if(!jogo) return;
+    sairDeTelaCheiaSePreciso();
+    jogoAtual = jogo;
+    jogoRodando = false;
+
+    const screenArea = document.getElementById('screen-area');
+    screenArea.innerHTML = `
+      <div class="screen-placeholder" id="screen-placeholder" onclick="iniciarJogoAtual()">
+        <div class="titlecard">${jogo.titulo.toUpperCase()}</div>
+        <div class="play-icon">▶</div>
+        <div class="hint">CLIQUE PRA JOGAR<br>(abre direto aqui na tela)</div>
+      </div>
+    `;
+    document.getElementById('monitor-led').classList.remove('on');
+    document.getElementById('btn-fechar-jogo').style.display = 'none';
+
+    document.getElementById('game-info').style.display = 'block';
+    document.getElementById('info-titulo').textContent = jogo.titulo;
+    document.getElementById('info-dev').textContent = '// DEV: ' + (jogo.autor || '???');
+    document.getElementById('info-desc').textContent = jogo.descricao || 'Sem metadados descritivos.';
+    document.getElementById('info-controles').textContent = jogo.controles || 'Não mapeados.';
+    document.getElementById('info-nova-aba').href = jogo.url;
+
+    renderCartuchos(document.getElementById('cart-search').value);
+  }catch(e){
+    console.error('Erro ao carregar cartucho:', e);
+  }
+}
+
+function fecharJogoAtual(){
+  sairDeTelaCheiaSePreciso();
   jogoRodando = false;
-
-  document.getElementById('screen-empty').style.display = 'none';
   const screenArea = document.getElementById('screen-area');
-  screenArea.innerHTML = `
-    <div class="screen-placeholder" id="screen-placeholder" onclick="iniciarJogoAtual()">
-      <div class="titlecard">${jogo.titulo.toUpperCase()}</div>
-      <div class="play-icon">▶</div>
-      <div class="hint">CLIQUE PRA JOGAR<br>(abre direto aqui na tela)</div>
-    </div>
-  `;
+  screenArea.innerHTML = `<div class="screen-empty">🕹️<br><br>ESCOLHA UM<br>CARTUCHO AO LADO</div>`;
   document.getElementById('monitor-led').classList.remove('on');
-
-  document.getElementById('game-info').style.display = 'block';
-  document.getElementById('info-titulo').textContent = jogo.titulo;
-  document.getElementById('info-dev').textContent = '// DEV: ' + (jogo.autor || '???');
-  document.getElementById('info-desc').textContent = jogo.descricao || 'Sem metadados descritivos.';
-  document.getElementById('info-controles').textContent = jogo.controles || 'Não mapeados.';
-  document.getElementById('info-nova-aba').href = jogo.url;
-
-  renderCartuchos(document.getElementById('cart-search').value);
+  document.getElementById('btn-fechar-jogo').style.display = 'none';
 }
 
 function tipoDeLinkItch(url){
@@ -308,6 +330,7 @@ function iniciarJogoAtual(){
     <div class="screen-scanlines"></div>
   `;
   document.getElementById('monitor-led').classList.add('on');
+  document.getElementById('btn-fechar-jogo').style.display = 'inline-block';
   jogoRodando = true;
   // tenta focar o iframe pra o teclado ir direto pro jogo assim que ele carrega
   const novoIframe = screenArea.querySelector('iframe');
