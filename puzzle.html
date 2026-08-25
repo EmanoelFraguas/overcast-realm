@@ -327,7 +327,7 @@
 <script src="./progress.js"></script>
 </head>
 <body>
-<div class="wrap">
+<div class="wrap" id="page-content" style="display:none;">
 
   <button id="lang-toggle-btn" style="position:fixed;top:10px;right:10px;z-index:999;font-size:22px;background:#fff;border:2px solid #d8d5e6;border-radius:50%;width:42px;height:42px;cursor:pointer;box-shadow:0 3px 0 #d8d5e6;" onclick="toggleLang()" title="English">🇺🇸</button>
   <a href="./index.html" class="back-home">← Voltar pro Overcast Realm</a>
@@ -350,6 +350,7 @@
   <footer id="t-footer">🎮 Overcast Game Studio — material de apoio para aulas de lógica</footer>
 </div>
 
+<script src="./course-gate.js"></script>
 <script>
 const exercises = [
   {icon:"⚡", title:{pt:"Espinho",en:"Spike"}, scenario:{pt:'Se o personagem <b>colidir com o espinho</b>, o sistema reinicia o layout.', en:'If the Player <b>collides with the Spike</b>, the system restarts the layout.'},
@@ -667,6 +668,8 @@ if(window.OvercastProgress){
   OvercastProgress.onLink(identity => { if(identity) syncCloudProgress(); });
   if(OvercastProgress.getIdentity()) syncCloudProgress();
 }
+
+CourseGate.protect({ cursos: ['games'], contentSelector: '#page-content' });
 </script>
 </body>
 </html>
