@@ -143,6 +143,14 @@
       </div>
       <button class="btn purple" id="btn-2o-compasso" onclick="toggleSegundoCompasso()">🔒 2º Compasso: OFF</button>
       <button class="btn gray" onclick="limparTudo()">🧹 Limpar</button>
+      <div class="bpm-row">
+        <span style="font-weight:800;font-size:11px;color:var(--ink-soft);">🎹 VOL</span>
+        <input type="range" id="ctl-vol-melodia" min="0" max="150" value="100">
+      </div>
+      <div class="bpm-row">
+        <span style="font-weight:800;font-size:11px;color:var(--ink-soft);">🥁 VOL</span>
+        <input type="range" id="ctl-vol-bateria" min="0" max="150" value="100">
+      </div>
       <div style="flex:1;"></div>
       <div id="melody-wave-row" style="display:flex;gap:6px;"></div>
     </div>
@@ -156,6 +164,15 @@
 
     <div class="transport" style="margin-top:10px;border-top:2px solid var(--border);padding-top:10px;">
       <input type="text" id="ctl-nome" value="minha-musica" maxlength="40" style="max-width:180px;">
+      <div class="bpm-row">
+        <span style="font-weight:800;font-size:11px;color:var(--ink-soft);">REPETIR</span>
+        <select id="ctl-repeticoes" style="font-family:'Baloo 2',sans-serif;font-weight:700;padding:8px 10px;border-radius:8px;border:2px solid var(--border);background:#150f24;color:#fff;">
+          <option value="1">1x</option>
+          <option value="2">2x</option>
+          <option value="4">4x</option>
+          <option value="8">8x</option>
+        </select>
+      </div>
       <button class="btn orange" onclick="baixarLoop()">⬇️ Baixar</button>
       <button class="btn green" onclick="abrirModalVincular()">👤 Vincular</button>
       <button class="btn pink" id="btn-salvar-pasta" onclick="salvarNaPasta()" disabled>📁 Salvar na Pasta</button>
@@ -217,6 +234,8 @@ let melodyGrid = ESCALA.map(() => new Array(STEPS).fill(false));
 let drumGrid = DRUMS.map(() => new Array(STEPS).fill(false));
 let melodyWave = 'square';
 let bpm = 120;
+let melodyVolume = 1;
+let drumVolume = 1;
 
 /* ======================================================
    PRESETS
@@ -366,7 +385,7 @@ function toggleMelody(linha, passo){
 function toggleDrum(linha, passo){
   drumGrid[linha][passo] = !drumGrid[linha][passo];
   renderGrids();
-  if(drumGrid[linha][passo]) tocarSamples(renderPercussao(DRUMS[linha].key));
+  if(drumGrid[linha][passo]) tocarSamples(renderPercussao(DRUMS[linha].key, drumVolume));
 }
 function limparTudo(){
   if(!confirm('Limpar toda a melodia e a bateria?')) return;
@@ -388,6 +407,8 @@ document.getElementById('ctl-bpm').oninput = e => {
   bpm = parseInt(e.target.value,10);
   document.getElementById('val-bpm').textContent = bpm + ' BPM';
 };
+document.getElementById('ctl-vol-melodia').oninput = e => { melodyVolume = parseInt(e.target.value,10)/100; };
+document.getElementById('ctl-vol-bateria').oninput = e => { drumVolume = parseInt(e.target.value,10)/100; };
 
 /* ======================================================
    SÍNTESE DE ÁUDIO
@@ -419,20 +440,21 @@ function renderNota(freq, duracao, wave, volume){
   }
   return buf;
 }
-function renderPercussao(key){
+function renderPercussao(key, volumeMult){
+  const vol = volumeMult===undefined ? 1 : volumeMult;
   if(key === 'kick'){
     const n = Math.floor(SAMPLE_RATE*0.15); const buf = new Float32Array(n); let phase=0;
-    for(let i=0;i<n;i++){ const t=i/n; phase += (150-110*t)/SAMPLE_RATE; buf[i]=waveSample('sine',phase)*(1-t)*0.8; }
+    for(let i=0;i<n;i++){ const t=i/n; phase += (150-110*t)/SAMPLE_RATE; buf[i]=waveSample('sine',phase)*(1-t)*0.8*vol; }
     return buf;
   }
   if(key === 'snare'){
     const n = Math.floor(SAMPLE_RATE*0.12); const buf = new Float32Array(n); let phase=0;
     for(let i=0;i<n;i++){ const t=i/n; phase += 180/SAMPLE_RATE;
-      buf[i] = (waveSample('triangle',phase)*0.4 + (Math.random()*2-1)*0.6) * (1-t) * 0.7; }
+      buf[i] = (waveSample('triangle',phase)*0.4 + (Math.random()*2-1)*0.6) * (1-t) * 0.7 * vol; }
     return buf;
   }
   const n = Math.floor(SAMPLE_RATE*0.045); const buf = new Float32Array(n);
-  for(let i=0;i<n;i++){ const t=i/n; buf[i]=(Math.random()*2-1)*(1-t)*0.3; }
+  for(let i=0;i<n;i++){ const t=i/n; buf[i]=(Math.random()*2-1)*(1-t)*0.3*vol; }
   return buf;
 }
 
@@ -445,7 +467,7 @@ function tocarSamples(samples){
   src.buffer = buffer; src.connect(audioCtx.destination); src.start();
 }
 function tocarNotaPreview(freq, wave){
-  tocarSamples(renderNota(freq, 0.25, wave, 0.5));
+  tocarSamples(renderNota(freq, 0.25, wave, 0.5*melodyVolume));
 }
 
 /* ======================================================
@@ -466,24 +488,30 @@ function normalizar(buffer, alvoPico){
   }
   return buffer;
 }
-function renderizarLoop(){
+function renderizarLoop(repeticoes){
+  const reps = repeticoes || 1;
   const totalPassos = segundoCompassoAtivo ? STEPS : 16;
   const passoDuracao = 60/bpm/4;
-  const duracaoTotal = passoDuracao*totalPassos;
-  const bufferPrincipal = new Float32Array(Math.ceil(duracaoTotal*SAMPLE_RATE) + Math.ceil(SAMPLE_RATE*0.3));
+  const duracaoUmLoop = passoDuracao*totalPassos;
+  const amostrasPorLoop = Math.ceil(duracaoUmLoop*SAMPLE_RATE);
+  const tailAmostras = Math.ceil(SAMPLE_RATE*0.3);
+  const bufferPrincipal = new Float32Array(amostrasPorLoop*reps + tailAmostras);
 
-  for(let linha=0; linha<ESCALA.length; linha++){
-    for(let passo=0; passo<totalPassos; passo++){
-      if(melodyGrid[linha][passo]){
-        const nota = renderNota(ESCALA[linha].freq, passoDuracao*0.9, melodyWave, 0.45);
-        misturar(bufferPrincipal, nota, passo*passoDuracao);
+  for(let rep=0; rep<reps; rep++){
+    const offsetRep = rep*amostrasPorLoop/SAMPLE_RATE; // em segundos
+    for(let linha=0; linha<ESCALA.length; linha++){
+      for(let passo=0; passo<totalPassos; passo++){
+        if(melodyGrid[linha][passo]){
+          const nota = renderNota(ESCALA[linha].freq, passoDuracao*0.9, melodyWave, 0.45*melodyVolume);
+          misturar(bufferPrincipal, nota, offsetRep + passo*passoDuracao);
+        }
       }
     }
-  }
-  for(let linha=0; linha<DRUMS.length; linha++){
-    for(let passo=0; passo<totalPassos; passo++){
-      if(drumGrid[linha][passo]){
-        misturar(bufferPrincipal, renderPercussao(DRUMS[linha].key), passo*passoDuracao);
+    for(let linha=0; linha<DRUMS.length; linha++){
+      for(let passo=0; passo<totalPassos; passo++){
+        if(drumGrid[linha][passo]){
+          misturar(bufferPrincipal, renderPercussao(DRUMS[linha].key, drumVolume), offsetRep + passo*passoDuracao);
+        }
       }
     }
   }
@@ -508,10 +536,10 @@ function iniciarPlay(){
   const tick = () => {
     destacarPasso(passoAtual);
     for(let linha=0; linha<ESCALA.length; linha++){
-      if(melodyGrid[linha][passoAtual]) tocarSamples(renderNota(ESCALA[linha].freq, (60/bpm/4)*0.9, melodyWave, 0.45));
+      if(melodyGrid[linha][passoAtual]) tocarSamples(renderNota(ESCALA[linha].freq, (60/bpm/4)*0.9, melodyWave, 0.45*melodyVolume));
     }
     for(let linha=0; linha<DRUMS.length; linha++){
-      if(drumGrid[linha][passoAtual]) tocarSamples(renderPercussao(DRUMS[linha].key));
+      if(drumGrid[linha][passoAtual]) tocarSamples(renderPercussao(DRUMS[linha].key, drumVolume));
     }
     const totalPassos = segundoCompassoAtivo ? STEPS : 16;
     passoAtual = (passoAtual+1) % totalPassos;
@@ -595,7 +623,8 @@ function slugify(s){
 function baixarLoop(){
   const statusEl = document.getElementById('export-status');
   const nome = (document.getElementById('ctl-nome').value || 'minha-musica').trim() || 'minha-musica';
-  const samples = renderizarLoop();
+  const repeticoes = parseInt(document.getElementById('ctl-repeticoes').value, 10) || 1;
+  const samples = renderizarLoop(repeticoes);
   const { blob, ext, wavSize, escolhidoSize } = exportarMaisLeve(samples);
   disparaDownload(blob, `${slugify(nome)}.${ext}`);
   const economiaPct = wavSize > 0 ? Math.round((1 - escolhidoSize/wavSize)*100) : 0;
@@ -667,7 +696,8 @@ async function salvarNaPasta(){
   statusEl.style.color = 'var(--ink-soft)';
   statusEl.textContent = '⏳ Enviando...';
   try{
-    const samples = renderizarLoop();
+    const repeticoes = parseInt(document.getElementById('ctl-repeticoes').value, 10) || 1;
+    const samples = renderizarLoop(repeticoes);
     const { blob, ext } = exportarMaisLeve(samples);
     const nomeVersionado = await proximoNomeVersionado(linkedAluno.codigo, `${slugify(nome)}.${ext}`);
     const path = `envios/${linkedAluno.codigo}/${nomeVersionado}`;
