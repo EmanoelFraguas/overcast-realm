@@ -314,7 +314,7 @@
 <script src="./progress.js"></script>
 </head>
 <body>
-<div class="wrap">
+<div class="wrap" id="page-content" style="display:none;">
 
   <button id="lang-toggle-btn" style="position:fixed;top:10px;right:10px;z-index:999;font-size:22px;background:#fff;border:2px solid #d8d5e6;border-radius:50%;width:42px;height:42px;cursor:pointer;box-shadow:0 3px 0 #d8d5e6;" onclick="toggleLang()" title="English">🇺🇸</button>
   <div class="back-row">
@@ -344,6 +344,7 @@
 
 </div>
 
+<script src="./course-gate.js"></script>
 <script>
 // Cada exercício: cond (SE) e act (ENTÃO), cada um é uma lista de peças na ordem certa.
 // role: 'obj' (objeto), 'evt' (evento/condição ou ação), 'param' (parâmetro/objeto-alvo, nem sempre existe)
@@ -770,6 +771,8 @@ if(window.OvercastProgress){
   OvercastProgress.onLink(identity => { if(identity) syncCloudProgress(); });
   if(OvercastProgress.getIdentity()) syncCloudProgress();
 }
+
+CourseGate.protect({ cursos: ['games'], contentSelector: '#page-content' });
 </script>
 </body>
 </html>
