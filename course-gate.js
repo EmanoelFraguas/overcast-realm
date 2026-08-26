@@ -1,20 +1,26 @@
 /* ============================================================================
-   CourseGate — controle de acesso por curso (games / arte)
+   CourseGate — identificação de curso (games / arte), NÃO-BLOQUEANTE
    Overcast Realm
 
-   Uso em qualquer página protegida:
+   Uso em qualquer página (igual antes, não muda a chamada):
      <script src="./course-gate.js"></script>
      ...
-     <div id="page-content" style="display:none;"> ...conteúdo real da página... </div>
+     <div id="page-content"> ...conteúdo real da página... </div>
      ...
      <script>
        CourseGate.protect({ cursos: ['games'], contentSelector: '#page-content' });
      </script>
 
-   O vínculo (turma + aluno) fica em sessionStorage — some sozinho ao fechar
-   o navegador — e também expira depois de algumas horas mesmo se a aba
-   continuar aberta, pra evitar que o aluno seguinte numa mesma máquina de
-   sala de informática "herde" o login de quem usou antes.
+   Mudança importante: o conteúdo NUNCA fica escondido esperando login.
+   protect() só cuida de:
+     1) mostrar um crachá pequeno e opcional pra vincular nome (igual o
+        progress.js já faz nas páginas de exercício) — só pra registrar
+        progresso/moedas, quem não vincular ainda assim usa a página normal;
+     2) se o aluno JÁ vinculou nome em outra hora e o curso salvo não bate
+        com o da página, mostra um avisinho discreto no topo (não trava nada).
+
+   O vínculo continua em sessionStorage (some ao fechar o navegador) e some
+   sozinho depois de 4h mesmo com a aba aberta, pra sala de informática.
 ============================================================================ */
 window.CourseGate = (function(){
   const SUPABASE_URL = "https://kezlmecrxhjahhoekybs.supabase.co";
@@ -62,15 +68,26 @@ window.CourseGate = (function(){
   }
   function clearIdentity(){ sessionStorage.removeItem(IDENTITY_KEY); }
 
-  /* ---- injeta a tela de bloqueio (link ou "não é do seu curso") ---- */
+  /* ---- estilos: crachá + modal + aviso, nada de tela cheia bloqueando ---- */
   function ensureStyles(){
     if(document.getElementById('cg-styles')) return;
     const style = document.createElement('style');
     style.id = 'cg-styles';
     style.textContent = `
-      #cg-overlay{ position:fixed; inset:0; z-index:99999; background:#14101f;
-        display:flex; align-items:center; justify-content:center; padding:20px;
+      #cg-badge{ position:fixed; bottom:14px; right:14px; z-index:9998;
+        display:inline-flex; align-items:center; gap:6px; font-family:'Baloo 2','Segoe UI',sans-serif;
+        font-weight:700; font-size:12px; color:#2bb673; background:#e3fbf0; border:2px solid #2bb673;
+        border-radius:999px; padding:8px 14px; cursor:pointer; box-shadow:0 4px 0 rgba(0,0,0,.25); }
+      #cg-badge.unlinked{ color:#6b5b8a; background:#f2f0f7; border-color:#d8d0ec; }
+      #cg-aviso-curso{ font-family:'Baloo 2','Segoe UI',sans-serif; font-weight:700; font-size:13px;
+        color:#3a2b0f; background:#ffd23f; border-bottom:3px solid #b98a00; padding:10px 16px;
+        display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+      #cg-aviso-curso button{ font-family:inherit; font-weight:800; font-size:12px; border:none;
+        border-radius:999px; padding:6px 12px; cursor:pointer; background:#3a2b0f; color:#ffd23f; }
+      #cg-overlay{ position:fixed; inset:0; z-index:99999; background:rgba(20,15,35,.6);
+        display:none; align-items:center; justify-content:center; padding:20px;
         font-family:'Baloo 2','Segoe UI',sans-serif; }
+      #cg-overlay.show{ display:flex; }
       #cg-box{ background:#221b38; border:3px solid #443a63; border-radius:20px; padding:26px;
         max-width:400px; width:100%; box-shadow:0 8px 0 #0c091680; text-align:center; }
       #cg-box h2{ font-family:'Press Start 2P','Courier New',monospace; font-size:14px; color:#ffd23f; margin:0 0 14px; line-height:1.6; }
@@ -91,34 +108,50 @@ window.CourseGate = (function(){
   let opcoesAtuais = null; // { cursos, contentSelector }
   let turmaBusca = null;
 
-  function mostrarOverlay(html){
+  /* ---- crachá opcional (nunca esconde conteúdo) ---- */
+  function badgeHTML(){
+    const id = getIdentity();
+    return id ? `👤 <b>${id.nome}</b> <span style="opacity:.7;">(trocar)</span>` : `🔗 Vincular meu nome`;
+  }
+  function mostrarBadge(){
+    ensureStyles();
+    let badge = document.getElementById('cg-badge');
+    if(!badge){
+      badge = document.createElement('div');
+      badge.id = 'cg-badge';
+      badge.onclick = abrirModalVinculo;
+      document.body.appendChild(badge);
+    }
+    badge.className = getIdentity() ? '' : 'unlinked';
+    badge.innerHTML = badgeHTML();
+  }
+
+  /* ---- modal de vínculo (mesmo fluxo de sempre, só que abre por escolha, não trava nada) ---- */
+  function abrirModalVinculo(){
     ensureStyles();
     let overlay = document.getElementById('cg-overlay');
     if(!overlay){
       overlay = document.createElement('div');
       overlay.id = 'cg-overlay';
       document.body.appendChild(overlay);
+      overlay.addEventListener('click', e => { if(e.target === overlay) fecharModalVinculo(); });
     }
-    overlay.innerHTML = `<div id="cg-box">${html}</div>`;
+    overlay.innerHTML = `<div id="cg-box">${telaVincularHTML()}</div>`;
+    overlay.classList.add('show');
+    document.getElementById('cg-buscar-btn').onclick = buscarTurma;
+    document.getElementById('cg-turma-code').addEventListener('keydown', e => { if(e.key === 'Enter') buscarTurma(); });
+    document.getElementById('cg-fechar-btn').onclick = fecharModalVinculo;
   }
-  function esconderOverlay(){
+  function fecharModalVinculo(){
     const overlay = document.getElementById('cg-overlay');
-    if(overlay) overlay.remove();
-  }
-  function liberarConteudo(){
-    if(opcoesAtuais && opcoesAtuais.contentSelector){
-      document.querySelectorAll(opcoesAtuais.contentSelector).forEach(el => { el.style.display = ''; });
-    }
-    esconderOverlay();
+    if(overlay) overlay.classList.remove('show');
   }
 
-  const LINK_VOLTAR = `<a href="./index.html" style="display:block;color:#8f88a8;font-size:12px;font-weight:700;text-decoration:none;margin-top:10px;">← Voltar pro Overcast Realm</a>`;
-
-  function telaVincular(mensagemExtra){
-    mostrarOverlay(`
-      <div id="cg-icon">🔒</div>
-      <h2>ÁREA RESTRITA</h2>
-      <p>${mensagemExtra || 'Essa atividade é só pra quem já vinculou o nome. Digite o código da sua turma:'}</p>
+  function telaVincularHTML(){
+    return `
+      <div id="cg-icon">🔗</div>
+      <h2>VINCULAR NOME</h2>
+      <p>Opcional — vincular seu nome salva seu progresso, moedas e avatar. Digite o código da sua turma:</p>
       <div id="cg-step-turma">
         <input type="text" id="cg-turma-code" placeholder="Código da turma">
         <button class="cg-btn-primary" id="cg-buscar-btn">🔎 Buscar Turma</button>
@@ -130,10 +163,8 @@ window.CourseGate = (function(){
         <div id="cg-aluno-list"></div>
         <button class="cg-btn-gray" id="cg-trocar-turma-btn">← Trocar turma</button>
       </div>
-      ${LINK_VOLTAR}
-    `);
-    document.getElementById('cg-buscar-btn').onclick = buscarTurma;
-    document.getElementById('cg-turma-code').addEventListener('keydown', e => { if(e.key === 'Enter') buscarTurma(); });
+      <button class="cg-btn-gray" id="cg-fechar-btn">✕ Fechar</button>
+    `;
   }
 
   async function buscarTurma(){
@@ -171,46 +202,58 @@ window.CourseGate = (function(){
       codigo: aluno.codigo, nome: aluno.nome,
       turmaCodigo: turmaBusca.turma.codigo_acesso, tipoCurso: turmaBusca.turma.tipo_curso
     });
-    await validarEExibir();
+    fecharModalVinculo();
+    mostrarBadge();
+    await checarAvisoCurso();
   }
 
-  function telaCursoErrado(nomeAluno, tipoCursoAluno, cursosExigidos){
+  /* ---- aviso leve (não bloqueia) quando o curso salvo não bate com o da página ---- */
+  function removerAviso(){
+    const el = document.getElementById('cg-aviso-curso');
+    if(el) el.remove();
+  }
+  function mostrarAviso(nomeAluno, tipoCursoAluno, cursosExigidos){
+    ensureStyles();
+    removerAviso();
     const nomeCursoAtual = NOMES_CURSO[tipoCursoAluno] || tipoCursoAluno;
     const nomesExigidos = cursosExigidos.map(c => NOMES_CURSO[c] || c).join(' ou ');
-    mostrarOverlay(`
-      <div id="cg-icon">🚫</div>
-      <h2>NÃO É DA SUA TURMA</h2>
-      <p>Oi, ${nomeAluno}! Essa atividade é do curso <b>${nomesExigidos}</b>, mas sua turma é de <b>${nomeCursoAtual}</b>.</p>
-      <button class="cg-btn-gray" id="cg-trocar-btn">🔁 Vincular com outro nome</button>
-      ${LINK_VOLTAR}
-    `);
-    document.getElementById('cg-trocar-btn').onclick = () => { clearIdentity(); telaVincular(); };
+    const aviso = document.createElement('div');
+    aviso.id = 'cg-aviso-curso';
+    aviso.innerHTML = `
+      <span>🚧 Oi, ${nomeAluno}! Essa atividade é do curso ${nomesExigidos}, mas seu vínculo é de ${nomeCursoAtual} — dá pra usar mesmo assim.</span>
+      <button id="cg-aviso-trocar">🔁 Trocar vínculo</button>
+    `;
+    document.body.insertBefore(aviso, document.body.firstChild);
+    document.getElementById('cg-aviso-trocar').onclick = () => { clearIdentity(); mostrarBadge(); removerAviso(); abrirModalVinculo(); };
   }
 
-  async function validarEExibir(){
+  async function checarAvisoCurso(){
     const identity = getIdentity();
-    if(!identity){ telaVincular(); return; }
-
-    // se já sabemos o tipo_curso da última vez que vinculou, usa como resposta rápida,
-    // mas revalida com o banco pra garantir que não mudou
-    const sb = await getSb();
+    if(!identity || !opcoesAtuais){ removerAviso(); return; }
     let tipoCurso = identity.tipoCurso;
+    const sb = await getSb();
     if(sb){
       const { data: turma } = await sb.from('turmas').select('tipo_curso').eq('codigo_acesso', identity.turmaCodigo).maybeSingle();
       if(turma) tipoCurso = turma.tipo_curso;
     }
-
-    if(opcoesAtuais.cursos.includes(tipoCurso)){
-      liberarConteudo();
+    if(tipoCurso && !opcoesAtuais.cursos.includes(tipoCurso)){
+      mostrarAviso(identity.nome, tipoCurso, opcoesAtuais.cursos);
     } else {
-      telaCursoErrado(identity.nome, tipoCurso, opcoesAtuais.cursos);
+      removerAviso();
     }
   }
 
+  /* ---- ponto de entrada: SEMPRE libera o conteúdo, nunca trava a página ---- */
   function protect(opcoes){
     opcoesAtuais = opcoes;
-    validarEExibir();
+    // conteúdo sempre visível — se a página tinha o bloco escondido via
+    // style="display:none" (padrão antigo), reexibe aqui
+    if(opcoes.contentSelector){
+      document.querySelectorAll(opcoes.contentSelector).forEach(el => { el.style.display = ''; });
+    }
+    mostrarBadge();
+    checarAvisoCurso();
   }
 
-  return { protect, getIdentity, clearIdentity };
+  return { protect, getIdentity, clearIdentity, abrirModalVinculo };
 })();
