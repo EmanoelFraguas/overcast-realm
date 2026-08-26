@@ -169,14 +169,12 @@
     padding:6px;
   }
   .cell{
-    width:clamp(24px, 6.4vmin, 48px);
-    height:clamp(24px, 6.4vmin, 48px);
     border-radius:8px;
     background:#fbfdff;
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:clamp(13px, 3.4vmin, 22px);
+    font-size:var(--cell-font-size, 18px);
     position:relative;
   }
   .cell.tree{ background:#e6f9ee; }
@@ -592,11 +590,40 @@ function isRock(x,y){ return (levelData().rocks||[]).some(w=>w[0]===x&&w[1]===y)
 function isCoinCell(x,y){ return (levelData().coins||[]).some(c=>c[0]===x&&c[1]===y); }
 function coinKey(x,y){ return x+','+y; }
 
+function calcularTamanhoCelula(cols, rows){
+  const gameCard = document.querySelector('.game-card');
+  const controls = document.querySelector('.controls');
+  const coinStatus = document.getElementById('coin-status');
+  if(!gameCard) return 40;
+
+  const rectCard = gameCard.getBoundingClientRect();
+  if(rectCard.width < 10 || rectCard.height < 10) return 40; // ainda não renderizou de verdade
+
+  const alturaControls = controls ? controls.getBoundingClientRect().height : 0;
+  const alturaCoin = coinStatus ? coinStatus.getBoundingClientRect().height : 0;
+
+  const gap = 3;
+  const folgaLargura = 30;  // padding do game-card + borda do #maze
+  const folgaAltura = 46;   // idem + espaço entre stage-top e controls
+
+  const espacoLargura = rectCard.width - folgaLargura;
+  const espacoAltura = rectCard.height - alturaControls - alturaCoin - folgaAltura;
+
+  const porLargura = (espacoLargura - gap * (cols - 1)) / cols;
+  const porAltura = (espacoAltura - gap * (rows - 1)) / rows;
+
+  let tamanho = Math.min(porLargura, porAltura, 48);
+  tamanho = Math.max(Math.floor(tamanho), 20); // nunca menor que 20px, mesmo em telas bem pequenas
+  return tamanho;
+}
+
 function renderMaze(){
   const lvl = levelData();
   const maze = document.getElementById('maze');
-  maze.style.gridTemplateColumns = `repeat(${lvl.cols}, clamp(24px, 6.4vmin, 48px))`;
-  maze.style.gridTemplateRows = `repeat(${lvl.rows}, clamp(24px, 6.4vmin, 48px))`;
+  const tamanho = calcularTamanhoCelula(lvl.cols, lvl.rows);
+  maze.style.gridTemplateColumns = `repeat(${lvl.cols}, ${tamanho}px)`;
+  maze.style.gridTemplateRows = `repeat(${lvl.rows}, ${tamanho}px)`;
+  maze.style.setProperty('--cell-font-size', Math.round(tamanho * 0.46) + 'px');
 
   let html = '';
   for(let y=0; y<lvl.rows; y++){
@@ -838,6 +865,12 @@ loadProgress();
 if(currentLevel > maxUnlocked()) currentLevel = maxUnlocked();
 buildLevelsStrip();
 loadLevel();
+
+let _resizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(_resizeTimer);
+  _resizeTimer = setTimeout(renderMaze, 150);
+});
 applyLang();
 
 if(window.OvercastProgress){
