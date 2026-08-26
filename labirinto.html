@@ -106,6 +106,19 @@
     overflow-x:auto;
     padding:2px 4px 6px;
     flex-shrink:0;
+    scroll-behavior:smooth;
+  }
+  .fase-atual-label{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:15px;
+    color:var(--sky-dark, #2b7fd1);
+    background:#e3f4ff;
+    border:2px solid var(--sky-dark, #2b7fd1);
+    border-radius:999px;
+    display:inline-block;
+    padding:5px 16px;
+    margin:6px 0 0;
   }
   .level-dot{
     width:26px; height:26px;
@@ -356,6 +369,7 @@
   <header>
     <h1>🤖 → ⭐</h1>
     <p class="subtitle" id="t-subtitle">Leve o robô até a estrela!</p>
+    <p class="fase-atual-label" id="fase-atual-label"></p>
   </header>
 
   <div class="legend">
@@ -544,6 +558,10 @@ function updateDots(){
     dot.classList.toggle('active', i === currentLevel);
     dot.classList.toggle('done', completed.has(i));
   });
+  const label = document.getElementById('fase-atual-label');
+  if(label) label.textContent = `🚩 Fase ${currentLevel + 1} de ${levels.length}`;
+  const activeDot = document.getElementById('dot-' + currentLevel);
+  if(activeDot) activeDot.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
 }
 
 function goToLevel(i){
