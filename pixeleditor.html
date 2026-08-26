@@ -228,6 +228,9 @@
     display:grid;
     line-height:0;
     touch-action:none;
+    user-select:none;
+    -webkit-user-select:none;
+    -moz-user-select:none;
   }
   .pxcell{ width:100%; height:100%; }
   #canvas-stage.grid-on .pxcell{ box-shadow: inset 0 0 0 1px rgba(255,255,255,0.22); }
@@ -834,9 +837,10 @@ function buildBigPalette(){
   for(let i=0;i<8;i++) colors.push(hslToHex(0,0,Math.round(i*100/7)));
   for(let h=0; h<360; h+=30) colors.push(hslToHex(h,75,55));
   for(let h=0; h<360; h+=30) colors.push(hslToHex(h,60,80));
+  for(let h=0; h<360; h+=30) colors.push(hslToHex(h,55,30)); // tons escuros/terrosos — inclui o marrom
   return colors;
 }
-PALETTES.ampla = { name: '🌈 Paleta Ampla (32 cores)', colors: buildBigPalette() };
+PALETTES.ampla = { name: '🌈 Paleta Ampla (44 cores)', nameEn: '🌈 Wide Palette (44 colors)', colors: buildBigPalette() };
 
 /* ---- "Minha Paleta": editável pelo aluno, inspirada no Lospec, salva no navegador ---- */
 const CUSTOM_PALETTE_KEY = 'overcast_pixelart_custom_palette';
@@ -1156,9 +1160,10 @@ function buildCanvasStage(){
   stage.innerHTML = html;
   paintAllCells();
 
-  stage.onmousedown = e => { const idx = indexFromEl(e.target); if(idx>=0) onCellDown(idx); };
+  stage.onmousedown = e => { e.preventDefault(); const idx = indexFromEl(e.target); if(idx>=0) onCellDown(idx); };
   stage.onmouseover = e => { const idx = indexFromEl(e.target); if(idx>=0) onCellHover(idx); };
   stage.onmouseleave = () => clearHoverHighlight();
+  stage.ondragstart = e => e.preventDefault();
   window.onmouseup = () => onCellUp();
 
   stage.ontouchstart = e => { const idx = touchIndex(e); if(idx>=0) onCellDown(idx); e.preventDefault(); };
@@ -1214,7 +1219,11 @@ function cellsInRect(x0,y0,x1,y1){
   const minX=Math.min(x0,x1), maxX=Math.max(x0,x1);
   const minY=Math.min(y0,y1), maxY=Math.max(y0,y1);
   const out=[];
-  for(let y=minY;y<=maxY;y++) for(let x=minX;x<=maxX;x++) out.push(y*gridSize+x);
+  for(let y=minY;y<=maxY;y++){
+    for(let x=minX;x<=maxX;x++){
+      if(x===minX || x===maxX || y===minY || y===maxY) out.push(y*gridSize+x);
+    }
+  }
   return out;
 }
 function cellsInEllipse(x0,y0,x1,y1){
@@ -1222,11 +1231,16 @@ function cellsInEllipse(x0,y0,x1,y1){
   const minY=Math.min(y0,y1), maxY=Math.max(y0,y1);
   const cx=(minX+maxX+1)/2, cy=(minY+maxY+1)/2;
   const rx=(maxX-minX+1)/2, ry=(maxY-minY+1)/2;
+  function inside(x,y){
+    const nx=(x+0.5-cx)/rx, ny=(y+0.5-cy)/ry;
+    return nx*nx+ny*ny<=1;
+  }
   const out=[];
   for(let y=minY;y<=maxY;y++){
     for(let x=minX;x<=maxX;x++){
-      const nx=(x+0.5-cx)/rx, ny=(y+0.5-cy)/ry;
-      if(nx*nx+ny*ny<=1) out.push(y*gridSize+x);
+      if(!inside(x,y)) continue;
+      const isEdge = !inside(x-1,y) || !inside(x+1,y) || !inside(x,y-1) || !inside(x,y+1);
+      if(isEdge) out.push(y*gridSize+x);
     }
   }
   return out;
