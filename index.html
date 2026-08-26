@@ -627,7 +627,7 @@
         <h3 class="font-pixel text-[11px] text-white mb-2" data-i18n="meusArquivos">[+] Meus Arquivos (.c3p / builds)</h3>
         <p class="text-xs text-gray-400 mb-4 leading-relaxed" data-i18n="descUploadDev">Upload direto para o seu diretório na nuvem — sem depender de uma conta compartilhada. Envie quantas vezes quiser; a versão mais recente fica sempre disponível.</p>
         <div class="flex flex-wrap items-center gap-3 mb-4">
-          <input type="file" id="dev-file-input" accept=".c3p,.txt,.png,.gif,.mp3,.ogg,.wav" class="text-xs text-gray-400" />
+          <input type="file" id="dev-file-input" accept=".c3p,.txt,.png,.gif,.mp3,.ogg,.wav,.mblock" class="text-xs text-gray-400" />
           <button class="btn-primary" onclick="uploadArquivoAluno('envio')" data-i18n="btnEnviarArquivo">Enviar arquivo</button>
           <span id="dev-upload-status" class="text-[10px] font-mono text-gray-500"></span>
         </div>
@@ -664,7 +664,7 @@
         <p class="text-xs text-gray-400 mb-4 leading-relaxed" data-i18n="descEnviarProjetoFinal">Selecione seu nome na lista da turma e envie o projeto final da aula, associado diretamente à sua identidade.</p>
         <div class="space-y-3">
           <select id="turma-final-aluno" class="search-input w-full text-xs"></select>
-          <input type="file" id="turma-final-file" accept=".c3p,.txt,.png,.gif,.mp3,.ogg,.wav" class="text-xs text-gray-400" />
+          <input type="file" id="turma-final-file" accept=".c3p,.txt,.png,.gif,.mp3,.ogg,.wav,.mblock" class="text-xs text-gray-400" />
           <button class="btn-primary" onclick="uploadProjetoFinal()" data-i18n="btnEnviarProjetoFinal">Enviar projeto final</button>
           <span id="turma-final-status" class="block text-[10px] font-mono text-gray-500"></span>
         </div>
@@ -858,7 +858,7 @@ const sb = (SUPABASE_URL.startsWith("http"))
   : null;
 
 // Extensões aceitas nos uploads (arquivos de desenvolvimento — amplia quando entrar arte digital)
-const EXTENSOES_PERMITIDAS = ['.c3p', '.txt', '.png', '.gif', '.mp3', '.ogg', '.wav'];
+const EXTENSOES_PERMITIDAS = ['.c3p', '.txt', '.png', '.gif', '.mp3', '.ogg', '.wav', '.mblock'];
 function extensaoPermitida(nomeArquivo) {
   const nome = nomeArquivo.toLowerCase();
   return EXTENSOES_PERMITIDAS.some(ext => nome.endsWith(ext));
