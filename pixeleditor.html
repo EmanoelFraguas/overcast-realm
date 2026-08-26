@@ -270,11 +270,11 @@
   }
   #current-color-swatch{ width:26px; height:26px; border-radius:6px; border:2px solid #fff; }
 
-  .palette-row{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; max-width:260px; }
+  .palette-row{ display:flex; flex-wrap:wrap; gap:6px; justify-content:center; max-width:260px; }
   .pal-swatch{
-    width:34px; height:34px;
-    border-radius:9px;
-    border:3px solid transparent;
+    width:26px; height:26px;
+    border-radius:7px;
+    border:2px solid transparent;
     cursor:pointer;
   }
   .pal-swatch.selected{ border-color:#fff; transform:scale(1.1); }
@@ -283,7 +283,7 @@
     position:absolute; inset:0;
     display:flex; align-items:center; justify-content:center;
     background:rgba(0,0,0,0.35);
-    color:#fff; font-size:14px; font-weight:800;
+    color:#fff; font-size:11px; font-weight:800;
     opacity:0;
     transition:opacity .1s;
   }
@@ -291,8 +291,8 @@
   .pal-add{
     display:flex; align-items:center; justify-content:center;
     background:var(--tool-bg);
-    border:3px dashed var(--border) !important;
-    font-size:16px;
+    border:2px dashed var(--border) !important;
+    font-size:13px;
   }
   #palette-edit-btn.active{ background:var(--pink); }
 
@@ -379,8 +379,21 @@
     min-height:16px; margin-top:4px;
   }
 
-  .action-list{ display:flex; flex-direction:column; gap:6px; }
-  .action-list .btn{ padding:8px 12px; font-size:9px; }
+  .icon-action-grid{ display:grid; grid-template-columns:repeat(5, 1fr); gap:6px; }
+  .icon-action-btn{
+    aspect-ratio:1;
+    font-size:17px;
+    border:3px solid var(--border);
+    border-radius:10px;
+    cursor:pointer;
+    color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 3px 0 rgba(0,0,0,0.3);
+  }
+  .icon-action-btn:active{ transform:translateY(2px); box-shadow:none; }
+  .icon-action-btn.purple{ background:var(--purple); }
+  .icon-action-btn.cyan{ background:#0891b2; }
+  .icon-action-btn.gray{ background:#4a3a7c; }
   .link-badge{
     display:flex; align-items:center; gap:6px; flex-wrap:wrap;
     font-family:'Baloo 2', sans-serif;
@@ -616,14 +629,14 @@
           </div>
 
           <div class="link-badge" style="display:none;"></div>
-          <div class="action-list">
-            <button class="btn purple" onclick="exportGIF()" data-i18n="btnExportarGif">🎞️ Exportar GIF</button>
-            <button class="btn cyan" onclick="exportSpriteSheet()" data-i18n="btnExportarSprite">🖼️ Exportar Sprite Sheet</button>
-            <button class="btn cyan" onclick="exportPNG()" data-i18n="btnExportarPng">💾 Exportar PNG</button>
-            <button class="btn green" onclick="openSaveStudentModal(false)" data-i18n="btnSalvarPasta">📁 Salvar na Pasta do Aluno</button>
-            <div id="export-status"></div>
-            <button class="btn gray" onclick="clearCanvas()" data-i18n="btnLimparQuadro">🧹 Limpar Quadro</button>
-            <button class="btn gray" onclick="backToSetup()" data-i18n="btnConfiguracoes">⚙️ Configurações</button>
+          <button class="btn green" style="width:100%;justify-content:center;" onclick="openSaveStudentModal(false)" data-i18n="btnSalvarPasta">📁 Salvar na Pasta do Aluno</button>
+          <div id="export-status"></div>
+          <div class="icon-action-grid">
+            <button class="icon-action-btn purple" onclick="exportGIF()" data-i18n-title="btnExportarGif" title="Exportar GIF">🎞️</button>
+            <button class="icon-action-btn cyan" onclick="exportSpriteSheet()" data-i18n-title="btnExportarSprite" title="Exportar Sprite Sheet">🖼️</button>
+            <button class="icon-action-btn cyan" onclick="exportPNG()" data-i18n-title="btnExportarPng" title="Exportar PNG">💾</button>
+            <button class="icon-action-btn gray" onclick="clearCanvas()" data-i18n-title="btnLimparQuadro" title="Limpar Quadro">🧹</button>
+            <button class="icon-action-btn gray" onclick="backToSetup()" data-i18n-title="btnConfiguracoes" title="Configurações">⚙️</button>
           </div>
         </div>
 
