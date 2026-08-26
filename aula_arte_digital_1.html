@@ -171,7 +171,12 @@
   /* ===== Módulo 1: grade de coordenadas ===== */
   .coord-area{ display:flex; flex-wrap:wrap; gap:24px; align-items:flex-start; }
   .grid-wrap{ display:inline-block; }
-  .x-axis{ display:flex; margin-left:28px; }
+  .axis-header{ display:flex; align-items:center; }
+  .corner-label{
+    width:24px; text-align:center; font-size:8px; line-height:1.25;
+    color:var(--neon-pink); font-family:'Press Start 2P',monospace;
+  }
+  .x-axis{ display:flex; }
   .x-axis span{ width:36px; text-align:center; font-size:11px; color:var(--neon-cyan); font-family:'Press Start 2P',monospace; }
   .grid-row{ display:flex; align-items:center; }
   .y-label{ width:24px; text-align:center; font-size:11px; color:var(--neon-cyan); font-family:'Press Start 2P',monospace; }
@@ -301,7 +306,10 @@
 
       <div class="coord-area">
         <div class="grid-wrap">
-          <div class="x-axis" id="m1-xaxis"></div>
+          <div class="axis-header">
+            <span class="corner-label" id="t-corner-label">X→<br>Y↓</span>
+            <div class="x-axis" id="m1-xaxis"></div>
+          </div>
           <div id="m1-rows"></div>
         </div>
 
