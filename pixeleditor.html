@@ -1190,11 +1190,13 @@ function indexFromEl(el){
 
 /* ---- pré-visualização do pixel sob o mouse ---- */
 let lastHoverIdx = -1;
+let lastHoverIndices = [];
 function clearHoverHighlight(){
-  if(lastHoverIdx>=0){
-    const el = document.getElementById('px-'+lastHoverIdx);
+  lastHoverIndices.forEach(i => {
+    const el = document.getElementById('px-'+i);
     if(el) el.classList.remove('hovered');
-  }
+  });
+  lastHoverIndices = [];
   lastHoverIdx = -1;
   const coordEl = document.getElementById('hover-coord');
   if(coordEl) coordEl.innerHTML = 'X: – &nbsp; Y: –';
@@ -1202,8 +1204,12 @@ function clearHoverHighlight(){
 function updateHoverHighlight(idx){
   if(idx === lastHoverIdx) return;
   clearHoverHighlight();
-  const el = document.getElementById('px-'+idx);
-  if(el) el.classList.add('hovered');
+  const indices = (currentTool==='pencil' || currentTool==='eraser') ? getBrushIndices(idx) : [idx];
+  indices.forEach(i => {
+    const el = document.getElementById('px-'+i);
+    if(el) el.classList.add('hovered');
+  });
+  lastHoverIndices = indices;
   lastHoverIdx = idx;
   const x = idx % gridSize, y = Math.floor(idx/gridSize);
   const coordEl = document.getElementById('hover-coord');
