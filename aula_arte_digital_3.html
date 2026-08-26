@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aula 3: Contorno e Silhueta — Overcast Realm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Baloo+2:wght@500;700;800&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#181229; --bg-panel:#241c3d; --bg-card:#2c2350; --border:#4a3a7c;
+    --pink:#ff5fa2; --cyan:#4be8ff; --yellow:#ffd23f; --green:#4be08f; --purple:#a06bff; --orange:#ff9a3c;
+    --ink:#ffffff; --ink-soft:#c9bfe8;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 10% 10%, #2e2258 0%, transparent 45%),
+      radial-gradient(circle at 90% 20%, #1e3a52 0%, transparent 40%),
+      radial-gradient(circle at 80% 90%, #35204a 0%, transparent 45%),
+      var(--bg-deep);
+    color:var(--ink); font-family:'Nunito', sans-serif; min-height:100vh; padding:14px;
+  }
+  .wrap{max-width:1100px;margin:0 auto;}
+  h1,h2,h3,.pixel{ font-family:'Press Start 2P', monospace; }
+
+  .back-row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+  .back-home{
+    display:inline-flex; align-items:center; gap:5px;
+    font-family:'Baloo 2', sans-serif; font-weight:700; font-size:12px;
+    color:var(--ink-soft); background:var(--bg-card); border:2px solid var(--border);
+    border-radius:999px; padding:8px 14px; text-decoration:none;
+  }
+
+  header{ text-align:center; margin-bottom:16px; }
+  header h1{ font-size:clamp(16px,3vw,26px); color:var(--cyan); text-shadow:3px 3px 0 #000; margin:0 0 8px; }
+  header p{ font-family:'Baloo 2', sans-serif; font-weight:700; color:var(--ink-soft); font-size:15px; margin:0; }
+
+  .tabs{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:16px 0; }
+  .tab-btn{
+    font-family:'Press Start 2P', monospace; font-size:10px; color:var(--ink-soft);
+    background:var(--bg-panel); border:3px solid var(--border); border-radius:14px;
+    padding:12px 14px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px; min-width:110px;
+  }
+  .tab-btn .n{ font-size:18px; }
+  .tab-btn.active{ color:#fff; background:linear-gradient(160deg,var(--purple),#6a3fd6); border-color:var(--purple); }
+
+  .module{ display:none; }
+  .module.active{ display:block; animation:fadein .25s ease; }
+  @keyframes fadein{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+
+  .panel{
+    background:var(--bg-panel); border:3px solid var(--border); border-radius:22px;
+    box-shadow:0 8px 0 #120c22; padding:22px; margin-bottom:16px;
+  }
+  .panel h2{ font-size:15px; color:var(--yellow); margin:0 0 6px; }
+  .panel .desc{ font-family:'Baloo 2', sans-serif; font-weight:700; color:var(--ink-soft); font-size:15px; margin:0 0 18px; line-height:1.4; }
+
+  .btn{
+    font-family:'Press Start 2P', monospace; font-size:11px; color:#fff; border:none;
+    border-radius:999px; padding:12px 20px; cursor:pointer; box-shadow:0 4px 0 rgba(0,0,0,0.3);
+    display:inline-flex; align-items:center; gap:8px;
+  }
+  .btn:active{ transform:translateY(3px); box-shadow:none; }
+  .btn.pink{ background:var(--pink); } .btn.cyan{ background:#0891b2; } .btn.green{ background:#0d9b6c; }
+  .btn.purple{ background:var(--purple); } .btn.gray{ background:#4a3a7c; }
+  .btn.selected{ outline:3px solid #fff; }
+  .btn:disabled{ opacity:.35; cursor:default; }
+
+  .flow-nav{ display:flex; justify-content:space-between; max-width:1100px; margin:0 auto 30px; }
+
+  .px-stage{
+    background:#140f24; border:4px solid var(--border); border-radius:14px;
+    padding:10px; display:inline-block;
+  }
+  .px-grid{ display:grid; line-height:0; }
+  .px-cell{ width:100%; height:100%; }
+
+  .m1-layout{ display:flex; flex-wrap:wrap; gap:26px; align-items:flex-start; justify-content:center; }
+  .example-card{ display:flex; flex-direction:column; align-items:center; gap:10px; max-width:230px; }
+  .example-card h3{ font-size:12px; margin:0; text-align:center; }
+  .example-card.good h3{ color:var(--green); }
+  .example-card.bad h3{ color:var(--pink); }
+  .example-card p{ font-family:'Baloo 2',sans-serif; font-weight:700; font-size:13px; color:var(--ink-soft); text-align:center; margin:0; }
+
+  .m2-gallery{ display:flex; flex-wrap:wrap; gap:22px; justify-content:center; }
+  .quiz-card{ display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .quiz-options{ display:flex; flex-wrap:wrap; gap:6px; justify-content:center; max-width:190px; }
+  .quiz-opt{
+    font-family:'Baloo 2',sans-serif; font-weight:800; font-size:12px; color:var(--ink-soft);
+    background:var(--bg-card); border:2px solid var(--border); border-radius:999px; padding:6px 12px; cursor:pointer;
+  }
+  .quiz-opt.correct{ background:#0d3d2a; border-color:var(--green); color:#fff; }
+  .quiz-opt.wrong{ background:#4a1420; border-color:var(--pink); color:#fff; }
+  .quiz-feedback{ font-family:'Baloo 2',sans-serif; font-weight:800; font-size:12px; min-height:18px; text-align:center; }
+  .quiz-feedback.ok{ color:var(--green); } .quiz-feedback.fail{ color:var(--pink); }
+
+  .m3-layout{ display:flex; flex-wrap:wrap; gap:26px; align-items:flex-start; justify-content:center; }
+  #draw-grid{ display:grid; gap:1px; background:#0e0a1c; border:4px solid var(--border); border-radius:12px; padding:6px; line-height:0; }
+  .draw-cell{ background:transparent; cursor:pointer; }
+  .m3-side{ display:flex; flex-direction:column; gap:14px; min-width:220px; }
+  .m3-palette{ display:flex; flex-wrap:wrap; gap:10px; }
+  .m3-swatch{ width:38px; height:38px; border-radius:10px; border:3px solid transparent; cursor:pointer; }
+  .m3-swatch.selected{ border-color:#fff; transform:scale(1.1); }
+  .silhouette-toggle{
+    font-family:'Press Start 2P', monospace; font-size:11px; color:#fff; border:none;
+    border-radius:999px; padding:14px 18px; cursor:pointer; box-shadow:0 4px 0 rgba(0,0,0,0.3);
+    background:linear-gradient(160deg,#3a2f5c,#1a1428); text-align:center;
+  }
+  .silhouette-toggle.active{ background:linear-gradient(160deg,var(--yellow),#c98f00); color:#241c3d; }
+  .m3-hint{
+    font-family:'Baloo 2', sans-serif; font-weight:800; font-size:13px; color:var(--ink-soft);
+    background:var(--bg-card); border:2px dashed var(--yellow); border-radius:12px; padding:10px 14px;
+  }
+  .m3-actions{ display:flex; flex-direction:column; gap:8px; }
+</style>
+</head>
+<body>
+<div class="wrap" id="page-content" style="display:none;">
+
+  <button id="lang-toggle-btn" style="position:fixed;top:10px;right:10px;z-index:999;font-size:20px;background:var(--bg-panel);border:2px solid var(--border);border-radius:50%;width:38px;height:38px;cursor:pointer;color:#fff;" onclick="toggleLang()" title="English">🇺🇸</button>
+  <div class="back-row">
+    <a href="./index.html" class="back-home">← Voltar</a>
+    <a href="./aula_arte_digital_1.html" class="back-home">🕹️ Aula 1</a>
+    <a href="./aula_arte_digital_2.html" class="back-home">🔦 Aula 2</a>
+  </div>
+
+  <header>
+    <h1 id="t-h1">🖤 AULA 3: CONTORNO E SILHUETA</h1>
+    <p id="t-sub">Overcast Realm — o que torna um personagem fácil de reconhecer, mesmo sem cor nenhuma</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab-btn active" id="tabbtn-1" onclick="goToModule(1)"><span class="n">1️⃣</span><span id="t-tab-1">O Que É Silhueta</span></button>
+    <button class="tab-btn" id="tabbtn-2" onclick="goToModule(2)"><span class="n">2️⃣</span><span id="t-tab-2">Teste Rápido</span></button>
+    <button class="tab-btn" id="tabbtn-3" onclick="goToModule(3)"><span class="n">3️⃣</span><span id="t-tab-3">Desafio</span></button>
+  </div>
+
+  <section class="module active" id="module-1">
+    <div class="panel">
+      <h2 id="t-m1-h2">🖤 O QUE É SILHUETA?</h2>
+      <p class="desc" id="t-m1-desc">Silhueta é o seu personagem virando uma sombra sólida, uma cor só. Se der pra reconhecer o que é mesmo assim, o design está bom — os detalhes coloridos só deixam ainda melhor. Clique nos botões pra alternar entre colorido e silhueta.</p>
+
+      <div class="m1-layout">
+        <div class="example-card good">
+          <h3 id="t-m1-good-title">✅ FÁCIL DE LER</h3>
+          <div class="px-stage"><div class="px-grid" id="grid-good"></div></div>
+          <button class="btn green" id="btn-toggle-good" onclick="toggleExample('good')">👁️ Ver Silhueta</button>
+          <p id="t-m1-good-desc">Formas redondas e simples. Mesmo em preto, ainda parece um bicho.</p>
+        </div>
+        <div class="example-card bad">
+          <h3 id="t-m1-bad-title">❌ DIFÍCIL DE LER</h3>
+          <div class="px-stage"><div class="px-grid" id="grid-bad"></div></div>
+          <button class="btn pink" id="btn-toggle-bad" onclick="toggleExample('bad')">👁️ Ver Silhueta</button>
+          <p id="t-m1-bad-desc">Muitas pontas finas espalhadas. Em preto, vira uma manchinha confusa.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="module" id="module-2">
+    <div class="panel">
+      <h2 id="t-m2-h2">🕵️ TESTE RÁPIDO: ADIVINHE PELA SILHUETA</h2>
+      <p class="desc" id="t-m2-desc">Essas formas só aparecem em preto — sem cor nenhuma. Clique na opção que você acha que é. Alguma dessas vai ser de propósito bem difícil, pra mostrar como fica quando o design não está claro!</p>
+      <div class="m2-gallery" id="m2-gallery"></div>
+    </div>
+  </section>
+
+  <section class="module" id="module-3">
+    <div class="panel">
+      <h2 id="t-m3-h2">🎨 DESAFIO: DESENHE E TESTE SUA SILHUETA</h2>
+      <p class="desc" id="t-m3-desc">Desenhe qualquer personagem ou objeto na grade. Depois clique em "Modo Silhueta" pra ver como fica em preto sólido — ainda dá pra reconhecer o que é?</p>
+
+      <div class="m3-layout">
+        <div class="px-stage"><div id="draw-grid"></div></div>
+
+        <div class="m3-side">
+          <div class="m3-hint" id="t-m3-hint">💡 Dica: formas redondas e simples costumam ficar mais claras que formas cheias de pontas finas.</div>
+          <div>
+            <p style="font-family:'Baloo 2',sans-serif;font-weight:700;color:var(--ink-soft);font-size:13px;margin:0 0 8px;" id="t-cor-atual">Cor atual:</p>
+            <div class="m3-palette" id="m3-palette"></div>
+          </div>
+          <button class="silhouette-toggle" id="btn-silhueta" onclick="toggleSilhouetteMode()">🌑 Modo Silhueta</button>
+          <div class="m3-actions">
+            <button class="btn gray" id="t-btn-limpar" onclick="clearDrawing()">🧹 Limpar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="flow-nav">
+    <button class="btn gray" id="prev-btn" onclick="prevModule()">⬅️ Voltar</button>
+    <button class="btn purple" id="next-btn" onclick="nextModule()">Avançar ➡️</button>
+  </div>
+
+</div>
+
+<script src="./course-gate.js"></script>
+<script>
+let currentLang = 'pt';
+const UI_STRINGS = {
+  pt: { h1:'🖤 AULA 3: CONTORNO E SILHUETA', sub:'Overcast Realm — o que torna um personagem fácil de reconhecer, mesmo sem cor nenhuma',
+        tab1:'O Que É Silhueta', tab2:'Teste Rápido', tab3:'Desafio',
+        m1h2:'🖤 O QUE É SILHUETA?', m1desc:'Silhueta é o seu personagem virando uma sombra sólida, uma cor só. Se der pra reconhecer o que é mesmo assim, o design está bom — os detalhes coloridos só deixam ainda melhor. Clique nos botões pra alternar entre colorido e silhueta.',
+        m1goodTitle:'✅ FÁCIL DE LER', m1goodDesc:'Formas redondas e simples. Mesmo em preto, ainda parece um bicho.',
+        m1badTitle:'❌ DIFÍCIL DE LER', m1badDesc:'Muitas pontas finas espalhadas. Em preto, vira uma manchinha confusa.',
+        verSilhueta:'👁️ Ver Silhueta', verColorido:'🎨 Ver Colorido',
+        m2h2:'🕵️ TESTE RÁPIDO: ADIVINHE PELA SILHUETA', m2desc:'Essas formas só aparecem em preto — sem cor nenhuma. Clique na opção que você acha que é. Alguma dessas vai ser de propósito bem difícil, pra mostrar como fica quando o design não está claro!',
+        m3h2:'🎨 DESAFIO: DESENHE E TESTE SUA SILHUETA', m3desc:'Desenhe qualquer personagem ou objeto na grade. Depois clique em "Modo Silhueta" pra ver como fica em preto sólido — ainda dá pra reconhecer o que é?',
+        m3hint:'💡 Dica: formas redondas e simples costumam ficar mais claras que formas cheias de pontas finas.',
+        corAtual:'Cor atual:', btnLimpar:'🧹 Limpar', btnVoltar:'⬅️ Voltar', btnAvancar:'Avançar ➡️', btnFim:'🏁 Fim da aula',
+        modoSilhueta:'🌑 Modo Silhueta', modoColorido:'🎨 Modo Colorido' },
+  en: { h1:'🖤 LESSON 3: OUTLINE AND SILHOUETTE', sub:'Overcast Realm — what makes a character easy to recognize, even with no color at all',
+        tab1:'What Is a Silhouette', tab2:'Quick Test', tab3:'Challenge',
+        m1h2:'🖤 WHAT IS A SILHOUETTE?', m1desc:"A silhouette is your character turned into a solid shadow, one single color. If it's still recognizable like that, the design works — colored details just make it even better. Click the buttons to switch between colored and silhouette.",
+        m1goodTitle:'✅ EASY TO READ', m1goodDesc:'Round, simple shapes. Even in black, it still reads as a creature.',
+        m1badTitle:'❌ HARD TO READ', m1badDesc:'Lots of thin scattered points. In black, it becomes a confusing blob.',
+        verSilhueta:'👁️ See Silhouette', verColorido:'🎨 See Colors',
+        m2h2:'🕵️ QUICK TEST: GUESS FROM THE SILHOUETTE', m2desc:"These shapes only show up in black — no color at all. Click the option you think it is. One of these is deliberately hard, to show what happens when a design isn't clear!",
+        m3h2:'🎨 CHALLENGE: DRAW AND TEST YOUR SILHOUETTE', m3desc:'Draw any character or object on the grid. Then click "Silhouette Mode" to see it as solid black — can you still tell what it is?',
+        m3hint:'💡 Tip: round, simple shapes usually read more clearly than shapes full of thin points.',
+        corAtual:'Current color:', btnLimpar:'🧹 Clear', btnVoltar:'⬅️ Back', btnAvancar:'Next ➡️', btnFim:'🏁 End of lesson',
+        modoSilhueta:'🌑 Silhouette Mode', modoColorido:'🎨 Color Mode' }
+};
+function toggleLang(){
+  currentLang = currentLang === 'pt' ? 'en' : 'pt';
+  document.getElementById('lang-toggle-btn').textContent = currentLang === 'pt' ? '🇺🇸' : '🇧🇷';
+  applyLang();
+}
+function applyLang(){
+  const t = UI_STRINGS[currentLang];
+  document.getElementById('t-h1').textContent = t.h1;
+  document.getElementById('t-sub').textContent = t.sub;
+  document.getElementById('t-tab-1').textContent = t.tab1;
+  document.getElementById('t-tab-2').textContent = t.tab2;
+  document.getElementById('t-tab-3').textContent = t.tab3;
+  document.getElementById('t-m1-h2').textContent = t.m1h2;
+  document.getElementById('t-m1-desc').textContent = t.m1desc;
+  document.getElementById('t-m1-good-title').textContent = t.m1goodTitle;
+  document.getElementById('t-m1-good-desc').textContent = t.m1goodDesc;
+  document.getElementById('t-m1-bad-title').textContent = t.m1badTitle;
+  document.getElementById('t-m1-bad-desc').textContent = t.m1badDesc;
+  document.getElementById('t-m2-h2').textContent = t.m2h2;
+  document.getElementById('t-m2-desc').textContent = t.m2desc;
+  document.getElementById('t-m3-h2').textContent = t.m3h2;
+  document.getElementById('t-m3-desc').textContent = t.m3desc;
+  document.getElementById('t-m3-hint').textContent = t.m3hint;
+  document.getElementById('t-cor-atual').textContent = t.corAtual;
+  document.getElementById('t-btn-limpar').textContent = t.btnLimpar;
+  document.getElementById('prev-btn').textContent = t.btnVoltar;
+  document.getElementById('next-btn').textContent = currentModule === 3 ? t.btnFim : t.btnAvancar;
+  document.getElementById('btn-toggle-good').textContent = exampleShowingSilhouette.good ? t.verColorido : t.verSilhueta;
+  document.getElementById('btn-toggle-bad').textContent = exampleShowingSilhouette.bad ? t.verColorido : t.verSilhueta;
+  document.getElementById('btn-silhueta').textContent = silhouetteMode ? t.modoColorido : t.modoSilhueta;
+}
+
+let currentModule = 1;
+function goToModule(n){
+  currentModule = n;
+  document.querySelectorAll('.module').forEach((el,i)=>el.classList.toggle('active', i === n-1));
+  document.querySelectorAll('.tab-btn').forEach((el,i)=>el.classList.toggle('active', i === n-1));
+  document.getElementById('prev-btn').disabled = (n === 1);
+  document.getElementById('next-btn').textContent = (n === 3) ? UI_STRINGS[currentLang].btnFim : UI_STRINGS[currentLang].btnAvancar;
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function nextModule(){ if(currentModule < 3) goToModule(currentModule+1); }
+function prevModule(){ if(currentModule > 1) goToModule(currentModule-1); }
+
+function renderPixelGrid(containerId, gridW, gridH, cellPx, paintFn){
+  const el = document.getElementById(containerId);
+  el.style.gridTemplateColumns = `repeat(${gridW}, ${cellPx}px)`;
+  el.style.gridTemplateRows = `repeat(${gridH}, ${cellPx}px)`;
+  let html = '';
+  for(let gy=0; gy<gridH; gy++){
+    for(let gx=0; gx<gridW; gx++){
+      const cor = paintFn(gx,gy);
+      html += `<div class="px-cell" style="background:${cor||'transparent'};"></div>`;
+    }
+  }
+  el.innerHTML = html;
+}
+
+const GRID_EX = 18;
+function paintGoodColor(gx,gy){
+  if(Math.hypot(gx-9,gy-9)<=6) return '#3ddc97';
+  if(Math.hypot(gx-9,gy-2)<=2) return '#2bb673';
+  if(gx>=3&&gx<=5&&gy>=13&&gy<=15) return '#2bb673';
+  if(gx>=12&&gx<=14&&gy>=13&&gy<=15) return '#2bb673';
+  if(gx>=2&&gx<=4&&gy>=8&&gy<=10) return '#2bb673';
+  if(gx>=13&&gx<=15&&gy>=8&&gy<=10) return '#2bb673';
+  return null;
+}
+function paintGoodSilhouette(gx,gy){ return paintGoodColor(gx,gy) ? '#0a0a0a' : null; }
+
+function paintBadColor(gx,gy){
+  const cx=9, cy=9;
+  const dx=gx-cx, dy=gy-cy;
+  const dist = Math.hypot(dx,dy);
+  if(dist<=3) return '#a06bff';
+  if(dist>3 && dist<=9){
+    const angle = (Math.atan2(dy,dx)*180/Math.PI+360)%360;
+    const dirs = [0,45,90,135,180,225,270,315];
+    for(const d of dirs){
+      let diff = Math.abs(angle-d);
+      if(diff>180) diff = 360-diff;
+      if(diff<=9) return '#7c4fd4';
+    }
+  }
+  return null;
+}
+function paintBadSilhouette(gx,gy){ return paintBadColor(gx,gy) ? '#0a0a0a' : null; }
+
+let exampleShowingSilhouette = { good:false, bad:false };
+function toggleExample(which){
+  exampleShowingSilhouette[which] = !exampleShowingSilhouette[which];
+  renderExample(which);
+  applyLang();
+}
+function renderExample(which){
+  const showSil = exampleShowingSilhouette[which];
+  if(which === 'good'){
+    renderPixelGrid('grid-good', GRID_EX, GRID_EX, 12, showSil ? paintGoodSilhouette : paintGoodColor);
+  } else {
+    renderPixelGrid('grid-bad', GRID_EX, GRID_EX, 12, showSil ? paintBadSilhouette : paintBadColor);
+  }
+}
+
+function paintStar(gx,gy){
+  const cx=8, cy=8;
+  const dx=gx-cx, dy=gy-cy;
+  const dist = Math.hypot(dx,dy);
+  const angle = (Math.atan2(dy,dx)*180/Math.PI+360)%360;
+  const pontas = [0,72,144,216,288];
+  let maxRaio = 3;
+  for(const p of pontas){
+    let diff = Math.abs(angle-p);
+    if(diff>180) diff = 360-diff;
+    if(diff<=14) maxRaio = 7 - (diff/14)*3;
+  }
+  return dist<=maxRaio ? '#0a0a0a' : null;
+}
+function paintCasa(gx,gy){
+  if(gy>=8 && gy<=14 && gx>=3 && gx<=13) return '#0a0a0a';
+  if(gy>=2 && gy<=8){
+    const largura = (gy-2)*0.95;
+    if(Math.abs(gx-8) <= largura) return '#0a0a0a';
+  }
+  return null;
+}
+function paintNuvem(gx,gy){
+  if(Math.hypot(gx-6,gy-9)<=4) return '#0a0a0a';
+  if(Math.hypot(gx-10,gy-7)<=5) return '#0a0a0a';
+  if(Math.hypot(gx-13,gy-10)<=3.5) return '#0a0a0a';
+  if(gy>=9 && gy<=12 && gx>=4 && gx<=15) return '#0a0a0a';
+  return null;
+}
+function paintConfuso(gx,gy){
+  const pontos = [[3,3],[13,2],[7,14],[2,10],[15,9],[9,4],[4,15],[14,14],[8,8]];
+  for(const [px,py] of pontos){
+    if(Math.hypot(gx-px,gy-py)<=1.6) return '#0a0a0a';
+  }
+  return null;
+}
+
+const M2_ITENS = [
+  { id:'estrela', paint:paintStar, opcoesPt:['Estrela','Flor','Roda'], opcoesEn:['Star','Flower','Wheel'], respostaIdx:0, dificil:false },
+  { id:'casa', paint:paintCasa, opcoesPt:['Casa','Tenda','Caixa'], opcoesEn:['House','Tent','Box'], respostaIdx:0, dificil:false },
+  { id:'nuvem', paint:paintNuvem, opcoesPt:['Nuvem','Bolha','Pedra'], opcoesEn:['Cloud','Bubble','Rock'], respostaIdx:0, dificil:false },
+  { id:'confuso', paint:paintConfuso, opcoesPt:['Impossível saber!','Cachorro','Carro'], opcoesEn:["Impossible to tell!",'Dog','Car'], respostaIdx:0, dificil:true }
+];
+
+function buildM2Gallery(){
+  const gallery = document.getElementById('m2-gallery');
+  gallery.innerHTML = M2_ITENS.map((item,i) => `
+    <div class="quiz-card">
+      <div class="px-stage"><div class="px-grid" id="m2-grid-${i}"></div></div>
+      <div class="quiz-options" id="m2-opts-${i}"></div>
+      <p class="quiz-feedback" id="m2-feedback-${i}"></p>
+    </div>
+  `).join('');
+  M2_ITENS.forEach((item,i) => {
+    renderPixelGrid('m2-grid-'+i, 18, 18, 11, item.paint);
+    renderM2Options(i);
+  });
+}
+function renderM2Options(i){
+  const item = M2_ITENS[i];
+  const opcoes = currentLang === 'pt' ? item.opcoesPt : item.opcoesEn;
+  const container = document.getElementById('m2-opts-'+i);
+  container.innerHTML = opcoes.map((op,idx) => `<button class="quiz-opt" onclick="answerM2(${i},${idx})">${op}</button>`).join('');
+}
+function answerM2(i, idx){
+  const item = M2_ITENS[i];
+  const feedback = document.getElementById('m2-feedback-'+i);
+  const opts = document.querySelectorAll('#m2-opts-'+i+' .quiz-opt');
+  opts.forEach(o => o.style.pointerEvents = 'none');
+  if(idx === item.respostaIdx){
+    opts[idx].classList.add('correct');
+    feedback.textContent = item.dificil
+      ? (currentLang==='pt' ? '🎯 Exato! Essa é de propósito difícil de ler.' : '🎯 Exactly! This one is deliberately hard to read.')
+      : (currentLang==='pt' ? '✅ Acertou! Silhueta clara.' : '✅ Correct! Clear silhouette.');
+    feedback.className = 'quiz-feedback ok';
+  } else {
+    opts[idx].classList.add('wrong');
+    opts[item.respostaIdx].classList.add('correct');
+    feedback.textContent = item.dificil
+      ? (currentLang==='pt' ? '👀 Viu como é difícil? Esse é o ponto!' : "👀 See how hard that was? That's the point!")
+      : (currentLang==='pt' ? '❌ Quase — repare no formato geral.' : '❌ Close — look at the overall shape.');
+    feedback.className = 'quiz-feedback fail';
+  }
+}
+
+const DRAW_GRID = 16;
+const DRAW_CELL_PX = 20;
+let drawingData = new Array(DRAW_GRID*DRAW_GRID).fill(null);
+let currentColor = '#e63946';
+let silhouetteMode = false;
+const M3_PALETTE = ['#e63946','#ffb703','#3ddc97','#4be8ff','#a06bff','#ffffff','#2b2b3d'];
+
+function buildM3Palette(){
+  const el = document.getElementById('m3-palette');
+  el.innerHTML = M3_PALETTE.map((c,i) => `<div class="m3-swatch ${c===currentColor?'selected':''}" style="background:${c};" onclick="pickM3Color('${c}', this)"></div>`).join('');
+}
+function pickM3Color(color, el){
+  currentColor = color;
+  document.querySelectorAll('.m3-swatch').forEach(s=>s.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function dcIndex(el){ return parseInt(el.dataset.i, 10); }
+function paintDrawCell(i){
+  if(silhouetteMode) return;
+  drawingData[i] = currentColor;
+  renderDrawGrid();
+}
+let isPainting = false;
+function buildDrawGrid(){
+  const grid = document.getElementById('draw-grid');
+  grid.style.gridTemplateColumns = `repeat(${DRAW_GRID}, ${DRAW_CELL_PX}px)`;
+  grid.style.gridTemplateRows = `repeat(${DRAW_GRID}, ${DRAW_CELL_PX}px)`;
+  let html = '';
+  for(let i=0;i<DRAW_GRID*DRAW_GRID;i++){
+    html += `<div class="draw-cell" data-i="${i}"></div>`;
+  }
+  grid.innerHTML = html;
+  grid.querySelectorAll('.draw-cell').forEach(cell => {
+    cell.addEventListener('mousedown', () => { isPainting = true; paintDrawCell(dcIndex(cell)); });
+    cell.addEventListener('mouseenter', () => { if(isPainting) paintDrawCell(dcIndex(cell)); });
+    cell.addEventListener('touchstart', (e) => { e.preventDefault(); paintDrawCell(dcIndex(cell)); }, {passive:false});
+    cell.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const el = document.elementFromPoint(touch.clientX, touch.clientY);
+      if(el && el.classList.contains('draw-cell')) paintDrawCell(dcIndex(el));
+    }, {passive:false});
+  });
+  document.addEventListener('mouseup', () => { isPainting = false; });
+}
+function renderDrawGrid(){
+  const cells = document.querySelectorAll('#draw-grid .draw-cell');
+  cells.forEach((cell,i) => {
+    const cor = drawingData[i];
+    if(!cor){ cell.style.background = 'transparent'; return; }
+    cell.style.background = silhouetteMode ? '#0a0a0a' : cor;
+  });
+}
+function clearDrawing(){
+  drawingData = new Array(DRAW_GRID*DRAW_GRID).fill(null);
+  renderDrawGrid();
+}
+function toggleSilhouetteMode(){
+  silhouetteMode = !silhouetteMode;
+  document.getElementById('btn-silhueta').classList.toggle('active', silhouetteMode);
+  document.getElementById('btn-silhueta').textContent = silhouetteMode ? UI_STRINGS[currentLang].modoColorido : UI_STRINGS[currentLang].modoSilhueta;
+  renderDrawGrid();
+}
+
+renderExample('good');
+renderExample('bad');
+buildM2Gallery();
+buildM3Palette();
+buildDrawGrid();
+renderDrawGrid();
+applyLang();
+
+CourseGate.protect({ cursos: ['arte'], contentSelector: '#page-content' });
+</script>
+</body>
+</html>
