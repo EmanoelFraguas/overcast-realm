@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="./avatar-render.js"></script>
   <style>
     :root {
       --bg-base: #14101f;
@@ -365,6 +366,7 @@
       <div class="sidebar-group-items">
         <button class="nav-tab" data-tab="aluno" onclick="switchTab('aluno', this)" data-i18n="navAreaDev">🧑‍💻 Área_Dev</button>
         <button class="nav-tab" data-tab="turma" onclick="switchTab('turma', this)" data-i18n="navTurma">👥 Turma</button>
+        <a href="./loja.html" class="nav-tab">🛍️ Loja do Avatar</a>
       </div>
     </div>
     <div class="sidebar-group collapsed" id="grp-atividades">
@@ -594,6 +596,15 @@
         </div>
         <button class="btn-secondary" onclick="logoutAluno()" data-i18n="btnSair">Sair</button>
       </div>
+
+      <a href="./loja.html" class="card p-4 mb-5 bg-[#1e1a2e] flex items-center gap-4 hover:no-underline">
+        <div id="avatar-dashboard" style="background:#0e0a1a;border-radius:10px;border:2px solid #322c47;flex-shrink:0;"></div>
+        <div class="flex-1">
+          <p class="font-pixel text-[9px] text-yellow-400 mb-1">// MEU AVATAR</p>
+          <p class="text-sm text-white font-bold flex items-center gap-2">🪙 <span id="dashboard-moedas">0</span> moedas</p>
+          <p class="text-[10px] text-gray-500 font-mono mt-1">Clique pra abrir a loja e trocar seu visual →</p>
+        </div>
+      </a>
 
       <div class="card p-6 mb-5 bg-[#1e1a2e]">
         <h3 class="font-pixel text-[9px] text-blue-400 mb-4" data-i18n="progressoDoProjeto">// PROGRESSO_DO_PROJETO</h3>
@@ -1058,6 +1069,13 @@ async function showDashboard(aluno) {
   document.getElementById('student-dashboard').classList.remove('hidden');
   document.getElementById('dashboard-nome').textContent = UI_STRINGS[currentLang].estacaoPrefix + aluno.nome.toUpperCase();
   document.getElementById('dashboard-etapa').textContent = aluno.etapa;
+  document.getElementById('dashboard-moedas').textContent = aluno.moedas || 0;
+  if(window.AvatarRender){
+    AvatarRender.render(document.getElementById('avatar-dashboard'), {
+      pele: aluno.avatar_pele || 'clara',
+      roupa: aluno.avatar_roupa, chapeu: aluno.avatar_chapeu, acessorio: aluno.avatar_acessorio
+    }, 3);
+  }
 
   const info = etapaMap[aluno.etapa] || etapaMap['Ideia'];
   document.getElementById('progress-bar').style.width = info.pct + '%';
@@ -1192,15 +1210,30 @@ async function carregarTurmaAtiva() {
   grid.innerHTML = (alunos || []).map(aluno => {
     const finalDoAluno = (arquivos || []).find(f => f.aluno_id === aluno.id && f.tipo === 'projeto_final');
     return `
-      <div class="card p-4">
-        <p class="font-pixel text-[10px] text-white mb-1">${aluno.nome.toUpperCase()}</p>
-        <p class="text-[10px] text-gray-500 font-mono mb-3">${UI_STRINGS[currentLang].estagioLabel}${aluno.etapa}</p>
-        ${finalDoAluno
-          ? `<a href="${urlPublicoArquivo(finalDoAluno.storage_path)}" target="_blank" class="btn-secondary text-[8px] inline-block">${UI_STRINGS[currentLang].baixarProjetoFinal}</a>`
-          : `<span class="text-[10px] text-gray-700 font-mono">${UI_STRINGS[currentLang].projetoAindaNaoEnviado}</span>`}
+      <div class="card p-4 flex gap-3 items-start">
+        <div class="avatar-mini shrink-0" id="avatar-turma-${aluno.id}" style="background:#0e0a1a;border-radius:8px;border:2px solid #322c47;"></div>
+        <div class="flex-1 min-w-0">
+          <p class="font-pixel text-[10px] text-white mb-1">${aluno.nome.toUpperCase()}</p>
+          <p class="text-[10px] text-gray-500 font-mono mb-3">${UI_STRINGS[currentLang].estagioLabel}${aluno.etapa}</p>
+          ${finalDoAluno
+            ? `<a href="${urlPublicoArquivo(finalDoAluno.storage_path)}" target="_blank" class="btn-secondary text-[8px] inline-block">${UI_STRINGS[currentLang].baixarProjetoFinal}</a>`
+            : `<span class="text-[10px] text-gray-700 font-mono">${UI_STRINGS[currentLang].projetoAindaNaoEnviado}</span>`}
+        </div>
       </div>
     `;
   }).join('');
+
+  (alunos || []).forEach(aluno => {
+    const el = document.getElementById('avatar-turma-' + aluno.id);
+    if(el && window.AvatarRender){
+      AvatarRender.render(el, {
+        pele: aluno.avatar_pele || 'clara',
+        roupa: aluno.avatar_roupa,
+        chapeu: aluno.avatar_chapeu,
+        acessorio: aluno.avatar_acessorio
+      }, 2.2);
+    }
+  });
 }
 
 async function uploadProjetoFinal() {
