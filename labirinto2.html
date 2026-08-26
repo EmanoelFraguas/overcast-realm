@@ -270,6 +270,12 @@
     cursor:pointer;
     position:relative;
   }
+  .program-tray .step-spacer{
+    width:28px; height:28px;
+    visibility:hidden;
+    pointer-events:none;
+    flex-shrink:0;
+  }
   .program-tray .step.running{ background:var(--sun); border-color:#e0a800; }
   .program-tray .step.ok{ background:var(--ok-bg); border-color:var(--ok); }
   .program-tray .step.fail{ background:var(--bad-bg); border-color:var(--bad); border-width:3px; animation:shake .4s; }
@@ -609,13 +615,13 @@ function renderMaze(){
 function renderTray(){
   const tray = document.getElementById('tray');
   if(program.length === 0){
-    tray.innerHTML = '<span class="empty-hint">🖐️</span>';
+    tray.innerHTML = '<span class="empty-hint">🖐️</span><div class="step-spacer"></div>';
     return;
   }
   tray.innerHTML = program.map((step, i) => {
     const icon = step.type === 'move' ? DIR_ICON[step.dir] : '🔁';
     return `<div class="step" data-type="${step.type}" id="step-${i}" onclick="removeStep(${i})">${icon}</div>`;
-  }).join('');
+  }).join('') + '<div class="step-spacer"></div>';
 }
 
 function addStep(step){
