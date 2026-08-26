@@ -542,9 +542,13 @@ function loadLevel(){
   program = [];
   document.getElementById('msg').textContent = '';
   document.getElementById('btn-next-inline').style.display = 'none';
-  renderMaze();
+  // renderMaze() mede a altura de .controls (bandeja incluída) pra calcular
+  // o tamanho da célula, então precisa rodar DEPOIS da bandeja já ter conteúdo
   renderTray();
-  updateDots();
+  requestAnimationFrame(() => {
+    renderMaze();
+    updateDots();
+  });
 }
 
 function calcularTamanhoCelula(cols, rows){
