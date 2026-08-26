@@ -579,10 +579,15 @@ function loadLevel(){
   coinsCollected = new Set();
   document.getElementById('msg').textContent = '';
   document.getElementById('btn-next-inline').style.display = 'none';
-  renderMaze();
+  // a ordem importa: renderMaze() mede a altura de .controls (que inclui a
+  // bandeja e o contador de moedas) pra calcular o tamanho da célula, então
+  // precisa rodar DEPOIS deles já estarem com o conteúdo final na tela
   renderTray();
   renderCoinStatus();
-  updateDots();
+  requestAnimationFrame(() => {
+    renderMaze();
+    updateDots();
+  });
 }
 
 function isTree(x,y){ return (levelData().walls||[]).some(w=>w[0]===x&&w[1]===y); }
