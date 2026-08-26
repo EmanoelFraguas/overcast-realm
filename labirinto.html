@@ -24,6 +24,7 @@
     --ok-bg:#e3fbf0;
     --bad:#ff5c5c;
     --bad-bg:#ffecec;
+    --cell-size:44px;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;height:100%;overflow:hidden;}
@@ -142,23 +143,26 @@
     border:3px solid var(--card-edge);
     border-radius:20px;
     box-shadow:0 6px 0 var(--card-edge);
-    padding:10px;
+    padding:12px;
     flex:1;
     min-height:0;
     display:flex;
+    flex-direction:row;
+    gap:14px;
     overflow:hidden;
   }
 
-  .stage{
+  .stage-left{
+    flex:1;
     display:flex;
     flex-direction:column;
     gap:8px;
     align-items:center;
     justify-content:center;
-    width:100%;
+    min-width:0;
     min-height:0;
+    overflow:auto;
   }
-  .stage-top{ display:flex; flex-direction:column; align-items:center; min-height:0; flex-shrink:1; }
 
   #maze{
     display:grid;
@@ -167,14 +171,17 @@
     border:3px solid #cfeaff;
     border-radius:14px;
     padding:6px;
+    flex-shrink:0;
   }
   .cell{
+    width:var(--cell-size, 44px);
+    height:var(--cell-size, 44px);
     border-radius:8px;
     background:#fbfdff;
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:var(--cell-font-size, 18px);
+    font-size:calc(var(--cell-size, 44px) * 0.46);
     position:relative;
   }
   .cell.tree{ background:#e6f9ee; }
@@ -218,13 +225,16 @@
   }
 
   .controls{
-    width:100%;
-    max-width:420px;
+    width:200px;
+    flex-shrink:0;
     display:flex;
     flex-direction:column;
     align-items:center;
-    gap:6px;
-    flex-shrink:0;
+    gap:8px;
+    overflow-y:auto;
+    min-height:0;
+    border-left:3px dashed var(--card-edge);
+    padding-left:14px;
   }
 
   .palette{
@@ -352,6 +362,22 @@
     .subtitle{display:none;}
     .legend{display:none;}
   }
+
+  /* telas estreitas: barra lateral vira faixa embaixo do labirinto, e o
+     tile encolhe um pouco (mas continua igual em TODAS as fases) */
+  @media (max-width:700px){
+    .game-card{ flex-direction:column; overflow-y:auto; overflow-x:hidden; }
+    .stage-left{ flex:none; overflow:visible; }
+    .controls{
+      width:100%; max-width:420px; margin:0 auto;
+      border-left:none; border-top:3px dashed var(--card-edge);
+      padding-left:0; padding-top:10px;
+    }
+    :root{ --cell-size:36px; }
+  }
+  @media (max-width:420px){
+    :root{ --cell-size:28px; }
+  }
 </style>
 <script src="./progress.js"></script>
 </head>
@@ -379,33 +405,31 @@
   <div class="levels-strip" id="levels-strip"></div>
 
   <div class="game-card">
-    <div class="stage">
-      <div class="stage-top">
-        <div id="maze"></div>
-        <div class="coin-status" id="coin-status"></div>
+    <div class="stage-left">
+      <div id="maze"></div>
+      <div class="coin-status" id="coin-status"></div>
+    </div>
+
+    <div class="controls">
+      <div class="palette" id="palette">
+        <div class="palette-block" draggable="true" data-type="move" data-dir="up">⬆️</div>
+        <div class="palette-block" draggable="true" data-type="move" data-dir="left">⬅️</div>
+        <div class="palette-block" draggable="true" data-type="move" data-dir="down">⬇️</div>
+        <div class="palette-block" draggable="true" data-type="move" data-dir="right">➡️</div>
+        <div class="palette-block" draggable="true" data-type="coin">🪙</div>
+        <div class="palette-block" draggable="true" data-type="jump">🦘</div>
       </div>
 
-      <div class="controls">
-        <div class="palette" id="palette">
-          <div class="palette-block" draggable="true" data-type="move" data-dir="up">⬆️</div>
-          <div class="palette-block" draggable="true" data-type="move" data-dir="left">⬅️</div>
-          <div class="palette-block" draggable="true" data-type="move" data-dir="down">⬇️</div>
-          <div class="palette-block" draggable="true" data-type="move" data-dir="right">➡️</div>
-          <div class="palette-block" draggable="true" data-type="coin">🪙</div>
-          <div class="palette-block" draggable="true" data-type="jump">🦘</div>
-        </div>
+      <div class="program-tray" id="tray"></div>
 
-        <div class="program-tray" id="tray"></div>
-
-        <div class="action-buttons">
-          <button class="big-btn btn-run" id="btn-run" onclick="runProgram()">▶️ Play</button>
-          <button class="big-btn btn-reset" id="t-btn-reset" onclick="reiniciarTentativa()">🔁 Reiniciar</button>
-          <button class="big-btn btn-clear" id="t-btn-clear" onclick="clearProgram()">🗑️ Limpar</button>
-          <button class="big-btn btn-next" id="btn-next-inline" onclick="irProximaFase()">➡️ Próximo</button>
-        </div>
-
-        <div class="msg" id="msg"></div>
+      <div class="action-buttons">
+        <button class="big-btn btn-run" id="btn-run" onclick="runProgram()">▶️ Play</button>
+        <button class="big-btn btn-reset" id="t-btn-reset" onclick="reiniciarTentativa()">🔁 Reiniciar</button>
+        <button class="big-btn btn-clear" id="t-btn-clear" onclick="clearProgram()">🗑️ Limpar</button>
+        <button class="big-btn btn-next" id="btn-next-inline" onclick="irProximaFase()">➡️ Próximo</button>
       </div>
+
+      <div class="msg" id="msg"></div>
     </div>
   </div>
 
@@ -579,15 +603,10 @@ function loadLevel(){
   coinsCollected = new Set();
   document.getElementById('msg').textContent = '';
   document.getElementById('btn-next-inline').style.display = 'none';
-  // a ordem importa: renderMaze() mede a altura de .controls (que inclui a
-  // bandeja e o contador de moedas) pra calcular o tamanho da célula, então
-  // precisa rodar DEPOIS deles já estarem com o conteúdo final na tela
+  renderMaze();
   renderTray();
   renderCoinStatus();
-  requestAnimationFrame(() => {
-    renderMaze();
-    updateDots();
-  });
+  updateDots();
 }
 
 function isTree(x,y){ return (levelData().walls||[]).some(w=>w[0]===x&&w[1]===y); }
@@ -595,40 +614,11 @@ function isRock(x,y){ return (levelData().rocks||[]).some(w=>w[0]===x&&w[1]===y)
 function isCoinCell(x,y){ return (levelData().coins||[]).some(c=>c[0]===x&&c[1]===y); }
 function coinKey(x,y){ return x+','+y; }
 
-function calcularTamanhoCelula(cols, rows){
-  const gameCard = document.querySelector('.game-card');
-  const controls = document.querySelector('.controls');
-  const coinStatus = document.getElementById('coin-status');
-  if(!gameCard) return 40;
-
-  const rectCard = gameCard.getBoundingClientRect();
-  if(rectCard.width < 10 || rectCard.height < 10) return 40; // ainda não renderizou de verdade
-
-  const alturaControls = controls ? controls.getBoundingClientRect().height : 0;
-  const alturaCoin = coinStatus ? coinStatus.getBoundingClientRect().height : 0;
-
-  const gap = 3;
-  const folgaLargura = 30;  // padding do game-card + borda do #maze
-  const folgaAltura = 46;   // idem + espaço entre stage-top e controls
-
-  const espacoLargura = rectCard.width - folgaLargura;
-  const espacoAltura = rectCard.height - alturaControls - alturaCoin - folgaAltura;
-
-  const porLargura = (espacoLargura - gap * (cols - 1)) / cols;
-  const porAltura = (espacoAltura - gap * (rows - 1)) / rows;
-
-  let tamanho = Math.min(porLargura, porAltura, 48);
-  tamanho = Math.max(Math.floor(tamanho), 20); // nunca menor que 20px, mesmo em telas bem pequenas
-  return tamanho;
-}
-
 function renderMaze(){
   const lvl = levelData();
   const maze = document.getElementById('maze');
-  const tamanho = calcularTamanhoCelula(lvl.cols, lvl.rows);
-  maze.style.gridTemplateColumns = `repeat(${lvl.cols}, ${tamanho}px)`;
-  maze.style.gridTemplateRows = `repeat(${lvl.rows}, ${tamanho}px)`;
-  maze.style.setProperty('--cell-font-size', Math.round(tamanho * 0.46) + 'px');
+  maze.style.gridTemplateColumns = `repeat(${lvl.cols}, var(--cell-size, 44px))`;
+  maze.style.gridTemplateRows = `repeat(${lvl.rows}, var(--cell-size, 44px))`;
 
   let html = '';
   for(let y=0; y<lvl.rows; y++){
@@ -870,12 +860,6 @@ loadProgress();
 if(currentLevel > maxUnlocked()) currentLevel = maxUnlocked();
 buildLevelsStrip();
 loadLevel();
-
-let _resizeTimer = null;
-window.addEventListener('resize', () => {
-  clearTimeout(_resizeTimer);
-  _resizeTimer = setTimeout(renderMaze, 150);
-});
 applyLang();
 
 if(window.OvercastProgress){
