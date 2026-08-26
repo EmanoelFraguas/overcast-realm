@@ -157,14 +157,12 @@
     padding:6px;
   }
   .cell{
-    width:clamp(22px, 6vmin, 44px);
-    height:clamp(22px, 6vmin, 44px);
     border-radius:6px;
     background:#8fcf6a;
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:clamp(12px, 3.2vmin, 20px);
+    font-size:var(--cell-font-size, 16px);
     position:relative;
   }
   .cell.path{ background:linear-gradient(180deg,#cdeeff,#a9defc); border-radius:8px; }
@@ -549,11 +547,40 @@ function loadLevel(){
   updateDots();
 }
 
+function calcularTamanhoCelula(cols, rows){
+  const gameCard = document.querySelector('.game-card');
+  const controls = document.querySelector('.controls');
+  const coinStatus = document.getElementById('coin-status');
+  if(!gameCard) return 38;
+
+  const rectCard = gameCard.getBoundingClientRect();
+  if(rectCard.width < 10 || rectCard.height < 10) return 38; // ainda não renderizou de verdade
+
+  const alturaControls = controls ? controls.getBoundingClientRect().height : 0;
+  const alturaCoin = coinStatus ? coinStatus.getBoundingClientRect().height : 0;
+
+  const gap = 3;
+  const folgaLargura = 30;
+  const folgaAltura = 46;
+
+  const espacoLargura = rectCard.width - folgaLargura;
+  const espacoAltura = rectCard.height - alturaControls - alturaCoin - folgaAltura;
+
+  const porLargura = (espacoLargura - gap * (cols - 1)) / cols;
+  const porAltura = (espacoAltura - gap * (rows - 1)) / rows;
+
+  let tamanho = Math.min(porLargura, porAltura, 44);
+  tamanho = Math.max(Math.floor(tamanho), 20);
+  return tamanho;
+}
+
 function renderMaze(){
   const lvl = levelData();
   const maze = document.getElementById('maze');
-  maze.style.gridTemplateColumns = `repeat(${lvl.cols}, clamp(22px, 6vmin, 44px))`;
-  maze.style.gridTemplateRows = `repeat(${lvl.rows}, clamp(22px, 6vmin, 44px))`;
+  const tamanho = calcularTamanhoCelula(lvl.cols, lvl.rows);
+  maze.style.gridTemplateColumns = `repeat(${lvl.cols}, ${tamanho}px)`;
+  maze.style.gridTemplateRows = `repeat(${lvl.rows}, ${tamanho}px)`;
+  maze.style.setProperty('--cell-font-size', Math.round(tamanho * 0.46) + 'px');
 
   let html = '';
   for(let y=0; y<lvl.rows; y++){
@@ -715,6 +742,12 @@ loadProgress();
 if(currentLevel > maxUnlocked()) currentLevel = maxUnlocked();
 buildLevelsStrip();
 loadLevel();
+
+let _resizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(_resizeTimer);
+  _resizeTimer = setTimeout(renderMaze, 150);
+});
 applyLang();
 
 if(window.OvercastProgress){
