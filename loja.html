@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loja do Avatar — Overcast Realm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#181229; --bg-panel:#241c3d; --bg-card:#2c2350; --border:#4a3a7c;
+    --pink:#ff5fa2; --cyan:#4be8ff; --yellow:#ffd23f; --green:#4be08f; --purple:#a06bff; --orange:#ff9a3c;
+    --ink:#ffffff; --ink-soft:#c9bfe8;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 15% 15%, #2e2258 0%, transparent 45%),
+      radial-gradient(circle at 90% 25%, #1e3a52 0%, transparent 40%),
+      var(--bg-deep);
+    color:var(--ink); font-family:'Baloo 2', sans-serif; min-height:100vh; padding:14px;
+  }
+  .wrap{max-width:1100px;margin:0 auto;}
+  h1,h2,h3,.pixel{ font-family:'Press Start 2P', monospace; }
+
+  .back-row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+  .back-home{
+    display:inline-flex; align-items:center; gap:5px; font-weight:700; font-size:12px;
+    color:var(--ink-soft); background:var(--bg-card); border:2px solid var(--border);
+    border-radius:999px; padding:8px 14px; text-decoration:none;
+  }
+  header{ text-align:center; margin-bottom:14px; }
+  header h1{ font-size:clamp(15px,3vw,20px); color:var(--yellow); text-shadow:2px 2px 0 #000; margin:0 0 6px; }
+  header p{ font-weight:700; color:var(--ink-soft); font-size:13px; margin:0; }
+
+  .panel{
+    background:var(--bg-panel); border:3px solid var(--border); border-radius:18px;
+    box-shadow:0 6px 0 #120c22; padding:16px 18px; margin-bottom:14px;
+  }
+  .panel h2{ font-size:12px; color:var(--yellow); margin:0 0 10px; }
+
+  .top-row{ display:grid; grid-template-columns:220px 1fr; gap:18px; align-items:start; }
+  @media (max-width:640px){ .top-row{ grid-template-columns:1fr; } }
+  .avatar-preview-box{ background:#0e0a1a; border:3px solid var(--border); border-radius:14px; padding:10px; display:flex; align-items:center; justify-content:center; }
+  .saldo-box{ display:flex; align-items:center; gap:10px; background:var(--bg-card); border:2px solid var(--yellow); border-radius:12px; padding:12px 16px; margin-bottom:12px; }
+  .saldo-box .moeda-icon{ font-size:24px; }
+  .saldo-box .valor{ font-family:'Press Start 2P',monospace; font-size:16px; color:var(--yellow); }
+
+  .pele-row{ display:flex; gap:8px; flex-wrap:wrap; }
+  .pele-swatch{ width:34px; height:34px; border-radius:50%; border:3px solid var(--border); cursor:pointer; }
+  .pele-swatch.active{ border-color:var(--yellow); box-shadow:0 0 0 2px var(--yellow); }
+
+  .cat-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:12px; }
+  .item-card{ background:var(--bg-card); border:2px solid var(--border); border-radius:12px; padding:10px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .item-card.equipado{ border-color:var(--green); }
+  .item-preview{ background:#0e0a1a; border-radius:8px; }
+  .item-nome{ font-weight:800; font-size:12px; margin:0; }
+  .item-preco{ font-family:'Press Start 2P',monospace; font-size:11px; color:var(--yellow); margin:0; }
+  .item-btn{
+    font-family:'Press Start 2P',monospace; font-size:9px; color:#fff; border:none; border-radius:999px;
+    padding:8px 12px; cursor:pointer; width:100%;
+  }
+  .item-btn.comprar{ background:var(--purple); }
+  .item-btn.equipar{ background:var(--cyan); }
+  .item-btn.equipado{ background:var(--green); cursor:default; }
+  .item-btn.sememoeda{ background:#4a3a7c; opacity:.6; cursor:not-allowed; }
+  .item-btn:disabled{ opacity:.6; cursor:default; }
+  .status-line{ font-weight:800; font-size:13px; min-height:18px; margin-top:8px; text-align:center; }
+
+  .zoom-overlay{ position:fixed; inset:0; background:rgba(10,6,20,.7); display:none; align-items:center; justify-content:center; z-index:999; padding:16px; }
+  .zoom-overlay.show{ display:flex; }
+  .zoom-box{ background:var(--bg-panel); border:3px solid var(--border); border-radius:20px; padding:22px; max-width:420px; width:100%; }
+  .zoom-box h3{ font-size:13px; color:var(--yellow); margin:0 0 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="back-row">
+    <a href="./index.html" class="back-home">← Voltar</a>
+  </div>
+
+  <header>
+    <h1>🛍️ LOJA DO AVATAR</h1>
+    <p>Overcast Realm — gaste as moedas que você ganhou completando atividades</p>
+  </header>
+
+  <div id="sem-vinculo" class="panel" style="text-align:center; padding:40px 20px;">
+    <div style="font-size:44px;">👤</div>
+    <p style="font-weight:800; margin:10px 0;">Vincule seu nome pra ver seu avatar e sua loja</p>
+    <button class="item-btn comprar" style="width:auto;padding:12px 20px;" onclick="abrirModalVincular()">🔗 Vincular meu nome</button>
+  </div>
+
+  <div id="loja-conteudo" style="display:none;">
+    <div class="panel top-row">
+      <div>
+        <div class="avatar-preview-box">
+          <div id="avatar-grande"></div>
+        </div>
+        <div class="saldo-box" style="margin-top:10px;">
+          <span class="moeda-icon">🪙</span>
+          <span class="valor" id="saldo-moedas">0</span>
+        </div>
+      </div>
+      <div>
+        <h2>🎨 COR DA PELE (grátis, troque à vontade)</h2>
+        <div class="pele-row" id="pele-row"></div>
+        <p style="font-size:12px; color:var(--ink-soft); font-weight:700; margin-top:10px;">
+          Olá, <b id="nome-aluno-loja"></b>! Suas peças ficam salvas e aparecem pros seus colegas de turma também.
+        </p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>👕 ROUPAS</h2>
+      <div class="cat-grid" id="cat-roupa"></div>
+    </div>
+    <div class="panel">
+      <h2>🎩 CHAPÉUS</h2>
+      <div class="cat-grid" id="cat-chapeu"></div>
+    </div>
+    <div class="panel">
+      <h2>🎒 ACESSÓRIOS</h2>
+      <div class="cat-grid" id="cat-acessorio"></div>
+    </div>
+
+    <p class="status-line" id="loja-status"></p>
+  </div>
+
+</div>
+
+<!-- ============== MODAL: vincular nome ============== -->
+<div class="zoom-overlay" id="link-modal">
+  <div class="zoom-box">
+    <h3>🔗 Vincular meu nome</h3>
+    <div id="link-step-turma">
+      <input type="text" id="link-turma-code" placeholder="Código da turma" style="width:100%;padding:10px;border-radius:8px;border:2px solid var(--border);background:#150f24;color:#fff;font-family:'Baloo 2',sans-serif;margin-bottom:8px;box-sizing:border-box;">
+      <button class="item-btn comprar" onclick="buscarTurma()">🔎 Buscar Turma</button>
+      <div id="link-turma-error" style="font-weight:800;color:var(--pink);font-size:12px;margin-top:8px;"></div>
+    </div>
+    <div id="link-step-aluno" style="display:none;">
+      <p style="font-weight:800;color:var(--yellow);font-size:14px;">Turma: <span id="link-turma-name"></span></p>
+      <p style="font-weight:700;color:var(--ink-soft);font-size:12px;">Clique no seu nome:</p>
+      <div id="link-aluno-list" style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;margin-bottom:8px;"></div>
+      <button class="item-btn equipar" onclick="voltarStepTurma()">← Trocar turma</button>
+    </div>
+    <div id="link-status" style="font-weight:800;font-size:13px;margin-top:10px;min-height:18px;"></div>
+    <button class="item-btn" style="background:#4a3a7c;margin-top:8px;" onclick="fecharModalVincular()">✕ Fechar</button>
+  </div>
+</div>
+
+<script src="./avatar-render.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const SUPABASE_URL = "https://kezlmecrxhjahhoekybs.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlemxtZWNyeGhqYWhob2VreWJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5MDkwNjAsImV4cCI6MjEwMjQ4NTA2MH0.-TcsKrFxRMeiqKrzXk57E8-60eobk3fJ0Crn7ci0MW8";
+const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+const IDENTITY_KEY = 'overcast_course_identity'; // mesmo usado pelo course-gate, reaproveita o vinculo
+
+let alunoAtual = null; // {codigo, nome}
+let inventario = null; // resultado de obter_inventario
+let catalogo = [];      // itens_loja do banco (id, slot, nome, preco, disponivel)
+
+function getIdentitySalva(){
+  try{
+    const raw = sessionStorage.getItem(IDENTITY_KEY);
+    if(!raw) return null;
+    return JSON.parse(raw);
+  }catch(e){ return null; }
+}
+
+async function init(){
+  const identity = getIdentitySalva();
+  if(identity && identity.codigo){
+    alunoAtual = { codigo: identity.codigo, nome: identity.nome };
+    await carregarLoja();
+  } else {
+    document.getElementById('sem-vinculo').style.display = 'block';
+  }
+}
+
+async function carregarLoja(){
+  if(!sb || !alunoAtual) return;
+  document.getElementById('sem-vinculo').style.display = 'none';
+  document.getElementById('loja-conteudo').style.display = 'block';
+  document.getElementById('nome-aluno-loja').textContent = alunoAtual.nome;
+
+  const { data: cat } = await sb.from('itens_loja').select('*').eq('disponivel', true).order('slot').order('ordem');
+  catalogo = cat || [];
+
+  const { data: inv, error } = await sb.rpc('obter_inventario', { p_codigo: alunoAtual.codigo });
+  if(error || !inv || !inv.ok){
+    document.getElementById('loja-status').textContent = '❌ Não consegui carregar seu inventário.';
+    return;
+  }
+  inventario = inv;
+
+  renderTudo();
+}
+
+function equipAtual(){
+  return {
+    pele: inventario.avatar_pele,
+    roupa: inventario.avatar_roupa,
+    chapeu: inventario.avatar_chapeu,
+    acessorio: inventario.avatar_acessorio
+  };
+}
+
+function renderTudo(){
+  document.getElementById('saldo-moedas').textContent = inventario.moedas;
+  AvatarRender.render(document.getElementById('avatar-grande'), equipAtual(), 8);
+
+  const peleRow = document.getElementById('pele-row');
+  peleRow.innerHTML = Object.entries(AvatarRender.PELES).map(([id, p]) => `
+    <div class="pele-swatch ${inventario.avatar_pele===id?'active':''}" style="background:${p.cor};" title="${p.nome}" onclick="escolherPele('${id}')"></div>
+  `).join('');
+
+  ['roupa','chapeu','acessorio'].forEach(renderCategoria);
+}
+
+function renderCategoria(slot){
+  const container = document.getElementById('cat-' + slot);
+  const itensDoSlot = catalogo.filter(i => i.slot === slot);
+  const possuidos = new Set(inventario.itens_possuidos || []);
+  const equipadoId = inventario['avatar_' + slot];
+
+  container.innerHTML = itensDoSlot.map(item => {
+    const possui = possuidos.has(item.id);
+    const equipado = equipadoId === item.id;
+    let botao;
+    if(equipado){
+      botao = `<button class="item-btn equipado" disabled>✅ Equipado</button>`;
+    } else if(possui){
+      botao = `<button class="item-btn equipar" onclick="equipar('${slot}','${item.id}')">👕 Equipar</button>`;
+    } else if(inventario.moedas < item.preco){
+      botao = `<button class="item-btn sememoeda" disabled>🔒 Faltam moedas</button>`;
+    } else {
+      botao = `<button class="item-btn comprar" onclick="comprar('${item.id}')">🪙 Comprar</button>`;
+    }
+    return `
+      <div class="item-card ${equipado?'equipado':''}">
+        <div class="item-preview" id="prev-${item.id}"></div>
+        <p class="item-nome">${item.nome}</p>
+        <p class="item-preco">🪙 ${item.preco}</p>
+        ${botao}
+      </div>
+    `;
+  }).join('');
+
+  itensDoSlot.forEach(item => {
+    const el = document.getElementById('prev-' + item.id);
+    if(el) AvatarRender.render(el, { ...equipAtual(), [slot]: item.id }, 3);
+  });
+}
+
+async function escolherPele(id){
+  const status = document.getElementById('loja-status');
+  status.textContent = '⏳ Salvando...';
+  const { data, error } = await sb.rpc('equipar_item', { p_codigo: alunoAtual.codigo, p_slot: 'pele', p_item_id: id });
+  if(error || !data || !data.ok){ status.textContent = '❌ ' + (data && data.erro ? data.erro : 'Erro ao salvar.'); return; }
+  inventario.avatar_pele = id;
+  status.textContent = '';
+  renderTudo();
+}
+
+async function equipar(slot, itemId){
+  const status = document.getElementById('loja-status');
+  status.textContent = '⏳ Equipando...';
+  const { data, error } = await sb.rpc('equipar_item', { p_codigo: alunoAtual.codigo, p_slot: slot, p_item_id: itemId });
+  if(error || !data || !data.ok){ status.textContent = '❌ ' + (data && data.erro ? data.erro : 'Erro ao equipar.'); return; }
+  inventario['avatar_' + slot] = itemId;
+  status.textContent = '✅ Equipado!';
+  renderTudo();
+}
+
+async function comprar(itemId){
+  const status = document.getElementById('loja-status');
+  status.textContent = '⏳ Comprando...';
+  const { data, error } = await sb.rpc('comprar_item', { p_codigo: alunoAtual.codigo, p_item_id: itemId });
+  if(error || !data || !data.ok){ status.textContent = '❌ ' + (data && data.erro ? data.erro : 'Erro na compra.'); return; }
+  inventario.moedas = data.moedas_restantes;
+  if(!inventario.itens_possuidos) inventario.itens_possuidos = [];
+  inventario.itens_possuidos.push(itemId);
+  status.textContent = '🎉 Comprado!';
+  renderTudo();
+}
+
+/* ---- vincular (mesmo padrao das outras ferramentas, salva na mesma sessionStorage do course-gate) ---- */
+let turmaBusca = null;
+function abrirModalVincular(){ document.getElementById('link-modal').classList.add('show'); }
+function fecharModalVincular(){ document.getElementById('link-modal').classList.remove('show'); }
+async function buscarTurma(){
+  const code = document.getElementById('link-turma-code').value.trim().toLowerCase();
+  const errEl = document.getElementById('link-turma-error');
+  if(!code){ errEl.textContent = '👉 Digite o código da turma.'; return; }
+  if(!sb){ errEl.textContent = '❌ Não consegui conectar.'; return; }
+  errEl.textContent = '⏳ Buscando...';
+  const { data: turma, error } = await sb.from('turmas').select('*').eq('codigo_acesso', code).maybeSingle();
+  if(error || !turma){ errEl.textContent = '❌ Turma não encontrada.'; return; }
+  errEl.textContent = '';
+  const { data: alunos } = await sb.from('alunos').select('*').eq('turma_id', turma.id).order('nome');
+  turmaBusca = { turma, alunos: alunos || [] };
+  document.getElementById('link-turma-name').textContent = turma.nome;
+  document.getElementById('link-aluno-list').innerHTML = (alunos && alunos.length)
+    ? alunos.map((a,i) => `<button class="item-btn equipar" data-i="${i}">${a.nome}</button>`).join('')
+    : '<p style="font-size:12px;">Nenhum aluno cadastrado.</p>';
+  document.querySelectorAll('#link-aluno-list .item-btn').forEach(btn => {
+    btn.onclick = () => escolherAluno(parseInt(btn.dataset.i, 10));
+  });
+  document.getElementById('link-step-turma').style.display = 'none';
+  document.getElementById('link-step-aluno').style.display = 'block';
+}
+function voltarStepTurma(){
+  document.getElementById('link-step-turma').style.display = 'block';
+  document.getElementById('link-step-aluno').style.display = 'none';
+}
+async function escolherAluno(i){
+  if(!turmaBusca) return;
+  const aluno = turmaBusca.alunos[i];
+  if(!aluno) return;
+  sessionStorage.setItem(IDENTITY_KEY, JSON.stringify({
+    codigo: aluno.codigo, nome: aluno.nome, turmaCodigo: turmaBusca.turma.codigo_acesso,
+    tipoCurso: turmaBusca.turma.tipo_curso, linkedAt: Date.now()
+  }));
+  alunoAtual = { codigo: aluno.codigo, nome: aluno.nome };
+  fecharModalVincular();
+  await carregarLoja();
+}
+
+init();
+</script>
+</body>
+</html>
