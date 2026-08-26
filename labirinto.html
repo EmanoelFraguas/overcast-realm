@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Labirinto 2 — Overcast Realm</title>
+<title>Labirinto do Robô — Overcast Realm</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
 <style>
@@ -15,6 +15,7 @@
     --coral:#ff7a6b;
     --mint:#3ddc97;
     --grape:#a06bff;
+    --gold:#e8a800;
     --ink:#3a2b52;
     --ink-soft:#6b5b8a;
     --card:#ffffff;
@@ -23,7 +24,7 @@
     --ok-bg:#e3fbf0;
     --bad:#ff5c5c;
     --bad-bg:#ffecec;
-    --cell-size:38px;
+    --cell-size:44px;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;height:100%;overflow:hidden;}
@@ -39,7 +40,7 @@
     padding:8px 10px;
     display:flex;
   }
-  .wrap{max-width:1000px;margin:0 auto;width:100%;height:100%;display:flex;flex-direction:column;min-height:0;}
+  .wrap{max-width:980px;margin:0 auto;width:100%;height:100%;display:flex;flex-direction:column;min-height:0;}
 
   .back-home {
     display: inline-flex;
@@ -85,7 +86,10 @@
     flex-wrap:wrap;
     flex-shrink:0;
   }
-  .legend .li{ display:flex; align-items:center; gap:4px; font-size:clamp(14px,2.2vh,20px); }
+  .legend .li{
+    display:flex; align-items:center; gap:4px;
+    font-size:clamp(14px,2.2vh,20px);
+  }
   .legend .li small{
     font-family:'Baloo 2', sans-serif;
     font-weight:700;
@@ -163,33 +167,41 @@
   #maze{
     display:grid;
     gap:4px;
-    background:#7ab857;
-    border:3px solid #5c9a3d;
+    background:#bcdcf7;
+    border:3px solid #8fc3ea;
     border-radius:14px;
     padding:6px;
     flex-shrink:0;
   }
   .cell{
-    width:var(--cell-size, 38px);
-    height:var(--cell-size, 38px);
-    border-radius:6px;
-    background:#8fcf6a;
-    border:2px solid #6fa84a;
+    width:var(--cell-size, 44px);
+    height:var(--cell-size, 44px);
+    border-radius:8px;
+    background:#fbfdff;
+    border:2px solid #a9cfec;
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:calc(var(--cell-size, 38px) * 0.42);
+    font-size:calc(var(--cell-size, 44px) * 0.46);
     position:relative;
   }
-  .cell.path{ background:linear-gradient(180deg,#cdeeff,#a9defc); border-radius:8px; }
-  .cell.goal{ background:linear-gradient(180deg,#fff2c2,#ffe08a); }
-  .cell.char{ background:linear-gradient(180deg,#eaf7ff,#cdeeff); }
-  .cell .robot{ font-size:1.15em; transition:transform .1s; display:inline-block; }
+  .cell.tree{ background:#e6f9ee; }
+  .cell.rock{ background:#f4efe4; }
+  .cell.goal{ background:#fff6da; }
+  .cell.char{ background:#dff1ff; }
+  .cell .robot{ font-size:1.1em; transition:transform .15s; }
+  .cell .coin-mark{ position:absolute; font-size:0.5em; bottom:1px; right:1px; }
   .cell.bump .robot{ animation:bump .3s; }
   @keyframes bump{
     0%{transform:scale(1);}
     40%{transform:scale(0.8) rotate(-10deg);}
     100%{transform:scale(1);}
+  }
+  .cell.hop .robot{ animation:hop .35s; }
+  @keyframes hop{
+    0%{transform:translateY(0);}
+    40%{transform:translateY(-14px) scale(1.1);}
+    100%{transform:translateY(0);}
   }
   .cell.win .robot{ animation:win .6s; }
   @keyframes win{
@@ -197,10 +209,20 @@
     50%{transform:scale(1.5) rotate(20deg);}
     100%{transform:scale(1) rotate(0);}
   }
-  .cell.sliding .robot{ animation:slidepulse .12s ease-out; }
-  @keyframes slidepulse{
-    0%{transform:scale(0.75);}
-    100%{transform:scale(1);}
+  .cell.sparkle .coin-mark{ animation:sparkle .4s; }
+  @keyframes sparkle{
+    0%{transform:scale(1); opacity:1;}
+    100%{transform:scale(2); opacity:0;}
+  }
+
+  .coin-status{
+    display:flex; align-items:center; justify-content:center; gap:4px;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:13px;
+    color:var(--gold);
+    margin-top:4px;
+    flex-shrink:0;
   }
 
   .controls{
@@ -215,7 +237,6 @@
     border-left:3px dashed var(--card-edge);
     padding-left:14px;
   }
-
 
   .palette{
     display:grid;
@@ -239,7 +260,8 @@
     box-shadow:0 3px 0 var(--sky-dark);
     user-select:none;
   }
-  .palette-block[data-type="repeat"]{ border-color:var(--grape); box-shadow:0 3px 0 var(--grape); }
+  .palette-block[data-type="coin"]{ border-color:var(--gold); box-shadow:0 3px 0 var(--gold); }
+  .palette-block[data-type="jump"]{ border-color:var(--grape); box-shadow:0 3px 0 var(--grape); }
   .palette-block.dragging{ opacity:.35; }
   .palette-block:active{ cursor:grabbing; }
 
@@ -270,10 +292,22 @@
     cursor:pointer;
     position:relative;
   }
+  .program-tray .step-spacer{
+    width:28px; height:28px;
+    visibility:hidden;
+    pointer-events:none;
+    flex-shrink:0;
+  }
+  .program-tray .step[data-type="coin"]{ border-color:var(--gold); }
+  .program-tray .step[data-type="jump"]{ border-color:var(--grape); }
   .program-tray .step.running{ background:var(--sun); border-color:#e0a800; }
   .program-tray .step.ok{ background:var(--ok-bg); border-color:var(--ok); }
   .program-tray .step.fail{ background:var(--bad-bg); border-color:var(--bad); border-width:3px; animation:shake .4s; }
-  .program-tray .step.fail:after{ content:"❌"; position:absolute; top:-10px; right:-7px; font-size:12px; }
+  .program-tray .step.fail:after{
+    content:"❌";
+    position:absolute; top:-10px; right:-7px;
+    font-size:12px;
+  }
   @keyframes shake{
     0%,100%{ transform:translateX(0); }
     20%{ transform:translateX(-4px); }
@@ -305,7 +339,12 @@
   button.big-btn:active{ transform:translateY(2px); box-shadow:none; }
   button.big-btn:disabled{ opacity:.5; cursor:default; }
 
-  .msg{ font-size:18px; text-align:center; min-height:22px; flex-shrink:0; }
+  .msg{
+    font-size:18px;
+    text-align:center;
+    min-height:22px;
+    flex-shrink:0;
+  }
 
   .win-overlay{
     position:fixed; inset:0;
@@ -341,10 +380,10 @@
       border-left:none; border-top:3px dashed var(--card-edge);
       padding-left:0; padding-top:10px;
     }
-    :root{ --cell-size:32px; }
+    :root{ --cell-size:36px; }
   }
   @media (max-width:420px){
-    :root{ --cell-size:24px; }
+    :root{ --cell-size:28px; }
   }
 </style>
 <script src="./progress.js"></script>
@@ -360,13 +399,14 @@
 
   <header>
     <h1>🤖 → ⭐</h1>
-    <p class="subtitle" id="t-subtitle">Cada seta desliza até parar! Chegue na estrela.</p>
+    <p class="subtitle" id="t-subtitle">Leve o robô até a estrela!</p>
     <p class="fase-atual-label" id="fase-atual-label"></p>
   </header>
 
   <div class="legend">
-    <div class="li">⬆️⬇️⬅️➡️ <small id="t-legend-deslizar">DESLIZAR</small></div>
-    <div class="li">🔁 <small id="t-legend-repetir">REPETIR</small></div>
+    <div class="li">⬆️⬇️⬅️➡️ <small id="t-legend-andar">ANDAR</small></div>
+    <div class="li">🪙 <small id="t-legend-pegar">PEGAR</small></div>
+    <div class="li">🦘 <small id="t-legend-pular">PULAR</small></div>
   </div>
 
   <div class="levels-strip" id="levels-strip"></div>
@@ -374,6 +414,7 @@
   <div class="game-card">
     <div class="stage-left">
       <div id="maze"></div>
+      <div class="coin-status" id="coin-status"></div>
     </div>
 
     <div class="controls">
@@ -382,7 +423,8 @@
         <div class="palette-block" draggable="true" data-type="move" data-dir="left">⬅️</div>
         <div class="palette-block" draggable="true" data-type="move" data-dir="down">⬇️</div>
         <div class="palette-block" draggable="true" data-type="move" data-dir="right">➡️</div>
-        <div class="palette-block" draggable="true" data-type="repeat">🔁</div>
+        <div class="palette-block" draggable="true" data-type="coin">🪙</div>
+        <div class="palette-block" draggable="true" data-type="jump">🦘</div>
       </div>
 
       <div class="program-tray" id="tray"></div>
@@ -409,75 +451,57 @@
 
 <script src="./course-gate.js"></script>
 <script>
-// Cada fase é definida por "esquinas" (waypoints). O caminho é a linha reta
-// entre cada par de esquinas seguidas. O robô sempre desliza até a próxima esquina.
-const rawLevels = [
-  {cols:5, rows:1, wp:[[0,0],[4,0]]},
-  {cols:1, rows:5, wp:[[0,0],[0,4]]},
-  {cols:5, rows:1, wp:[[4,0],[0,0]]},
-  {cols:5, rows:3, wp:[[0,0],[4,0],[4,2]]},
-  {cols:5, rows:3, wp:[[0,0],[0,2],[4,2]]},
+// x = coluna (0 = esquerda), y = linha (0 = topo)
+// walls = árvore (bloqueia sempre) · rocks = pedra (precisa pular) · coins = moedas a coletar
+const levels = [
+  {cols:3, rows:1, start:[0,0], goal:[2,0]},
+  {cols:1, rows:3, start:[0,0], goal:[0,2]},
+  {cols:3, rows:1, start:[2,0], goal:[0,0]},
+  {cols:3, rows:3, start:[0,0], goal:[2,2]},
+  {cols:4, rows:3, start:[0,0], goal:[3,2]},
 
-  {cols:6, rows:4, wp:[[0,0],[5,0],[5,3]]},
-  {cols:6, rows:4, wp:[[0,3],[0,0],[5,0]]},
-  {cols:6, rows:5, wp:[[0,0],[5,0],[5,4],[0,4]]},
-  {cols:6, rows:5, wp:[[0,4],[5,4],[5,0],[0,0]]},
-  {cols:7, rows:5, wp:[[0,0],[6,0],[6,2],[3,2],[3,4]]},
+  {cols:4, rows:1, start:[0,0], goal:[3,0], coins:[[2,0]]},
+  {cols:1, rows:4, start:[0,0], goal:[0,3], coins:[[0,1]]},
+  {cols:4, rows:3, start:[0,0], goal:[3,2], coins:[[3,0]], walls:[[0,2]]},
+  {cols:4, rows:4, start:[0,0], goal:[3,3], coins:[[3,0],[3,2]], walls:[[0,3]]},
+  {cols:5, rows:1, start:[0,0], goal:[4,0], coins:[[1,0],[3,0]]},
 
-  {cols:7, rows:5, wp:[[0,4],[0,1],[4,1],[4,4],[6,4]]},
-  {cols:7, rows:6, wp:[[0,0],[6,0],[6,3],[2,3],[2,5]]},
-  {cols:7, rows:6, wp:[[0,5],[0,2],[3,2],[3,0],[6,0]]},
-  {cols:8, rows:6, wp:[[0,0],[7,0],[7,3],[3,3],[3,5],[0,5]]},
-  {cols:8, rows:6, wp:[[0,5],[0,0],[4,0],[4,4],[7,4]]},
+  {cols:4, rows:1, start:[0,0], goal:[3,0], rocks:[[2,0]]},
+  {cols:1, rows:4, start:[0,0], goal:[0,3], rocks:[[0,2]]},
+  {cols:5, rows:1, start:[0,0], goal:[4,0], rocks:[[2,0]], coins:[[3,0]]},
+  {cols:1, rows:5, start:[0,0], goal:[0,4], rocks:[[0,2]], coins:[[0,3]]},
+  {cols:6, rows:1, start:[0,0], goal:[5,0], rocks:[[2,0],[4,0]]},
 
-  {cols:8, rows:7, wp:[[0,0],[7,0],[7,2],[2,2],[2,4],[7,4],[7,6]]},
-  {cols:8, rows:7, wp:[[0,6],[0,3],[5,3],[5,0],[7,0]]},
-  {cols:9, rows:6, wp:[[0,0],[8,0],[8,3],[4,3],[4,5],[0,5]]},
-  {cols:9, rows:7, wp:[[0,0],[8,0],[8,2],[3,2],[3,4],[8,4],[8,6]]},
-  {cols:9, rows:7, wp:[[0,6],[0,4],[5,4],[5,2],[8,2],[8,0]]},
+  {cols:4, rows:4, start:[0,0], goal:[3,3], rocks:[[3,1]], coins:[[3,0]], walls:[[1,2]]},
+  {cols:5, rows:4, start:[0,0], goal:[4,3], rocks:[[4,2]], coins:[[4,0],[4,3]], walls:[[1,1]]},
+  {cols:6, rows:4, start:[0,0], goal:[5,3], rocks:[[5,2]], coins:[[1,0],[5,3]], walls:[[2,1],[2,2]]},
+  {cols:5, rows:4, start:[0,0], goal:[4,0], walls:[[2,0],[2,1],[2,2]]},
+  {cols:5, rows:4, start:[0,0], goal:[4,3], rocks:[[2,3]], coins:[[0,3],[4,3]], walls:[[2,0],[2,1]]},
 
-  {cols:9, rows:8, wp:[[0,0],[8,0],[8,3],[4,3],[4,6],[0,6]]},
-  {cols:9, rows:8, wp:[[0,7],[0,4],[5,4],[5,1],[8,1]]},
-  {cols:10, rows:7, wp:[[0,0],[9,0],[9,2],[3,2],[3,4],[9,4],[9,6],[0,6]]},
-  {cols:10, rows:8, wp:[[0,7],[0,5],[6,5],[6,3],[2,3],[2,1],[9,1]]},
-  {cols:10, rows:8, wp:[[0,0],[9,0],[9,3],[5,3],[5,5],[0,5],[0,7],[9,7]]},
-  {cols:11, rows:8, wp:[[0,0],[10,0],[10,2],[4,2],[4,4],[10,4],[10,6],[0,6]]},
-  {cols:11, rows:9, wp:[[0,8],[0,6],[6,6],[6,4],[2,4],[2,2],[10,2],[10,0]]},
-  {cols:11, rows:9, wp:[[0,0],[10,0],[10,3],[3,3],[3,5],[8,5],[8,7],[0,7]]},
-  {cols:12, rows:9, wp:[[0,0],[11,0],[11,2],[5,2],[5,4],[11,4],[11,6],[2,6],[2,8]]},
-  {cols:12, rows:10, wp:[[0,9],[0,7],[7,7],[7,5],[3,5],[3,3],[11,3],[11,1],[6,1]]}
+  {cols:6, rows:5, start:[0,0], goal:[5,4], coins:[[5,0],[5,4]], walls:[[2,2]]},
+  {cols:6, rows:5, start:[0,0], goal:[5,4], rocks:[[5,2]], coins:[[5,4]], walls:[]},
+  {cols:7, rows:1, start:[0,0], goal:[6,0], rocks:[[2,0],[5,0]]},
+  {cols:1, rows:7, start:[0,0], goal:[0,6], rocks:[[0,2],[0,5]]},
+  {cols:6, rows:5, start:[0,0], goal:[5,4], rocks:[[5,2]], coins:[[5,0],[5,4]], walls:[[1,3],[3,3]]},
+  {cols:7, rows:5, start:[0,0], goal:[6,4], walls:[[3,0],[3,1],[3,2],[3,3]]},
+  {cols:7, rows:1, start:[0,0], goal:[6,0], rocks:[[5,0]], coins:[[6,0]], walls:[[3,0]]},
+  {cols:6, rows:6, start:[0,0], goal:[5,5], rocks:[[4,5]], coins:[[0,5],[5,5]], walls:[[2,0],[2,1],[2,2],[2,3],[2,4]]},
+  {cols:7, rows:6, start:[0,0], goal:[6,5], walls:[[3,1],[3,2],[1,4]]},
+  {cols:7, rows:6, start:[0,0], goal:[6,5], rocks:[[3,5]], coins:[[0,5],[6,5]], walls:[[3,1],[3,2]]}
 ];
-
-function buildPath(wp){
-  const set = new Set();
-  const add = (x,y) => set.add(x+','+y);
-  for(let i=0;i<wp.length-1;i++){
-    let [x1,y1] = wp[i];
-    const [x2,y2] = wp[i+1];
-    add(x1,y1);
-    while(x1!==x2 || y1!==y2){
-      if(x1<x2) x1++; else if(x1>x2) x1--;
-      if(y1<y2) y1++; else if(y1>y2) y1--;
-      add(x1,y1);
-    }
-  }
-  return set;
-}
-
-const levels = rawLevels.map(l => ({
-  cols:l.cols, rows:l.rows,
-  start:l.wp[0], goal:l.wp[l.wp.length-1],
-  path: buildPath(l.wp)
-}));
 
 let currentLang = 'pt';
 const UI_STRINGS = {
-  pt: { subtitle:'Cada seta desliza até parar! Chegue na estrela.', deslizar:'DESLIZAR', repetir:'REPETIR',
+  pt: { subtitle:'Leve o robô até a estrela!', andar:'ANDAR', pegar:'PEGAR', pular:'PULAR',
         reiniciar:'🔁 Reiniciar', limpar:'🗑️ Limpar', proximo:'➡️ Próximo', fim:'🏆 Fim!',
-        naoDeslizou:'❌ Esse bloco não deslizou', chegou:'🎉 Você chegou!', quaseEstrela:'🤔 Quase! Faltou chegar na estrela' },
-  en: { subtitle:'Each arrow slides until it stops! Reach the star.', deslizar:'SLIDE', repetir:'REPEAT',
+        bateuParede:'❌ Esse bloco bateu na parede', naoSabePulo:'❌ Esse bloco não sabe pra onde pular',
+        pulouErrado:'❌ Esse bloco pulou pro lugar errado', chegou:'🎉 Você chegou!',
+        faltaMoeda:'🪙 Falta pegar moeda', quaseEstrela:'🤔 Quase! Faltou chegar na estrela' },
+  en: { subtitle:'Get the robot to the star!', andar:'MOVE', pegar:'GRAB', pular:'JUMP',
         reiniciar:'🔁 Reset', limpar:'🗑️ Clear', proximo:'➡️ Next', fim:'🏆 Done!',
-        naoDeslizou:"❌ That block didn't slide", chegou:'🎉 You made it!', quaseEstrela:"🤔 Almost! Didn't reach the star" }
+        bateuParede:'❌ That block hit the wall', naoSabePulo:"❌ That block doesn't know which way to jump",
+        pulouErrado:'❌ That block jumped to the wrong spot', chegou:'🎉 You made it!',
+        faltaMoeda:'🪙 Still need a coin', quaseEstrela:"🤔 Almost! Didn't reach the star" }
 };
 function toggleLang(){
   currentLang = currentLang === 'pt' ? 'en' : 'pt';
@@ -486,8 +510,9 @@ function toggleLang(){
 function applyLang(){
   const t = UI_STRINGS[currentLang];
   document.getElementById('t-subtitle').textContent = t.subtitle;
-  document.getElementById('t-legend-deslizar').textContent = t.deslizar;
-  document.getElementById('t-legend-repetir').textContent = t.repetir;
+  document.getElementById('t-legend-andar').textContent = t.andar;
+  document.getElementById('t-legend-pegar').textContent = t.pegar;
+  document.getElementById('t-legend-pular').textContent = t.pular;
   document.getElementById('t-btn-reset').textContent = t.reiniciar;
   document.getElementById('t-btn-clear').textContent = t.limpar;
   document.getElementById('btn-next-inline').textContent = t.proximo;
@@ -495,24 +520,29 @@ function applyLang(){
   document.getElementById('lang-toggle-btn').title = currentLang==='pt' ? 'English' : 'Português';
 }
 
-const STORAGE_KEY = 'overcast_labirinto2_v1';
+const STORAGE_KEY = 'overcast_labirinto_v1';
 let currentLevel = 0;
 let program = [];
 let pos = [0,0];
+let lastDir = null;
+let coinsCollected = new Set();
 let completed = new Set();
 
 const DIR_ICON = {up:'⬆️', down:'⬇️', left:'⬅️', right:'➡️'};
 const DELTA = { up:[0,-1], down:[0,1], left:[-1,0], right:[1,0] };
 
 function saveProgress(){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ completed:[...completed], lastLevel: currentLevel }));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    completed:[...completed],
+    lastLevel: currentLevel
+  }));
   if(window.OvercastProgress){
-    OvercastProgress.saveProgress('labirinto2', { completed:[...completed], lastLevel: currentLevel });
+    OvercastProgress.saveProgress('labirinto1', { completed:[...completed], lastLevel: currentLevel });
   }
 }
 async function syncCloudProgress(){
   if(!window.OvercastProgress) return;
-  const cloud = await OvercastProgress.loadProgress('labirinto2');
+  const cloud = await OvercastProgress.loadProgress('labirinto1');
   if(cloud && Array.isArray(cloud.completed)){
     let changed = false;
     cloud.completed.forEach(n => { if(!completed.has(n)){ completed.add(n); changed = true; } });
@@ -549,6 +579,7 @@ function buildLevelsStrip(){
   }).join('');
   updateDots();
 }
+
 function updateDots(){
   levels.forEach((_, i) => {
     const dot = document.getElementById('dot-'+i);
@@ -561,96 +592,137 @@ function updateDots(){
   const activeDot = document.getElementById('dot-' + currentLevel);
   if(activeDot) activeDot.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
 }
+
 function goToLevel(i){
   if(i > maxUnlocked()) return;
   currentLevel = i;
   saveProgress();
   loadLevel();
 }
+
 function levelData(){ return levels[currentLevel]; }
-function isPath(x,y){ return levelData().path.has(x+','+y); }
 
 function loadLevel(){
   const lvl = levelData();
   pos = [...lvl.start];
+  lastDir = null;
   program = [];
+  coinsCollected = new Set();
   document.getElementById('msg').textContent = '';
   document.getElementById('btn-next-inline').style.display = 'none';
   renderMaze();
   renderTray();
+  renderCoinStatus();
   updateDots();
 }
+
+function isTree(x,y){ return (levelData().walls||[]).some(w=>w[0]===x&&w[1]===y); }
+function isRock(x,y){ return (levelData().rocks||[]).some(w=>w[0]===x&&w[1]===y); }
+function isCoinCell(x,y){ return (levelData().coins||[]).some(c=>c[0]===x&&c[1]===y); }
+function coinKey(x,y){ return x+','+y; }
 
 function renderMaze(){
   const lvl = levelData();
   const maze = document.getElementById('maze');
-  maze.style.gridTemplateColumns = `repeat(${lvl.cols}, var(--cell-size, 38px))`;
-  maze.style.gridTemplateRows = `repeat(${lvl.rows}, var(--cell-size, 38px))`;
+  maze.style.gridTemplateColumns = `repeat(${lvl.cols}, var(--cell-size, 44px))`;
+  maze.style.gridTemplateRows = `repeat(${lvl.rows}, var(--cell-size, 44px))`;
 
   let html = '';
   for(let y=0; y<lvl.rows; y++){
     for(let x=0; x<lvl.cols; x++){
-      const onPath = isPath(x,y);
+      const tree = isTree(x,y);
+      const rock = isRock(x,y);
       const isGoal = x===lvl.goal[0] && y===lvl.goal[1];
       const isChar = x===pos[0] && y===pos[1];
+      const hasCoin = isCoinCell(x,y) && !coinsCollected.has(coinKey(x,y));
+
       let cls = 'cell';
-      if(onPath) cls += ' path';
-      if(isGoal && !isChar) cls += ' goal';
+      if(tree) cls += ' tree';
+      else if(rock) cls += ' rock';
+      else if(isGoal && !isChar) cls += ' goal';
       if(isChar) cls += ' char';
+
       let content = '';
-      if(isChar) content = '<span class="robot" id="robot">🤖</span>';
+      if(tree) content = '🌳';
+      else if(rock) content = '🪨';
+      else if(isChar) content = '<span class="robot" id="robot">🤖</span>';
       else if(isGoal) content = '⭐';
+
+      if(hasCoin && !isChar) content += '<span class="coin-mark">🪙</span>';
+
       html += `<div class="${cls}" id="cell-${x}-${y}">${content}</div>`;
     }
   }
   maze.innerHTML = html;
 }
 
+function renderCoinStatus(){
+  const lvl = levelData();
+  const total = (lvl.coins || []).length;
+  const el = document.getElementById('coin-status');
+  if(total === 0){ el.innerHTML = ''; return; }
+  el.innerHTML = `🪙 ${coinsCollected.size}/${total}`;
+}
+
 function renderTray(){
   const tray = document.getElementById('tray');
   if(program.length === 0){
-    tray.innerHTML = '<span class="empty-hint">🖐️</span>';
+    tray.innerHTML = '<span class="empty-hint">🖐️</span><div class="step-spacer"></div>';
     return;
   }
   tray.innerHTML = program.map((step, i) => {
-    const icon = step.type === 'move' ? DIR_ICON[step.dir] : '🔁';
+    const icon = step.type === 'move' ? DIR_ICON[step.dir] : (step.type === 'jump' ? '🦘' : '🪙');
     return `<div class="step" data-type="${step.type}" id="step-${i}" onclick="removeStep(${i})">${icon}</div>`;
-  }).join('');
+  }).join('') + '<div class="step-spacer"></div>';
 }
 
 function addStep(step){
-  if(program.length >= 40) return;
-  if(step.type === 'repeat'){
-    if(program.length === 0) return;
-    program.push({...program[program.length - 1]});
-  } else {
-    program.push(step);
-  }
+  if(program.length >= 30) return;
+  program.push(step);
   renderTray();
 }
-function removeStep(i){ program.splice(i,1); renderTray(); }
-function clearProgram(){ program = []; renderTray(); reiniciarTentativa(); }
+function removeStep(i){
+  program.splice(i,1);
+  renderTray();
+}
+function undoStep(){
+  program.pop();
+  renderTray();
+}
+function clearProgram(){
+  program = [];
+  renderTray();
+  reiniciarTentativa();
+}
 function reiniciarTentativa(){
   const lvl = levelData();
   pos = [...lvl.start];
+  lastDir = null;
+  coinsCollected = new Set();
   document.getElementById('msg').textContent = '';
   document.getElementById('btn-next-inline').style.display = 'none';
   document.querySelectorAll('.program-tray .step').forEach(s=>s.classList.remove('running','ok','fail'));
   renderMaze();
+  renderCoinStatus();
 }
 
 let draggedStep = null;
+
 document.querySelectorAll('.palette-block').forEach(block=>{
-  block.addEventListener('dragstart', ()=>{
+  block.addEventListener('dragstart', e=>{
     draggedStep = block.dataset.type === 'move'
       ? { type:'move', dir: block.dataset.dir }
-      : { type:'repeat' };
+      : { type: block.dataset.type };
     block.classList.add('dragging');
   });
   block.addEventListener('dragend', ()=>block.classList.remove('dragging'));
 });
+
 const trayEl = document.getElementById('tray');
-trayEl.addEventListener('dragover', e=>{ e.preventDefault(); trayEl.classList.add('dragover'); });
+trayEl.addEventListener('dragover', e=>{
+  e.preventDefault();
+  trayEl.classList.add('dragover');
+});
 trayEl.addEventListener('dragleave', ()=>trayEl.classList.remove('dragover'));
 trayEl.addEventListener('drop', e=>{
   e.preventDefault();
@@ -669,8 +741,16 @@ async function runProgram(){
   runBtn.disabled = true;
 
   pos = [...lvl.start];
+  lastDir = null;
+  coinsCollected = new Set();
   renderMaze();
+  renderCoinStatus();
   await sleep(250);
+
+  function checkWin(){
+    const total = (lvl.coins || []).length;
+    return pos[0]===lvl.goal[0] && pos[1]===lvl.goal[1] && coinsCollected.size >= total;
+  }
 
   for(let i=0; i<program.length; i++){
     document.querySelectorAll('.program-tray .step').forEach(s=>s.classList.remove('running'));
@@ -678,35 +758,72 @@ async function runProgram(){
     if(stepEl) stepEl.classList.add('running');
     const step = program[i];
 
-    const [dx,dy] = DELTA[step.dir];
-    let moved = 0;
-    let nx = pos[0], ny = pos[1];
-    while(isPath(nx+dx, ny+dy)){
-      nx += dx; ny += dy;
-      moved++;
+    if(step.type === 'move'){
+      lastDir = step.dir;
+      const [dx,dy] = DELTA[step.dir];
+      const nx = pos[0]+dx, ny = pos[1]+dy;
+      const outOfBounds = nx<0 || ny<0 || nx>=lvl.cols || ny>=lvl.rows;
+
+      if(outOfBounds || isTree(nx,ny)){
+        const cell = document.getElementById(`cell-${pos[0]}-${pos[1]}`);
+        if(cell) cell.classList.add('bump');
+        if(stepEl) stepEl.classList.add('fail');
+        msg.textContent = UI_STRINGS[currentLang].bateuParede;
+        runBtn.disabled = false;
+        return;
+      }
+      if(isRock(nx,ny)){
+        const cell = document.getElementById(`cell-${pos[0]}-${pos[1]}`);
+        if(cell) cell.classList.add('bump');
+        await sleep(300);
+      } else {
+        pos = [nx, ny];
+        renderMaze();
+        if(stepEl) stepEl.classList.add('ok');
+        await sleep(350);
+      }
     }
 
-    if(moved === 0){
-      const cell = document.getElementById(`cell-${pos[0]}-${pos[1]}`);
-      if(cell) cell.classList.add('bump');
-      if(stepEl) stepEl.classList.add('fail');
-      msg.textContent = UI_STRINGS[currentLang].naoDeslizou;
-      runBtn.disabled = false;
-      return;
+    else if(step.type === 'jump'){
+      if(!lastDir){
+        if(stepEl) stepEl.classList.add('fail');
+        msg.textContent = UI_STRINGS[currentLang].naoSabePulo;
+        await sleep(250);
+        runBtn.disabled = false;
+        return;
+      } else {
+        const [dx,dy] = DELTA[lastDir];
+        const nx = pos[0]+dx*2, ny = pos[1]+dy*2;
+        const outOfBounds = nx<0 || ny<0 || nx>=lvl.cols || ny>=lvl.rows;
+        if(outOfBounds || isTree(nx,ny) || isRock(nx,ny)){
+          const cell = document.getElementById(`cell-${pos[0]}-${pos[1]}`);
+          if(cell) cell.classList.add('bump');
+          if(stepEl) stepEl.classList.add('fail');
+          msg.textContent = UI_STRINGS[currentLang].pulouErrado;
+          runBtn.disabled = false;
+          return;
+        }
+        pos = [nx, ny];
+        renderMaze();
+        const cell = document.getElementById(`cell-${pos[0]}-${pos[1]}`);
+        if(cell) cell.classList.add('hop');
+        if(stepEl) stepEl.classList.add('ok');
+        await sleep(400);
+      }
     }
 
-    // desliza casa por casa (animado) até a última casa livre nessa direção
-    for(let s=0; s<moved; s++){
-      pos = [pos[0]+dx, pos[1]+dy];
-      renderMaze();
-      const cell = document.getElementById(`cell-${pos[0]}-${pos[1]}`);
-      if(cell) cell.classList.add('sliding');
-      await sleep(85);
+    else if(step.type === 'coin'){
+      if(isCoinCell(pos[0], pos[1]) && !coinsCollected.has(coinKey(pos[0], pos[1]))){
+        coinsCollected.add(coinKey(pos[0], pos[1]));
+        renderCoinStatus();
+        const cell = document.getElementById(`cell-${pos[0]}-${pos[1]}`);
+        if(cell) cell.classList.add('sparkle');
+        if(stepEl) stepEl.classList.add('ok');
+      }
+      await sleep(280);
     }
-    if(stepEl) stepEl.classList.add('ok');
-    await sleep(120);
 
-    if(pos[0]===lvl.goal[0] && pos[1]===lvl.goal[1]){
+    if(checkWin()){
       const cell = document.getElementById(`cell-${pos[0]}-${pos[1]}`);
       if(cell) cell.classList.add('win');
       completed.add(currentLevel);
@@ -721,7 +838,8 @@ async function runProgram(){
     }
   }
 
-  msg.textContent = UI_STRINGS[currentLang].quaseEstrela;
+  const total = (lvl.coins || []).length;
+  msg.textContent = coinsCollected.size < total ? UI_STRINGS[currentLang].faltaMoeda : UI_STRINGS[currentLang].quaseEstrela;
   runBtn.disabled = false;
 }
 
@@ -730,7 +848,9 @@ function showWinOverlay(){
   document.getElementById('win-btn').innerHTML = isLast ? UI_STRINGS[currentLang].fim : UI_STRINGS[currentLang].proximo;
   document.getElementById('win-overlay').classList.add('show');
 }
-function irProximaFase(){ closeWinOverlay(); }
+function irProximaFase(){
+  closeWinOverlay();
+}
 function closeWinOverlay(){
   document.getElementById('win-overlay').classList.remove('show');
   document.getElementById('btn-next-inline').style.display = 'none';
