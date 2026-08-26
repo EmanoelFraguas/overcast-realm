@@ -155,12 +155,12 @@
     min-height:0;
     overflow-x:auto;
   }
-  .col{ display:flex; flex-direction:column; gap:8px; min-height:0; }
+  .col{ display:flex; flex-direction:column; gap:6px; min-height:0; }
   .col-scroll{ overflow-y:auto; min-height:0; }
 
   .toolbar{
-    display:flex;
-    flex-direction:column;
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
     gap:8px;
     background:var(--bg-card);
     border:3px solid var(--border);
@@ -173,17 +173,17 @@
     text-align:center;
     font-family:'Baloo 2',sans-serif;
     font-weight:800;
-    font-size:11px;
+    font-size:10px;
     border-radius:999px;
-    padding:6px 10px;
-    margin-top:8px;
+    padding:5px 8px;
+    margin-top:6px;
     transition:background .15s, color .15s;
   }
   .save-status-pill.saved{ background:#0d3d2a; color:#4be08f; }
   .save-status-pill.unsaved{ background:#4a3a10; color:#ffd23f; }
   .tool-btn{
-    width:44px; height:44px;
-    font-size:20px;
+    width:40px; height:40px;
+    font-size:18px;
     border:3px solid var(--border);
     background:var(--tool-bg);
     border-radius:12px;
@@ -298,9 +298,9 @@
     background:var(--bg-card);
     border:3px solid var(--border);
     border-radius:14px;
-    padding:10px;
+    padding:8px;
   }
-  .frames-panel .label{ font-family:'Press Start 2P', monospace; font-size:9px; color:var(--ink-soft); margin-bottom:8px; }
+  .frames-panel .label{ font-family:'Press Start 2P', monospace; font-size:9px; color:var(--ink-soft); margin-bottom:6px; }
   .frame-strip{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
   .frame-thumb-item{
     position:relative;
@@ -353,7 +353,7 @@
     background:var(--bg-card);
     border:3px solid var(--border);
     border-radius:14px;
-    padding:10px;
+    padding:8px;
     text-align:center;
   }
   #preview-canvas{
@@ -361,20 +361,21 @@
     border:2px solid var(--border);
     border-radius:8px;
     image-rendering:pixelated;
-    margin:0 auto 8px;
+    margin:0 auto 6px;
     display:block;
   }
   .fps-row{
     display:flex; align-items:center; gap:6px; justify-content:center;
     font-family:'Baloo 2',sans-serif; font-weight:700; font-size:12px; color:var(--ink-soft);
-    margin-top:8px;
+    margin-top:6px;
   }
   #export-status{
     font-family:'Baloo 2', sans-serif; font-weight:700; font-size:12px; color:var(--yellow);
     min-height:16px; margin-top:4px;
   }
 
-  .action-list{ display:flex; flex-direction:column; gap:8px; }
+  .action-list{ display:flex; flex-direction:column; gap:6px; }
+  .action-list .btn{ padding:8px 12px; font-size:9px; }
   .link-badge{
     display:flex; align-items:center; gap:6px; flex-wrap:wrap;
     font-family:'Baloo 2', sans-serif;
@@ -601,7 +602,7 @@
 
           <div class="preview-panel">
             <div class="label" style="font-family:'Press Start 2P', monospace; font-size:9px; color:var(--ink-soft); margin-bottom:8px;" data-i18n="lblPrevia">// PRÉVIA_DA_ANIMAÇÃO</div>
-            <canvas id="preview-canvas" width="110" height="110"></canvas>
+            <canvas id="preview-canvas" width="90" height="90"></canvas>
             <button class="btn green" id="preview-play-btn" style="width:100%;justify-content:center;" onclick="togglePreviewPlay()" data-i18n="btnReproduzir">▶️ Reproduzir</button>
             <div class="fps-row">
               🐢 <input type="range" id="fps-input" min="1" max="18" value="6"> 🐇
