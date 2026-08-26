@@ -257,14 +257,14 @@
     background:var(--bg-card);
     border:2px solid var(--border);
     border-radius:8px;
-    padding:6px 12px;
-    min-width:140px;
+    padding:6px 8px;
+    min-width:110px;
     text-align:center;
   }
 
   .current-color-row{
-    display:flex; align-items:center; gap:10px;
-    font-family:'Baloo 2', sans-serif; font-weight:700; color:var(--ink-soft); font-size:13px;
+    display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:8px;
+    font-family:'Baloo 2', sans-serif; font-weight:700; color:var(--ink-soft); font-size:12px;
   }
   #current-color-swatch{ width:26px; height:26px; border-radius:6px; border:2px solid #fff; }
 
@@ -518,7 +518,7 @@
     <div class="panel" style="flex:1; min-height:0; display:flex;">
       <div class="editor-layout">
 
-        <div class="col" style="flex-shrink:0;">
+        <div class="col" style="flex-shrink:0; align-items:center;">
           <div class="toolbar">
             <button class="tool-btn active" id="tool-pencil" onclick="setTool('pencil')" data-i18n-title="toolPencil" title="Lápis">✏️</button>
             <button class="tool-btn" id="tool-eraser" onclick="setTool('eraser')" data-i18n-title="toolEraser" title="Borracha">🧽</button>
@@ -540,6 +540,10 @@
               <button class="brush-btn" data-size="4" onclick="setBrushSize(4)">4</button>
             </div>
           </div>
+          <div class="hover-coord" id="hover-coord">X: – &nbsp; Y: –</div>
+          <div class="current-color-row">
+            <span data-i18n="corAtualLabel">Cor atual:</span> <span id="current-color-swatch"></span>
+          </div>
         </div>
 
         <div class="col" style="flex:1; align-items:center; justify-content:center; min-width:220px;">
@@ -549,10 +553,6 @@
               <div class="axis-y-col" id="canvas-yaxis"></div>
               <div id="canvas-stage"></div>
             </div>
-          </div>
-          <div class="hover-coord" id="hover-coord">X: – &nbsp; Y: –</div>
-          <div class="current-color-row">
-            <span data-i18n="corAtualLabel">Cor atual:</span> <span id="current-color-swatch"></span>
           </div>
         </div>
 
