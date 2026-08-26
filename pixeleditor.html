@@ -168,6 +168,19 @@
     padding:10px;
     flex-shrink:0;
   }
+  .save-status-pill{
+    display:block;
+    text-align:center;
+    font-family:'Baloo 2',sans-serif;
+    font-weight:800;
+    font-size:11px;
+    border-radius:999px;
+    padding:6px 10px;
+    margin-top:8px;
+    transition:background .15s, color .15s;
+  }
+  .save-status-pill.saved{ background:#0d3d2a; color:#4be08f; }
+  .save-status-pill.unsaved{ background:#4a3a10; color:#ffd23f; }
   .tool-btn{
     width:44px; height:44px;
     font-size:20px;
@@ -513,6 +526,7 @@
             <button class="tool-btn" id="tool-grid" onclick="toggleGrid()" data-i18n-title="toolGrid" title="Mostrar/ocultar grade">#️⃣</button>
             <button class="tool-btn" id="tool-undo" onclick="undo()" data-i18n-title="toolUndo" title="Desfazer (Ctrl+Z)">↩️</button>
           </div>
+          <span class="save-status-pill saved" id="save-status-pill">💾 Salvo</span>
           <div class="brush-panel" id="brush-panel">
             <div class="brush-label" data-i18n="brushLabel">✏️ TAMANHO</div>
             <div class="brush-row">
@@ -774,6 +788,7 @@ function applyLang(){
     const key = el.dataset.i18n;
     if(t[key] !== undefined) el.innerHTML = t[key];
   });
+  updateSaveStatusPill();
   document.querySelectorAll('[data-i18n-title]').forEach(el => {
     const key = el.dataset.i18nTitle;
     if(t[key] !== undefined) el.title = t[key];
@@ -933,6 +948,30 @@ function setPixels(newArr){
 }
 
 /* ======================================================
+   INDICADOR DE STATUS DE SALVAMENTO
+====================================================== */
+let hasUnsavedChanges = false;
+function markUnsaved(){
+  hasUnsavedChanges = true;
+  updateSaveStatusPill();
+}
+function markSaved(){
+  hasUnsavedChanges = false;
+  updateSaveStatusPill();
+}
+function updateSaveStatusPill(){
+  const pill = document.getElementById('save-status-pill');
+  if(!pill) return;
+  if(hasUnsavedChanges){
+    pill.className = 'save-status-pill unsaved';
+    pill.textContent = currentLang === 'pt' ? '● Alterações não salvas' : '● Unsaved changes';
+  } else {
+    pill.className = 'save-status-pill saved';
+    pill.textContent = currentLang === 'pt' ? '💾 Salvo' : '💾 Saved';
+  }
+}
+
+/* ======================================================
    TELA DE SETUP
 ====================================================== */
 function buildSetupScreen(){
@@ -1029,6 +1068,7 @@ function startEditor(fromRestore){
   document.getElementById('editor-screen').style.display = 'flex';
   document.getElementById('autosave-banner').style.display = 'none';
 
+  markSaved();
   startAutosaveTimer();
 }
 
@@ -1336,11 +1376,13 @@ const MAX_UNDO = 30;
 function saveUndoState(){
   undoStack.push(pixels.slice());
   if(undoStack.length > MAX_UNDO) undoStack.shift();
+  markUnsaved();
 }
 function undo(){
   if(!undoStack.length) return;
   setPixels(undoStack.pop());
   paintAllCells();
+  markUnsaved();
 }
 document.addEventListener('keydown', e => {
   if((e.ctrlKey || e.metaKey) && e.key.toLowerCase()==='z'){
@@ -1588,6 +1630,7 @@ function addFrame(duplicate){
   paintAllCells();
   renderFrameStrip();
   if(showOnionSkin) updateOnionSkin();
+  markUnsaved();
 }
 function deleteFrame(idx){
   if(frames.length<=1) return;
@@ -1599,6 +1642,7 @@ function deleteFrame(idx){
   paintAllCells();
   renderFrameStrip();
   if(showOnionSkin) updateOnionSkin();
+  markUnsaved();
 }
 
 /* ---- quadro-fantasma (onion skin) ---- */
@@ -2032,6 +2076,7 @@ async function saveToAluno(aluno){
     }
     status.textContent = UI_STRINGS[currentLang].salvoPasta + aluno.nome + '!';
     setTimeout(closeSaveStudentModal, 1600);
+    markSaved();
   } catch(e){
     status.textContent = UI_STRINGS[currentLang].erroPrefix + e.message;
   }
@@ -2145,6 +2190,7 @@ function autosaveNow(){
       savedAt: Date.now()
     };
     localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(payload));
+    markSaved();
   }catch(e){ /* localStorage cheio ou indisponível — ignora silenciosamente */ }
   if(linkedAluno) cloudSaveNow();
 }
