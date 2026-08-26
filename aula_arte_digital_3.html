@@ -97,12 +97,18 @@
   .quiz-feedback.ok{ color:var(--green); } .quiz-feedback.fail{ color:var(--pink); }
 
   .m3-layout{ display:flex; flex-wrap:wrap; gap:26px; align-items:flex-start; justify-content:center; }
-  #draw-grid{ display:grid; gap:1px; background:#0e0a1c; border:4px solid var(--border); border-radius:12px; padding:6px; line-height:0; }
+  #draw-grid{ display:grid; gap:1px; background:#a9a9b8; border:4px solid var(--border); border-radius:12px; padding:6px; line-height:0; }
   .draw-cell{ background:transparent; cursor:pointer; }
   .m3-side{ display:flex; flex-direction:column; gap:14px; min-width:220px; }
   .m3-palette{ display:flex; flex-wrap:wrap; gap:10px; }
   .m3-swatch{ width:38px; height:38px; border-radius:10px; border:3px solid transparent; cursor:pointer; }
   .m3-swatch.selected{ border-color:#fff; transform:scale(1.1); }
+  .tool-row{ display:flex; gap:8px; }
+  .tool-btn{
+    flex:1; font-family:'Baloo 2',sans-serif; font-weight:800; font-size:13px; color:var(--ink-soft);
+    background:var(--bg-card); border:3px solid var(--border); border-radius:12px; padding:10px 8px; cursor:pointer;
+  }
+  .tool-btn.active{ color:#241c3d; background:var(--cyan); border-color:var(--cyan); }
   .silhouette-toggle{
     font-family:'Press Start 2P', monospace; font-size:11px; color:#fff; border:none;
     border-radius:999px; padding:14px 18px; cursor:pointer; box-shadow:0 4px 0 rgba(0,0,0,0.3);
@@ -114,6 +120,26 @@
     background:var(--bg-card); border:2px dashed var(--yellow); border-radius:12px; padding:10px 14px;
   }
   .m3-actions{ display:flex; flex-direction:column; gap:8px; }
+
+  /* módulo 4: praticar com referência */
+  .m4-gallery{ display:flex; flex-wrap:wrap; gap:18px; justify-content:center; margin-bottom:6px; }
+  .m4-ref-thumb{
+    display:flex; flex-direction:column; align-items:center; gap:8px; cursor:pointer;
+    background:var(--bg-card); border:3px solid var(--border); border-radius:16px; padding:12px; transition:border-color .12s;
+  }
+  .m4-ref-thumb:hover{ border-color:var(--cyan); }
+  .m4-ref-thumb.selected{ border-color:var(--yellow); }
+  .m4-ref-thumb p{ font-family:'Baloo 2',sans-serif; font-weight:800; font-size:13px; color:var(--ink-soft); margin:0; }
+  .m4-ref-img{ border-radius:10px; overflow:hidden; line-height:0; }
+
+  .m4-workspace{ display:flex; flex-wrap:wrap; gap:26px; align-items:flex-start; justify-content:center; margin-top:20px; }
+  .m4-ref-col, .m4-draw-col{ display:flex; flex-direction:column; align-items:center; gap:10px; }
+  .ref-label{ font-family:'Baloo 2',sans-serif; font-weight:800; font-size:12px; color:var(--ink-soft); margin:0; text-align:center; }
+  .m4-ref-big{ border-radius:16px; overflow:hidden; line-height:0; background:#a9a9b8; padding:10px; border:4px solid var(--border); }
+  .m4-step-hint{
+    font-family:'Baloo 2', sans-serif; font-weight:800; font-size:12px; color:var(--ink-soft); text-align:center;
+    background:var(--bg-card); border:2px dashed var(--yellow); border-radius:12px; padding:8px 12px; max-width:260px;
+  }
 </style>
 </head>
 <body>
@@ -135,6 +161,7 @@
     <button class="tab-btn active" id="tabbtn-1" onclick="goToModule(1)"><span class="n">1️⃣</span><span id="t-tab-1">O Que É Silhueta</span></button>
     <button class="tab-btn" id="tabbtn-2" onclick="goToModule(2)"><span class="n">2️⃣</span><span id="t-tab-2">Teste Rápido</span></button>
     <button class="tab-btn" id="tabbtn-3" onclick="goToModule(3)"><span class="n">3️⃣</span><span id="t-tab-3">Desafio</span></button>
+    <button class="tab-btn" id="tabbtn-4" onclick="goToModule(4)"><span class="n">4️⃣</span><span id="t-tab-4">Praticar</span></button>
   </div>
 
   <section class="module active" id="module-1">
@@ -181,10 +208,42 @@
             <p style="font-family:'Baloo 2',sans-serif;font-weight:700;color:var(--ink-soft);font-size:13px;margin:0 0 8px;" id="t-cor-atual">Cor atual:</p>
             <div class="m3-palette" id="m3-palette"></div>
           </div>
+          <div class="tool-row">
+            <button class="tool-btn active" id="tool-lapis" onclick="setTool('lapis')">✏️ <span id="t-lapis">Lápis</span></button>
+            <button class="tool-btn" id="tool-borracha" onclick="setTool('borracha')">🧽 <span id="t-borracha">Borracha</span></button>
+          </div>
           <button class="silhouette-toggle" id="btn-silhueta" onclick="toggleSilhouetteMode()">🌑 Modo Silhueta</button>
           <div class="m3-actions">
             <button class="btn gray" id="t-btn-limpar" onclick="clearDrawing()">🧹 Limpar</button>
           </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= MÓDULO 4 ================= -->
+  <section class="module" id="module-4">
+    <div class="panel">
+      <h2 id="t-m4-h2">🖼️ PRATICAR COM REFERÊNCIA</h2>
+      <p class="desc" id="t-m4-desc">Escolha uma referência abaixo. Primeiro tente desenhar só a forma geral (a silhueta) do lado — só depois vá acrescentando os detalhes por cima, aos poucos.</p>
+
+      <div class="m4-gallery" id="m4-gallery"></div>
+
+      <div class="m4-workspace" id="m4-workspace" style="display:none;">
+        <div class="m4-ref-col">
+          <p class="ref-label" id="t-m4-ref-label">👀 REFERÊNCIA</p>
+          <div class="m4-ref-big"><div class="px-grid" id="m4-ref-big-grid"></div></div>
+          <p class="m4-step-hint" id="t-m4-step-hint">1️⃣ Desenhe a forma geral primeiro. 2️⃣ Só depois adicione os detalhes.</p>
+        </div>
+        <div class="m4-draw-col">
+          <p class="ref-label" id="t-m4-seu-label">✏️ SEU DESENHO</p>
+          <div id="draw-grid-2"></div>
+          <div class="tool-row">
+            <button class="tool-btn active" id="tool2-lapis" onclick="setTool2('lapis')">✏️ <span id="t-lapis2">Lápis</span></button>
+            <button class="tool-btn" id="tool2-borracha" onclick="setTool2('borracha')">🧽 <span id="t-borracha2">Borracha</span></button>
+          </div>
+          <div class="m3-palette" id="m4-palette"></div>
+          <button class="btn gray" id="t-btn-limpar2" onclick="clearDrawing2()">🧹 Limpar</button>
         </div>
       </div>
     </div>
@@ -202,7 +261,7 @@
 let currentLang = 'pt';
 const UI_STRINGS = {
   pt: { h1:'🖤 AULA 3: CONTORNO E SILHUETA', sub:'Overcast Realm — o que torna um personagem fácil de reconhecer, mesmo sem cor nenhuma',
-        tab1:'O Que É Silhueta', tab2:'Teste Rápido', tab3:'Desafio',
+        tab1:'O Que É Silhueta', tab2:'Teste Rápido', tab3:'Desafio', tab4:'Praticar',
         m1h2:'🖤 O QUE É SILHUETA?', m1desc:'Silhueta é o seu personagem virando uma sombra sólida, uma cor só. Se der pra reconhecer o que é mesmo assim, o design está bom — os detalhes coloridos só deixam ainda melhor. Clique nos botões pra alternar entre colorido e silhueta.',
         m1goodTitle:'✅ FÁCIL DE LER', m1goodDesc:'Formas redondas e simples. Mesmo em preto, ainda parece um bicho.',
         m1badTitle:'❌ DIFÍCIL DE LER', m1badDesc:'Muitas pontas finas espalhadas. Em preto, vira uma manchinha confusa.',
@@ -211,9 +270,13 @@ const UI_STRINGS = {
         m3h2:'🎨 DESAFIO: DESENHE E TESTE SUA SILHUETA', m3desc:'Desenhe qualquer personagem ou objeto na grade. Depois clique em "Modo Silhueta" pra ver como fica em preto sólido — ainda dá pra reconhecer o que é?',
         m3hint:'💡 Dica: formas redondas e simples costumam ficar mais claras que formas cheias de pontas finas.',
         corAtual:'Cor atual:', btnLimpar:'🧹 Limpar', btnVoltar:'⬅️ Voltar', btnAvancar:'Avançar ➡️', btnFim:'🏁 Fim da aula',
-        modoSilhueta:'🌑 Modo Silhueta', modoColorido:'🎨 Modo Colorido' },
+        modoSilhueta:'🌑 Modo Silhueta', modoColorido:'🎨 Modo Colorido',
+        lapis:'Lápis', borracha:'Borracha',
+        m4h2:'🖼️ PRATICAR COM REFERÊNCIA', m4desc:'Escolha uma referência abaixo. Primeiro tente desenhar só a forma geral (a silhueta) do lado — só depois vá acrescentando os detalhes por cima, aos poucos.',
+        m4refLabel:'👀 REFERÊNCIA', m4seuLabel:'✏️ SEU DESENHO', m4stepHint:'1️⃣ Desenhe a forma geral primeiro. 2️⃣ Só depois adicione os detalhes.',
+        refPassarinho:'Passarinho', refFantasma:'Fantasminha', refPeixinho:'Peixinho' },
   en: { h1:'🖤 LESSON 3: OUTLINE AND SILHOUETTE', sub:'Overcast Realm — what makes a character easy to recognize, even with no color at all',
-        tab1:'What Is a Silhouette', tab2:'Quick Test', tab3:'Challenge',
+        tab1:'What Is a Silhouette', tab2:'Quick Test', tab3:'Challenge', tab4:'Practice',
         m1h2:'🖤 WHAT IS A SILHOUETTE?', m1desc:"A silhouette is your character turned into a solid shadow, one single color. If it's still recognizable like that, the design works — colored details just make it even better. Click the buttons to switch between colored and silhouette.",
         m1goodTitle:'✅ EASY TO READ', m1goodDesc:'Round, simple shapes. Even in black, it still reads as a creature.',
         m1badTitle:'❌ HARD TO READ', m1badDesc:'Lots of thin scattered points. In black, it becomes a confusing blob.',
@@ -222,7 +285,11 @@ const UI_STRINGS = {
         m3h2:'🎨 CHALLENGE: DRAW AND TEST YOUR SILHOUETTE', m3desc:'Draw any character or object on the grid. Then click "Silhouette Mode" to see it as solid black — can you still tell what it is?',
         m3hint:'💡 Tip: round, simple shapes usually read more clearly than shapes full of thin points.',
         corAtual:'Current color:', btnLimpar:'🧹 Clear', btnVoltar:'⬅️ Back', btnAvancar:'Next ➡️', btnFim:'🏁 End of lesson',
-        modoSilhueta:'🌑 Silhouette Mode', modoColorido:'🎨 Color Mode' }
+        modoSilhueta:'🌑 Silhouette Mode', modoColorido:'🎨 Color Mode',
+        lapis:'Pencil', borracha:'Eraser',
+        m4h2:'🖼️ PRACTICE WITH A REFERENCE', m4desc:'Pick a reference below. First try drawing just the overall shape (the silhouette) next to it — only then start adding details on top, little by little.',
+        m4refLabel:'👀 REFERENCE', m4seuLabel:'✏️ YOUR DRAWING', m4stepHint:'1️⃣ Draw the overall shape first. 2️⃣ Only then add the details.',
+        refPassarinho:'Little Bird', refFantasma:'Little Ghost', refPeixinho:'Little Fish' }
 };
 function toggleLang(){
   currentLang = currentLang === 'pt' ? 'en' : 'pt';
@@ -236,6 +303,7 @@ function applyLang(){
   document.getElementById('t-tab-1').textContent = t.tab1;
   document.getElementById('t-tab-2').textContent = t.tab2;
   document.getElementById('t-tab-3').textContent = t.tab3;
+  document.getElementById('t-tab-4').textContent = t.tab4;
   document.getElementById('t-m1-h2').textContent = t.m1h2;
   document.getElementById('t-m1-desc').textContent = t.m1desc;
   document.getElementById('t-m1-good-title').textContent = t.m1goodTitle;
@@ -247,10 +315,24 @@ function applyLang(){
   document.getElementById('t-m3-h2').textContent = t.m3h2;
   document.getElementById('t-m3-desc').textContent = t.m3desc;
   document.getElementById('t-m3-hint').textContent = t.m3hint;
+  document.getElementById('t-lapis').textContent = t.lapis;
+  document.getElementById('t-borracha').textContent = t.borracha;
+  document.getElementById('t-lapis2').textContent = t.lapis;
+  document.getElementById('t-borracha2').textContent = t.borracha;
+  document.getElementById('t-m4-h2').textContent = t.m4h2;
+  document.getElementById('t-m4-desc').textContent = t.m4desc;
+  document.getElementById('t-m4-ref-label').textContent = t.m4refLabel;
+  document.getElementById('t-m4-seu-label').textContent = t.m4seuLabel;
+  document.getElementById('t-m4-step-hint').textContent = t.m4stepHint;
+  document.getElementById('t-btn-limpar2').textContent = t.btnLimpar;
+  M4_REFS.forEach((ref,i) => {
+    const el = document.getElementById('m4-thumb-nome-'+i);
+    if(el) el.textContent = currentLang === 'pt' ? ref.nomePt : ref.nomeEn;
+  });
   document.getElementById('t-cor-atual').textContent = t.corAtual;
   document.getElementById('t-btn-limpar').textContent = t.btnLimpar;
   document.getElementById('prev-btn').textContent = t.btnVoltar;
-  document.getElementById('next-btn').textContent = currentModule === 3 ? t.btnFim : t.btnAvancar;
+  document.getElementById('next-btn').textContent = currentModule === 4 ? t.btnFim : t.btnAvancar;
   document.getElementById('btn-toggle-good').textContent = exampleShowingSilhouette.good ? t.verColorido : t.verSilhueta;
   document.getElementById('btn-toggle-bad').textContent = exampleShowingSilhouette.bad ? t.verColorido : t.verSilhueta;
   document.getElementById('btn-silhueta').textContent = silhouetteMode ? t.modoColorido : t.modoSilhueta;
@@ -262,10 +344,10 @@ function goToModule(n){
   document.querySelectorAll('.module').forEach((el,i)=>el.classList.toggle('active', i === n-1));
   document.querySelectorAll('.tab-btn').forEach((el,i)=>el.classList.toggle('active', i === n-1));
   document.getElementById('prev-btn').disabled = (n === 1);
-  document.getElementById('next-btn').textContent = (n === 3) ? UI_STRINGS[currentLang].btnFim : UI_STRINGS[currentLang].btnAvancar;
+  document.getElementById('next-btn').textContent = (n === 4) ? UI_STRINGS[currentLang].btnFim : UI_STRINGS[currentLang].btnAvancar;
   window.scrollTo({top:0, behavior:'smooth'});
 }
-function nextModule(){ if(currentModule < 3) goToModule(currentModule+1); }
+function nextModule(){ if(currentModule < 4) goToModule(currentModule+1); }
 function prevModule(){ if(currentModule > 1) goToModule(currentModule-1); }
 
 function renderPixelGrid(containerId, gridW, gridH, cellPx, paintFn){
@@ -416,6 +498,7 @@ const DRAW_GRID = 16;
 const DRAW_CELL_PX = 20;
 let drawingData = new Array(DRAW_GRID*DRAW_GRID).fill(null);
 let currentColor = '#e63946';
+let currentTool = 'lapis';
 let silhouetteMode = false;
 const M3_PALETTE = ['#e63946','#ffb703','#3ddc97','#4be8ff','#a06bff','#ffffff','#2b2b3d'];
 
@@ -425,13 +508,19 @@ function buildM3Palette(){
 }
 function pickM3Color(color, el){
   currentColor = color;
-  document.querySelectorAll('.m3-swatch').forEach(s=>s.classList.remove('selected'));
+  setTool('lapis');
+  document.querySelectorAll('#m3-palette .m3-swatch').forEach(s=>s.classList.remove('selected'));
   el.classList.add('selected');
+}
+function setTool(tool){
+  currentTool = tool;
+  document.getElementById('tool-lapis').classList.toggle('active', tool==='lapis');
+  document.getElementById('tool-borracha').classList.toggle('active', tool==='borracha');
 }
 function dcIndex(el){ return parseInt(el.dataset.i, 10); }
 function paintDrawCell(i){
   if(silhouetteMode) return;
-  drawingData[i] = currentColor;
+  drawingData[i] = currentTool === 'borracha' ? null : currentColor;
   renderDrawGrid();
 }
 let isPainting = false;
@@ -476,12 +565,138 @@ function toggleSilhouetteMode(){
   renderDrawGrid();
 }
 
+/* ======================================================
+   MÓDULO 4: praticar com referência — imagens originais,
+   mostradas só como referência (sem grade por cima), com uma
+   segunda área de desenho independente do módulo 3
+====================================================== */
+function paintPassarinho(gx,gy){
+  const bx=(gx-8)/5, by=(gy-10)/4;
+  if(bx*bx+by*by<=1) return '#ffb703';
+  if(gx>=13&&gx<=16&&gy>=9&&gy<=11 && (16-gx)>=Math.abs(gy-10)*1.5) return '#e63946';
+  if(Math.hypot(gx-6,gy-8)<=2) return '#e0a000';
+  if(gx===7&&gy>=14&&gy<=15) return '#7c4a1e';
+  if(gx===9&&gy>=14&&gy<=15) return '#7c4a1e';
+  return null;
+}
+function paintFantasma(gx,gy){
+  if((gx===6||gx===7)&&gy>=8&&gy<=9) return '#2b2b3d';
+  if((gx===11||gx===12)&&gy>=8&&gy<=9) return '#2b2b3d';
+  if(gy<=8 && Math.hypot(gx-9,gy-8)<=5) return '#eaf7ff';
+  if(gy>8 && gy<=13 && gx>=4 && gx<=14) return '#eaf7ff';
+  if(gy===14){
+    const onda = Math.sin(gx*1.3)>0;
+    if(gx>=4&&gx<=14 && onda) return '#eaf7ff';
+  }
+  return null;
+}
+function paintPeixinho(gx,gy){
+  const bx=(gx-9)/6, by=(gy-9)/4;
+  if(bx*bx+by*by<=1) return '#4be8ff';
+  if(gx>=1&&gx<=4 && Math.abs(gy-9)<=(gx-1)*0.9) return '#2fa8ec';
+  if(gy>=3&&gy<=6 && gx>=8&&gx<=11 && (gy-3)>=Math.abs(gx-9.5)*1.2) return '#2fa8ec';
+  if(Math.hypot(gx-13,gy-8)<=1) return '#12314a';
+  return null;
+}
+
+const M4_REFS = [
+  { id:'passarinho', paint:paintPassarinho, nomePt:'Passarinho', nomeEn:'Little Bird' },
+  { id:'fantasma', paint:paintFantasma, nomePt:'Fantasminha', nomeEn:'Little Ghost' },
+  { id:'peixinho', paint:paintPeixinho, nomePt:'Peixinho', nomeEn:'Little Fish' }
+];
+let m4SelectedRef = null;
+
+function buildM4Gallery(){
+  const gallery = document.getElementById('m4-gallery');
+  gallery.innerHTML = M4_REFS.map((ref,i) => `
+    <div class="m4-ref-thumb" id="m4-thumb-${i}" onclick="selectM4Ref(${i})">
+      <div class="m4-ref-img" id="m4-thumb-grid-${i}"></div>
+      <p id="m4-thumb-nome-${i}">${currentLang==='pt' ? ref.nomePt : ref.nomeEn}</p>
+    </div>
+  `).join('');
+  M4_REFS.forEach((ref,i) => renderPixelGrid('m4-thumb-grid-'+i, GRID_EX, GRID_EX, 6, ref.paint));
+}
+function selectM4Ref(i){
+  m4SelectedRef = i;
+  document.querySelectorAll('.m4-ref-thumb').forEach((el,idx) => el.classList.toggle('selected', idx===i));
+  document.getElementById('m4-workspace').style.display = 'flex';
+  renderPixelGrid('m4-ref-big-grid', GRID_EX, GRID_EX, 14, M4_REFS[i].paint);
+}
+
+/* segunda área de desenho, independente da do módulo 3 */
+const DRAW_GRID2 = 16;
+const DRAW_CELL_PX2 = 20;
+let drawingData2 = new Array(DRAW_GRID2*DRAW_GRID2).fill(null);
+let currentColor2 = '#e63946';
+let currentTool2 = 'lapis';
+function buildM4Palette(){
+  const el = document.getElementById('m4-palette');
+  el.innerHTML = M3_PALETTE.map((c,i) => `<div class="m3-swatch ${c===currentColor2?'selected':''}" style="background:${c};" onclick="pickM4Color('${c}', this)"></div>`).join('');
+}
+function pickM4Color(color, el){
+  currentColor2 = color;
+  setTool2('lapis');
+  document.querySelectorAll('#m4-palette .m3-swatch').forEach(s=>s.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function setTool2(tool){
+  currentTool2 = tool;
+  document.getElementById('tool2-lapis').classList.toggle('active', tool==='lapis');
+  document.getElementById('tool2-borracha').classList.toggle('active', tool==='borracha');
+}
+function paintDrawCell2(i){
+  drawingData2[i] = currentTool2 === 'borracha' ? null : currentColor2;
+  renderDrawGrid2();
+}
+let isPainting2 = false;
+function buildDrawGrid2(){
+  const grid = document.getElementById('draw-grid-2');
+  grid.style.gridTemplateColumns = `repeat(${DRAW_GRID2}, ${DRAW_CELL_PX2}px)`;
+  grid.style.gridTemplateRows = `repeat(${DRAW_GRID2}, ${DRAW_CELL_PX2}px)`;
+  grid.style.display = 'grid';
+  grid.style.gap = '1px';
+  grid.style.background = '#a9a9b8';
+  grid.style.border = '4px solid var(--border)';
+  grid.style.borderRadius = '12px';
+  grid.style.padding = '6px';
+  grid.style.lineHeight = '0';
+  let html = '';
+  for(let i=0;i<DRAW_GRID2*DRAW_GRID2;i++){
+    html += `<div class="draw-cell" data-i="${i}"></div>`;
+  }
+  grid.innerHTML = html;
+  grid.querySelectorAll('.draw-cell').forEach(cell => {
+    cell.addEventListener('mousedown', () => { isPainting2 = true; paintDrawCell2(dcIndex(cell)); });
+    cell.addEventListener('mouseenter', () => { if(isPainting2) paintDrawCell2(dcIndex(cell)); });
+    cell.addEventListener('touchstart', (e) => { e.preventDefault(); paintDrawCell2(dcIndex(cell)); }, {passive:false});
+    cell.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const el = document.elementFromPoint(touch.clientX, touch.clientY);
+      if(el && el.classList.contains('draw-cell')) paintDrawCell2(dcIndex(el));
+    }, {passive:false});
+  });
+  document.addEventListener('mouseup', () => { isPainting2 = false; });
+}
+function renderDrawGrid2(){
+  const cells = document.querySelectorAll('#draw-grid-2 .draw-cell');
+  cells.forEach((cell,i) => { cell.style.background = drawingData2[i] || 'transparent'; });
+}
+function clearDrawing2(){
+  drawingData2 = new Array(DRAW_GRID2*DRAW_GRID2).fill(null);
+  renderDrawGrid2();
+}
+
 renderExample('good');
 renderExample('bad');
 buildM2Gallery();
 buildM3Palette();
 buildDrawGrid();
 renderDrawGrid();
+buildM4Gallery();
+buildM4Palette();
+buildDrawGrid2();
+renderDrawGrid2();
 applyLang();
 
 CourseGate.protect({ cursos: ['arte'], contentSelector: '#page-content' });
