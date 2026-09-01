@@ -1,22 +1,22 @@
 {
   "videos": [
     {
-      "titulo": "IntroduÃÂ§ÃÂ£o ÃÂ  IDE do Construct 3",
+      "titulo": "IntroduÃÂÃÂ§ÃÂÃÂ£o ÃÂÃÂ  IDE do Construct 3",
       "url": "https://www.youtube.com/embed/dQw4w9WgXcQ",
-      "categoria": "BÃÂ¡sico"
+      "categoria": "BÃÂÃÂ¡sico"
     }
   ],
   "links": [
     {
       "titulo": "Lospec Color Palettes",
       "url": "https://lospec.com",
-      "descricao": "Indexador de paletas cromÃÂ¡ticas restritas para pixel art tÃÂ©cnico.",
+      "descricao": "Indexador de paletas cromÃÂÃÂ¡ticas restritas para pixel art tÃÂÃÂ©cnico.",
       "tag": "Arte"
     },
     {
-      "titulo": "Assets GrÃÂ¡tis",
+      "titulo": "Assets GrÃÂÃÂ¡tis",
       "url": "https://itch.io/game-assets/free",
-      "descricao": "Itch.io - Link de acesso a assets grÃÂ¡tis",
+      "descricao": "Itch.io - Link de acesso a assets grÃÂÃÂ¡tis",
       "tag": "Assets"
     }
   ],
@@ -26,8 +26,8 @@
       "autor": "Manolloz",
       "capa": "https://img.itch.zone/aW1nLzE4MDE2MTA0LnBuZw==/315x250%23c/WRKADo.png",
       "url": "https://itch.io/embed-upload/14462910?color=ab5237",
-      "descricao": "MecÃÂ¢nicas de colisÃÂ£o estruturadas em malha 2D. O projeto explora ciclos de pulo, gravidade simulada via blocos de eventos e polimento bÃÂ¡sico de interface no Construct 3.",
-      "controles": "Mover: SETAS / WASD<br/>Pular: ESPAÃÂO"
+      "descricao": "MecÃÂÃÂ¢nicas de colisÃÂÃÂ£o estruturadas em malha 2D. O projeto explora ciclos de pulo, gravidade simulada via blocos de eventos e polimento bÃÂÃÂ¡sico de interface no Construct 3.",
+      "controles": "Mover: SETAS / WASD<br/>Pular: ESPAÃÂÃÂO"
     },
     {
       "titulo": "Among Us Adventures",
@@ -36,6 +36,14 @@
       "url": "https://itch.io/embed-upload/15871253?color=333333",
       "descricao": "",
       "controles": ""
+    },
+    {
+      "titulo": "Survive The Ugabugas",
+      "autor": "Benicio",
+      "capa": "https://img.itch.zone/aW1nLzI5Njg0MzkzLmpwZWc=/315x250%23c/f26g69.jpeg",
+      "url": "https://itch.io/embed-upload/17721362?color=333333",
+      "descricao": "Em Survive The Ugabugas, o jogador enfrenta uma jornada desafiadora. O objetivo principal da aventura é superar os obstáculos do caminho para conseguir chegar ao nível do boss.",
+      "controles": "Setas do teclado: Movimentam o personagem Tecla Z: Usa o cajado"
     }
   ]
 }
