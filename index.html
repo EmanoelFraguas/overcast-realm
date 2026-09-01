@@ -904,6 +904,16 @@ function urlPublicoArquivo(path) {
   return sb.storage.from('submissoes').getPublicUrl(path).data.publicUrl;
 }
 
+function formatarDataHora(isoString) {
+  if (!isoString) return '';
+  const d = new Date(isoString);
+  const dia = String(d.getDate()).padStart(2, '0');
+  const mes = String(d.getMonth() + 1).padStart(2, '0');
+  const hora = String(d.getHours()).padStart(2, '0');
+  const min = String(d.getMinutes()).padStart(2, '0');
+  return `${dia}/${mes} ${hora}:${min}`;
+}
+
 function switchTab(tabName, btn) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
@@ -1127,7 +1137,10 @@ async function renderArquivosAluno() {
   container.innerHTML = arquivos.map(f => `
     <div class="flex items-center justify-between bg-[#150f24] border border-[#322c47] px-3 py-2">
       <a href="${urlPublicoArquivo(f.storage_path)}" target="_blank" class="text-[11px] text-blue-400 hover:underline truncate">${f.nome_arquivo}</a>
-      <button class="btn-secondary text-[8px]" onclick="removerArquivoAluno('${f.id}')">${UI_STRINGS[currentLang].excluir}</button>
+      <div class="flex items-center gap-2 shrink-0">
+        <span class="text-[9px] text-gray-500 font-mono">${formatarDataHora(f.criado_em)}</span>
+        <button class="btn-secondary text-[8px]" onclick="removerArquivoAluno('${f.id}')">${UI_STRINGS[currentLang].excluir}</button>
+      </div>
     </div>
   `).join('');
 }
@@ -1219,16 +1232,22 @@ async function carregarTurmaAtiva() {
   selectFinal.innerHTML = (alunos || []).map(a => `<option value="${a.id}">${a.nome}</option>`).join('');
 
   grid.innerHTML = (alunos || []).map(aluno => {
-    const finalDoAluno = (arquivos || []).find(f => f.aluno_id === aluno.id && f.tipo === 'projeto_final');
+    const arquivosDoAluno = (arquivos || []).filter(f => f.aluno_id === aluno.id).slice(0, 5);
+    const listaArquivos = arquivosDoAluno.length
+      ? `<div class="space-y-1 mt-1">${arquivosDoAluno.map(f => `
+          <div class="flex items-center justify-between gap-2 bg-[#150f24] border border-[#241c3d] rounded px-2 py-1">
+            <a href="${urlPublicoArquivo(f.storage_path)}" target="_blank" class="text-[9px] text-blue-400 hover:underline truncate flex-1">${f.nome_arquivo}</a>
+            <span class="text-[8px] text-gray-500 font-mono shrink-0">${formatarDataHora(f.criado_em)}</span>
+          </div>
+        `).join('')}</div>`
+      : `<span class="text-[10px] text-gray-700 font-mono">${UI_STRINGS[currentLang].projetoAindaNaoEnviado}</span>`;
     return `
       <div class="card p-4 flex gap-3 items-start">
         <div class="avatar-mini shrink-0" id="avatar-turma-${aluno.id}" style="background:#0e0a1a;border-radius:8px;border:2px solid #322c47;"></div>
         <div class="flex-1 min-w-0">
           <p class="font-pixel text-[10px] text-white mb-1">${aluno.nome.toUpperCase()}</p>
-          <p class="text-[10px] text-gray-500 font-mono mb-3">${UI_STRINGS[currentLang].estagioLabel}${aluno.etapa}</p>
-          ${finalDoAluno
-            ? `<a href="${urlPublicoArquivo(finalDoAluno.storage_path)}" target="_blank" class="btn-secondary text-[8px] inline-block">${UI_STRINGS[currentLang].baixarProjetoFinal}</a>`
-            : `<span class="text-[10px] text-gray-700 font-mono">${UI_STRINGS[currentLang].projetoAindaNaoEnviado}</span>`}
+          <p class="text-[10px] text-gray-500 font-mono">${UI_STRINGS[currentLang].estagioLabel}${aluno.etapa}</p>
+          ${listaArquivos}
         </div>
       </div>
     `;
