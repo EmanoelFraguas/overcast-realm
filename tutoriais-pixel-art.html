@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tutoriais de Pixel Art — Overcast Realm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#181229; --bg-panel:#241c3d; --bg-card:#2c2350; --border:#4a3a7c;
+    --pink:#ff5fa2; --cyan:#4be8ff; --yellow:#ffd23f; --green:#4be08f; --purple:#a06bff;
+    --ink:#ffffff; --ink-soft:#c9bfe8;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 15% 15%, #2e2258 0%, transparent 45%),
+      radial-gradient(circle at 90% 25%, #1e3a52 0%, transparent 40%),
+      var(--bg-deep);
+    color:var(--ink); font-family:'Baloo 2', sans-serif; min-height:100vh; padding:14px;
+  }
+  .wrap{max-width:1200px;margin:0 auto;}
+  h1,h2,.pixel{ font-family:'Press Start 2P', monospace; }
+
+  .back-row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+  .back-home{
+    display:inline-flex; align-items:center; gap:5px; font-weight:700; font-size:12px;
+    color:var(--ink-soft); background:var(--bg-card); border:2px solid var(--border);
+    border-radius:999px; padding:8px 14px; text-decoration:none;
+  }
+  header{ text-align:center; margin-bottom:16px; }
+  header h1{ font-size:clamp(16px,3vw,24px); color:var(--yellow); text-shadow:3px 3px 0 #000; margin:0 0 8px; }
+  header p{ font-weight:700; color:var(--ink-soft); font-size:14px; margin:0; }
+
+  .tag-bar{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:18px 0; }
+  .tag-pill{
+    font-family:'Press Start 2P', monospace; font-size:9px; color:var(--ink-soft);
+    background:var(--bg-card); border:2px solid var(--border); border-radius:999px;
+    padding:8px 14px; cursor:pointer;
+  }
+  .tag-pill.active{ background:var(--purple); border-color:var(--purple); color:#fff; }
+  .tag-pill.all{ background:var(--bg-panel); }
+  .tag-pill.all.active{ background:var(--yellow); border-color:var(--yellow); color:#241c3d; }
+
+  .gallery{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));
+    gap:16px;
+  }
+  .tut-card{
+    background:var(--bg-panel); border:3px solid var(--border); border-radius:16px;
+    overflow:hidden; cursor:pointer; box-shadow:0 5px 0 #120c22;
+    display:flex; flex-direction:column;
+  }
+  .tut-card:hover{ border-color:var(--cyan); }
+  .tut-thumb{ width:100%; aspect-ratio:1; object-fit:cover; background:#0e0a1a; display:block; }
+  .tut-info{ padding:10px 12px; }
+  .tut-title{ font-weight:800; font-size:13px; color:#fff; margin:0 0 6px; }
+  .tut-tags{ display:flex; flex-wrap:wrap; gap:5px; }
+  .tut-tag{ font-size:9px; font-weight:700; color:var(--cyan); background:#0e2a33; border-radius:999px; padding:2px 8px; }
+
+  .empty-msg{ text-align:center; color:var(--ink-soft); font-weight:700; padding:60px 20px; }
+
+  .lightbox{
+    position:fixed; inset:0; background:rgba(10,6,20,.9); z-index:999;
+    display:none; align-items:center; justify-content:center; padding:20px; flex-direction:column; gap:14px;
+  }
+  .lightbox.show{ display:flex; }
+  .lightbox img{ max-width:90vw; max-height:75vh; border-radius:12px; border:4px solid var(--border); }
+  .lightbox h3{ color:var(--yellow); font-size:14px; margin:0; text-align:center; }
+  .lightbox .tut-tags{ justify-content:center; }
+  .lightbox-close{
+    position:absolute; top:16px; right:16px; font-family:'Press Start 2P',monospace; font-size:11px;
+    color:#fff; background:var(--bg-card); border:2px solid var(--border); border-radius:999px;
+    padding:10px 16px; cursor:pointer;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="back-row">
+    <a href="./index.html" class="back-home">← Voltar</a>
+  </div>
+
+  <header>
+    <h1>🖼️ TUTORIAIS DE PIXEL ART</h1>
+    <p>Overcast Realm — imagens de referência pra estudar, organizadas por tema</p>
+  </header>
+
+  <div class="tag-bar" id="tag-bar"></div>
+
+  <div id="gallery" class="gallery"></div>
+
+</div>
+
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" onclick="fecharLightbox()">✕ Fechar</button>
+  <h3 id="lightbox-title"></h3>
+  <img id="lightbox-img" src="" alt="">
+  <div class="tut-tags" id="lightbox-tags"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const SUPABASE_URL = "https://kezlmecrxhjahhoekybs.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlemxtZWNyeGhqYWhob2VreWJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5MDkwNjAsImV4cCI6MjEwMjQ4NTA2MH0.-TcsKrFxRMeiqKrzXk57E8-60eobk3fJ0Crn7ci0MW8";
+const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+let tutoriais = [];
+let tagAtiva = null; // null = todos
+
+function urlPublica(path){
+  return sb.storage.from('submissoes').getPublicUrl(path).data.publicUrl;
+}
+
+async function carregar(){
+  if(!sb) return;
+  const { data, error } = await sb.from('tutoriais_pixel_art').select('*').order('criado_em', { ascending: false });
+  tutoriais = data || [];
+  montarTagBar();
+  renderGaleria();
+}
+
+function montarTagBar(){
+  const todasTags = new Set();
+  tutoriais.forEach(t => (t.tags || []).forEach(tag => todasTags.add(tag)));
+  const bar = document.getElementById('tag-bar');
+  const tagsOrdenadas = [...todasTags].sort();
+  bar.innerHTML = `<button class="tag-pill all ${tagAtiva===null?'active':''}" onclick="filtrarTag(null)">🗂️ Todos</button>`
+    + tagsOrdenadas.map(tag => `<button class="tag-pill ${tagAtiva===tag?'active':''}" onclick="filtrarTag('${tag}')">#${tag}</button>`).join('');
+}
+
+function filtrarTag(tag){
+  tagAtiva = tag;
+  montarTagBar();
+  renderGaleria();
+}
+
+function renderGaleria(){
+  const gallery = document.getElementById('gallery');
+  const lista = tagAtiva ? tutoriais.filter(t => (t.tags||[]).includes(tagAtiva)) : tutoriais;
+
+  if(!lista.length){
+    gallery.innerHTML = `<p class="empty-msg" style="grid-column:1/-1;">📭 Nenhum tutorial ${tagAtiva ? 'com essa tag' : 'ainda'}.</p>`;
+    return;
+  }
+
+  gallery.innerHTML = lista.map((t,i) => `
+    <div class="tut-card" onclick="abrirLightbox(${tutoriais.indexOf(t)})">
+      <img class="tut-thumb" src="${urlPublica(t.storage_path)}" loading="lazy" alt="${t.titulo}">
+      <div class="tut-info">
+        <p class="tut-title">${t.titulo}</p>
+        <div class="tut-tags">${(t.tags||[]).map(tag => `<span class="tut-tag">#${tag}</span>`).join('')}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function abrirLightbox(idx){
+  const t = tutoriais[idx];
+  if(!t) return;
+  document.getElementById('lightbox-title').textContent = t.titulo;
+  document.getElementById('lightbox-img').src = urlPublica(t.storage_path);
+  document.getElementById('lightbox-tags').innerHTML = (t.tags||[]).map(tag => `<span class="tut-tag">#${tag}</span>`).join('');
+  document.getElementById('lightbox').classList.add('show');
+}
+function fecharLightbox(){
+  document.getElementById('lightbox').classList.remove('show');
+}
+document.getElementById('lightbox').addEventListener('click', e => {
+  if(e.target.id === 'lightbox') fecharLightbox();
+});
+
+carregar();
+</script>
+</body>
+</html>
