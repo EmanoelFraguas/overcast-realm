@@ -464,6 +464,22 @@
           </div>
         </div>
       </div>
+      <div class="card p-5 mt-8">
+        <h2 class="font-pixel text-[10px] text-emerald-400 mb-2">// TUTORIAIS_DE_PIXEL_ART</h2>
+        <p class="text-xs font-mono text-gray-500 mb-4">Galeria de imagens de referência com tags — aparece pra todo mundo em <code>tutoriais-pixel-art.html</code>. Suba só imagens que você tem direito de usar (suas próprias ou de fontes livres).</p>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-5 space-y-3 font-mono text-xs">
+            <input type="text" id="tut-titulo" placeholder="TÍTULO DO TUTORIAL" class="input-field" />
+            <input type="text" id="tut-tags" placeholder="TAGS (separadas por vírgula: top,walk,cycle)" class="input-field" />
+            <input type="file" id="tut-imagem" accept=".png,.jpg,.jpeg,.gif,.webp" class="input-field" />
+            <button class="btn-action btn-add w-full" onclick="uploadTutorial()">ADICIONAR_TUTORIAL</button>
+            <span id="tut-status" class="block text-[10px]"></span>
+          </div>
+          <div class="lg:col-span-7">
+            <div id="tutoriais-lista" class="space-y-2 font-mono text-xs max-h-96 overflow-y-auto"></div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- ================= PAINEL: PROGRESSO ================= -->
@@ -640,7 +656,7 @@ function unlockDashboard() {
   document.getElementById('admin-auth-screen').classList.add('hidden');
   document.getElementById('admin-dashboard-content').classList.remove('hidden');
   loadFromGitHub();
-  if (initSupabase()) { carregarTurmas(); carregarStatusJogos(); }
+  if (initSupabase()) { carregarTurmas(); carregarStatusJogos(); carregarTutoriais(); }
 }
 
 function logoutAdmin() {
@@ -1342,6 +1358,67 @@ async function toggleJogosLiberados() {
   if (error) { alert('Erro ao mudar o status: ' + error.message); atualizarUiJogosLiberados(); return; }
   jogosLiberadosAtual = novoValor;
   atualizarUiJogosLiberados();
+}
+
+/* ======================================================
+   TUTORIAIS DE PIXEL ART (galeria com tags)
+====================================================== */
+async function carregarTutoriais() {
+  if (!sb) return;
+  const { data, error } = await sb.from('tutoriais_pixel_art').select('*').order('criado_em', { ascending: false });
+  const container = document.getElementById('tutoriais-lista');
+  if (!container) return;
+  if (error || !data || !data.length) {
+    container.innerHTML = '<p class="text-gray-500">Nenhum tutorial ainda.</p>';
+    return;
+  }
+  container.innerHTML = data.map(t => `
+    <div class="flex items-center gap-3 border border-[#d8d5e6] rounded p-2">
+      <img src="${urlPublicoArquivo(t.storage_path)}" class="w-14 h-14 object-cover rounded shrink-0" />
+      <div class="flex-1 min-w-0">
+        <p class="text-gray-900 font-bold truncate">${t.titulo}</p>
+        <p class="text-gray-500 truncate">${(t.tags || []).map(tag => '#' + tag).join(' ')}</p>
+      </div>
+      <button class="btn-action" style="background:#dc2626;padding:6px 10px;" onclick="excluirTutorial('${t.id}')">✕</button>
+    </div>
+  `).join('');
+}
+
+async function uploadTutorial() {
+  const titulo = document.getElementById('tut-titulo').value.trim();
+  const tagsRaw = document.getElementById('tut-tags').value.trim();
+  const file = document.getElementById('tut-imagem').files[0];
+  const statusEl = document.getElementById('tut-status');
+
+  if (!titulo || !file) { statusEl.textContent = '👉 Preencha o título e escolha uma imagem.'; statusEl.style.color = '#dc2626'; return; }
+
+  const tags = tagsRaw.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
+  const extensao = file.name.slice(file.name.lastIndexOf('.'));
+  const nomeArquivo = titulo.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Date.now() + extensao;
+  const path = `tutoriais/${nomeArquivo}`;
+
+  statusEl.textContent = '⏳ Enviando...'; statusEl.style.color = '#f59e0b';
+
+  const { error: upErr } = await sb.storage.from('submissoes').upload(path, file, { upsert: true });
+  if (upErr) { statusEl.textContent = '❌ Erro no upload: ' + upErr.message; statusEl.style.color = '#dc2626'; return; }
+
+  const { data, error: rpcErr } = await sb.rpc('admin_criar_tutorial', {
+    chave_admin: sbAdminKey, p_titulo: titulo, p_storage_path: path, p_tags: tags
+  });
+  if (rpcErr || !data || !data.ok) { statusEl.textContent = '❌ Erro ao salvar: ' + (rpcErr ? rpcErr.message : data.erro); statusEl.style.color = '#dc2626'; return; }
+
+  statusEl.textContent = '✅ Adicionado!'; statusEl.style.color = '#16a34a';
+  document.getElementById('tut-titulo').value = '';
+  document.getElementById('tut-tags').value = '';
+  document.getElementById('tut-imagem').value = '';
+  carregarTutoriais();
+}
+
+async function excluirTutorial(id) {
+  if (!confirm('Excluir esse tutorial da galeria?')) return;
+  const { data, error } = await sb.rpc('admin_excluir_tutorial', { chave_admin: sbAdminKey, p_id: id });
+  if (error || !data || !data.ok) { alert('Erro ao excluir: ' + (error ? error.message : data.erro)); return; }
+  carregarTutoriais();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
