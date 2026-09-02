@@ -1202,30 +1202,43 @@ async function renderArquivosAluno() {
   `).join('');
 }
 
+function setStatus(el, texto, tipo) {
+  // tipo: 'ok' (verde, negrito), 'erro' (vermelho, negrito), 'info' (amarelo, neutro)
+  el.textContent = texto;
+  el.classList.remove('text-gray-500', 'text-green-400', 'text-red-400', 'text-yellow-400', 'font-bold');
+  if (tipo === 'ok') {
+    el.classList.add('text-green-400', 'font-bold');
+  } else if (tipo === 'erro') {
+    el.classList.add('text-red-400', 'font-bold');
+  } else {
+    el.classList.add('text-yellow-400');
+  }
+}
+
 async function uploadArquivoAluno(tipo) {
   const input = document.getElementById('dev-file-input');
   const statusEl = document.getElementById('dev-upload-status');
   const file = input.files[0];
-  if (!file || !alunoAtivo) { statusEl.textContent = UI_STRINGS[currentLang].selecioneArquivo; return; }
+  if (!file || !alunoAtivo) { setStatus(statusEl, UI_STRINGS[currentLang].selecioneArquivo, 'erro'); return; }
   if (!extensaoPermitida(file.name)) {
-    statusEl.textContent = `${UI_STRINGS[currentLang].tipoNaoPermitido}${EXTENSOES_PERMITIDAS.join(', ')}`;
+    setStatus(statusEl, `${UI_STRINGS[currentLang].tipoNaoPermitido}${EXTENSOES_PERMITIDAS.join(', ')}`, 'erro');
     return;
   }
 
-  statusEl.textContent = UI_STRINGS[currentLang].enviando;
+  setStatus(statusEl, UI_STRINGS[currentLang].enviando, 'info');
   const nomeVersionado = await proximoNomeVersionado(alunoAtivo.codigo, file.name);
   const path = `envios/${alunoAtivo.codigo}/${nomeVersionado}`;
 
   const { error: upErr } = await sb.storage.from('submissoes').upload(path, file, { upsert: true });
-  if (upErr) { statusEl.textContent = UI_STRINGS[currentLang].erroUpload + upErr.message; return; }
+  if (upErr) { setStatus(statusEl, UI_STRINGS[currentLang].erroUpload + upErr.message, 'erro'); return; }
 
   const { error: rpcErr } = await sb.rpc('registrar_envio', {
     p_codigo: alunoAtivo.codigo, p_nome_arquivo: nomeVersionado, p_storage_path: path,
     p_tipo: tipo, p_tamanho_bytes: file.size
   });
-  if (rpcErr) { statusEl.textContent = UI_STRINGS[currentLang].erroRegistrar + rpcErr.message; return; }
+  if (rpcErr) { setStatus(statusEl, UI_STRINGS[currentLang].erroRegistrar + rpcErr.message, 'erro'); return; }
 
-  statusEl.textContent = UI_STRINGS[currentLang].enviadoSucesso;
+  setStatus(statusEl, UI_STRINGS[currentLang].enviadoSucesso, 'ok');
   input.value = '';
   renderArquivosAluno();
 }
@@ -1359,16 +1372,16 @@ async function uploadProjetoFinal() {
   const alunoId = alunoFinalSelecionadoId;
   const file = document.getElementById('turma-final-file').files[0];
   const statusEl = document.getElementById('turma-final-status');
-  if (!alunoId || !file) { statusEl.textContent = UI_STRINGS[currentLang].selecioneNomeArquivo; return; }
+  if (!alunoId || !file) { setStatus(statusEl, UI_STRINGS[currentLang].selecioneNomeArquivo, 'erro'); return; }
   if (!extensaoPermitida(file.name)) {
-    statusEl.textContent = `Tipo não permitido. Aceitos: ${EXTENSOES_PERMITIDAS.join(', ')}`;
+    setStatus(statusEl, `Tipo não permitido. Aceitos: ${EXTENSOES_PERMITIDAS.join(', ')}`, 'erro');
     return;
   }
 
   const { data: aluno, error: aErr } = await sb.from('alunos').select('*').eq('id', alunoId).maybeSingle();
-  if (aErr || !aluno) { statusEl.textContent = UI_STRINGS[currentLang].alunoNaoEncontrado; return; }
+  if (aErr || !aluno) { setStatus(statusEl, UI_STRINGS[currentLang].alunoNaoEncontrado, 'erro'); return; }
 
-  statusEl.textContent = UI_STRINGS[currentLang].enviando;
+  setStatus(statusEl, UI_STRINGS[currentLang].enviando, 'info');
   // centralizado na mesma pasta 'envios/' que o resto dos arquivos do aluno —
   // independente de onde o envio aconteceu, ele mora no mesmo lugar no Storage
   // e aparece na lista "Meus Arquivos" do aluno
@@ -1376,15 +1389,15 @@ async function uploadProjetoFinal() {
   const path = `envios/${aluno.codigo}/${nomeVersionado}`;
 
   const { error: upErr } = await sb.storage.from('submissoes').upload(path, file, { upsert: true });
-  if (upErr) { statusEl.textContent = UI_STRINGS[currentLang].erroUpload + upErr.message; return; }
+  if (upErr) { setStatus(statusEl, UI_STRINGS[currentLang].erroUpload + upErr.message, 'erro'); return; }
 
   const { error: rpcErr } = await sb.rpc('registrar_envio', {
     p_codigo: aluno.codigo, p_nome_arquivo: nomeVersionado, p_storage_path: path,
     p_tipo: 'projeto_final', p_tamanho_bytes: file.size
   });
-  if (rpcErr) { statusEl.textContent = UI_STRINGS[currentLang].erroRegistrar + rpcErr.message; return; }
+  if (rpcErr) { setStatus(statusEl, UI_STRINGS[currentLang].erroRegistrar + rpcErr.message, 'erro'); return; }
 
-  statusEl.textContent = UI_STRINGS[currentLang].projetoFinalSucesso;
+  setStatus(statusEl, UI_STRINGS[currentLang].projetoFinalSucesso, 'ok');
   document.getElementById('turma-final-file').value = '';
   carregarTurmaAtiva();
 }
