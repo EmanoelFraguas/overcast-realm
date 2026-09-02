@@ -670,8 +670,8 @@
         <h3 class="font-pixel text-[11px] text-white mb-2" data-i18n="enviarProjetoFinal">[+] Enviar Projeto Final</h3>
         <p class="text-xs text-gray-400 mb-4 leading-relaxed" data-i18n="descEnviarProjetoFinal">Selecione seu nome na lista da turma e envie o projeto final da aula, associado diretamente à sua identidade.</p>
         <div class="space-y-3">
-          <select id="turma-final-aluno" class="search-input w-full text-xs"></select>
           <input type="file" id="turma-final-file" accept=".c3p,.txt,.png,.gif,.mp3,.ogg,.wav,.mblock" class="text-xs text-gray-400" />
+          <select id="turma-final-aluno" class="search-input w-full text-xs"></select>
           <button class="btn-primary" onclick="uploadProjetoFinal()" data-i18n="btnEnviarProjetoFinal">Enviar projeto final</button>
           <span id="turma-final-status" class="block text-[10px] font-mono text-gray-500"></span>
         </div>
@@ -750,6 +750,7 @@ const UI_STRINGS = {
     selecioneArquivo:'Selecione um arquivo.', tipoNaoPermitido:'Tipo não permitido. Aceitos: ',
     enviando:'Enviando...', erroUpload:'Erro no upload: ', erroRegistrar:'Erro ao registrar: ',
     enviadoSucesso:'Enviado com sucesso!', selecioneNomeArquivo:'Selecione seu nome e um arquivo.',
+    selecioneSeuNome:'👉 Selecione seu nome...',
     alunoNaoEncontrado:'Aluno não encontrado.', projetoFinalSucesso:'Projeto final enviado com sucesso!',
     estagioLabel:'Estágio: ', baixarProjetoFinal:'Baixar projeto final', projetoAindaNaoEnviado:'Projeto final ainda não enviado',
     btnFecharModal:'✕ Fechar', prontoParaJogar:'🎮 Pronto pra jogar?',
@@ -814,6 +815,7 @@ const UI_STRINGS = {
     selecioneArquivo:'Select a file.', tipoNaoPermitido:'Type not allowed. Accepted: ',
     enviando:'Uploading...', erroUpload:'Upload error: ', erroRegistrar:'Error registering: ',
     enviadoSucesso:'Uploaded successfully!', selecioneNomeArquivo:'Select your name and a file.',
+    selecioneSeuNome:'👉 Select your name...',
     alunoNaoEncontrado:'Student not found.', projetoFinalSucesso:'Final project submitted successfully!',
     estagioLabel:'Stage: ', baixarProjetoFinal:'Download final project', projetoAindaNaoEnviado:'Final project not submitted yet',
     btnFecharModal:'✕ Close', prontoParaJogar:'🎮 Ready to play?',
@@ -1060,6 +1062,25 @@ const etapaMap = {
   Publicado:  { pct: 100, steps: [1,1,1,1,1] }
 };
 
+function salvarAlunoPersistido(code) {
+  sessionStorage.setItem('active_student_code', JSON.stringify({ code, ts: Date.now() }));
+}
+function lerAlunoPersistido() {
+  try {
+    const raw = sessionStorage.getItem('active_student_code');
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (!data.ts || Date.now() - data.ts > SESSAO_VALIDADE_MS) {
+      sessionStorage.removeItem('active_student_code');
+      return null;
+    }
+    return data.code;
+  } catch (e) {
+    sessionStorage.removeItem('active_student_code');
+    return null;
+  }
+}
+
 async function loginAluno() {
   const code = document.getElementById('student-code-input').value.trim().toLowerCase();
   if (!sb) { alert(UI_STRINGS[currentLang].alertSupabase); return; }
@@ -1071,13 +1092,13 @@ async function loginAluno() {
   }
   document.getElementById('login-error').classList.add('hidden');
 
-  // Persistindo Código do Aluno na Sessão Corrente
-  sessionStorage.setItem('active_student_code', code);
+  // Persistindo Código do Aluno na Sessão Corrente (expira em 1 hora)
+  salvarAlunoPersistido(code);
   showDashboard(aluno);
 }
 
 async function checkPersistedLogin() {
-  const savedCode = sessionStorage.getItem('active_student_code');
+  const savedCode = lerAlunoPersistido();
   if (savedCode && sb) {
     const { data: aluno } = await sb.from('alunos').select('*').eq('codigo', savedCode.toLowerCase()).maybeSingle();
     if (aluno) showDashboard(aluno);
@@ -1182,6 +1203,28 @@ async function removerArquivoAluno(arquivoId) {
 
 // ---- Aba Turma: acesso por código + visão coletiva + envio de projeto final --
 
+const SESSAO_VALIDADE_MS = 60 * 60 * 1000; // 1 hora — depois disso, F5 pede pra entrar de novo
+
+function salvarTurmaPersistida(codigo) {
+  localStorage.setItem('turma_codigo_acesso', JSON.stringify({ codigo, ts: Date.now() }));
+}
+function lerTurmaPersistida() {
+  try {
+    const raw = localStorage.getItem('turma_codigo_acesso');
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (!data.ts || Date.now() - data.ts > SESSAO_VALIDADE_MS) {
+      localStorage.removeItem('turma_codigo_acesso');
+      return null;
+    }
+    return data.codigo;
+  } catch (e) {
+    // formato antigo (string simples, sem validade) — trata como expirado
+    localStorage.removeItem('turma_codigo_acesso');
+    return null;
+  }
+}
+
 let turmaAtiva = null; // { id, nome, codigo_acesso, slug }
 
 async function acessarTurma() {
@@ -1194,7 +1237,7 @@ async function acessarTurma() {
     return;
   }
   document.getElementById('turma-codigo-erro').classList.add('hidden');
-  localStorage.setItem('turma_codigo_acesso', codigo);
+  salvarTurmaPersistida(codigo);
   abrirTurma(turma);
 }
 
@@ -1207,7 +1250,7 @@ function sairDaTurma() {
 }
 
 async function checarAcessoTurmaPersistido() {
-  const codigoSalvo = localStorage.getItem('turma_codigo_acesso');
+  const codigoSalvo = lerTurmaPersistida();
   if (!codigoSalvo || !sb) return;
   const { data: turma } = await sb.from('turmas').select('*').eq('codigo_acesso', codigoSalvo).maybeSingle();
   if (turma) abrirTurma(turma);
@@ -1229,7 +1272,8 @@ async function carregarTurmaAtiva() {
   const { data: alunos } = await sb.from('alunos').select('*').eq('turma_id', turmaAtiva.id).order('nome');
   const { data: arquivos } = await sb.from('arquivos').select('*').eq('turma_id', turmaAtiva.id).order('criado_em', { ascending: false });
 
-  selectFinal.innerHTML = (alunos || []).map(a => `<option value="${a.id}">${a.nome}</option>`).join('');
+  selectFinal.innerHTML = `<option value="" selected disabled>${UI_STRINGS[currentLang].selecioneSeuNome}</option>`
+    + (alunos || []).map(a => `<option value="${a.id}">${a.nome}</option>`).join('');
 
   grid.innerHTML = (alunos || []).map(aluno => {
     const arquivosDoAluno = (arquivos || []).filter(f => f.aluno_id === aluno.id).slice(0, 5);
