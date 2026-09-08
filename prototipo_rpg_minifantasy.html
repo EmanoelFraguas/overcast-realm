@@ -1,0 +1,1563 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>Trilhas de Aldeceira — Protótipo v10</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+:root{
+  --forest-dark:#1e3a2b; --forest-mid:#3f6b4a; --bark:#4a3221;
+  --parchment:#e8dcb5; --parchment-dk:#cbb989; --ink:#2b2116;
+  --gold:#d4af37; --ember:#c1502e; --energy:#3f7fbf; --stone:#8a8a86;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{ margin:0; padding:0; height:100%; background:#10120d; color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; }
+#app{ max-width:1060px; margin:14px auto; padding:14px; background:var(--bark);
+  background-image: repeating-linear-gradient(135deg, rgba(0,0,0,0) 0px, rgba(0,0,0,0) 8px, rgba(0,0,0,0.12) 8px, rgba(0,0,0,0.12) 9px);
+  border:6px solid #2c1c10; box-shadow:8px 8px 0 #000, inset 0 0 0 3px #6b4a2e; }
+#app:fullscreen, #app:-webkit-full-screen{ max-width:none; width:100vw; height:100vh; margin:0; overflow:auto; }
+h1{ margin:0 0 10px 0; font-family:'Press Start 2P', monospace; font-size:13px; letter-spacing:1px;
+  color:var(--gold); text-shadow:2px 2px 0 #000; display:flex; justify-content:space-between;
+  align-items:center; gap:10px; border-bottom:3px solid var(--gold); padding-bottom:10px; flex-wrap:wrap; }
+h1 .titleText{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+h1 span.sub{ font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  font-size:12px; color:var(--parchment); text-shadow:none; font-weight:normal; }
+#fullscreenBtn{ flex:0 0 auto; }
+#topbar{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;
+  background:var(--forest-dark); color:var(--parchment); border:3px solid #0c1a12;
+  box-shadow: inset 0 0 0 2px #d4af3755;
+  padding:8px 12px; margin-bottom:10px; font-size:13px; }
+#topbar b{ color:var(--gold); }
+#topbar .stat{ display:flex; align-items:center; gap:4px; }
+#saveMenuBtn{ margin-left:auto; }
+#layout{ display:flex; gap:10px; flex-wrap:wrap; }
+
+/* ---------- MAPA ---------- */
+#mapWrap{ border:5px solid var(--forest-dark); background:#0c1a12; position:relative;
+  flex:0 0 auto; width:640px; height:420px; max-width:100%; touch-action:manipulation;
+  display:flex; align-items:center; justify-content:center; overflow:hidden;
+  box-shadow: inset 0 0 0 3px #0000004d; }
+#mapInner{ position:relative; line-height:0; }
+#mapCanvas{ display:block; width:100%; height:100%; cursor:grab; image-rendering:pixelated; touch-action:none; }
+#minimapBox{ position:absolute; top:8px; right:8px; z-index:3; display:flex; align-items:flex-start; gap:4px; }
+#minimapCanvas{ border:2px solid var(--gold); background:#000; image-rendering:pixelated;
+  box-shadow:2px 2px 0 #000; width:110px; height:auto; cursor:pointer; display:block; }
+#expandMinimapBtn, #recenterBtn{ font-size:11px; padding:3px 6px; }
+#hoverTip{ position:absolute; pointer-events:none; background:#000000cc; color:#fff; font-size:12px;
+  padding:3px 7px; border:1px solid var(--gold); display:none; z-index:4; white-space:nowrap; }
+
+#travelPanel, #confirmPanel{ position:absolute; left:0; right:0; bottom:0; z-index:6;
+  background:rgba(232,220,181,0.98); border-top:4px solid var(--gold);
+  box-shadow: inset 0 3px 0 0 #0000001a;
+  padding:9px 10px; font-size:13px; line-height:1.45; display:none; }
+#travelPanel .row, #confirmPanel .row{ display:flex; justify-content:space-between; align-items:center;
+  margin-top:7px; gap:8px; flex-wrap:wrap; }
+.qtyRow{ display:flex; align-items:center; gap:8px; margin-top:6px; flex-wrap:wrap; }
+.qtyRow button{ min-height:30px; padding:4px 10px; }
+.qtyRow b{ min-width:16px; text-align:center; }
+
+/* ---------- SIDEBAR ---------- */
+#sidebar{ flex:1 1 300px; display:flex; flex-direction:column; background:var(--parchment);
+  border:4px solid var(--bark); box-shadow: inset 0 0 0 3px #4a322155; min-width:280px; min-height:0; }
+#tabs{ display:flex; flex:0 0 auto; }
+.tabBtn{ flex:1; padding:10px 4px; font-size:13px; text-align:center; background:var(--parchment-dk);
+  color:var(--ink); border:none; border-right:2px solid var(--bark); border-bottom:3px solid var(--bark);
+  cursor:pointer; font-family:inherit; }
+.tabBtn:last-child{ border-right:none; }
+.tabBtn.active{ background:var(--parchment); border-bottom:3px solid var(--gold); font-weight:bold; }
+#tabContent{ padding:12px; font-size:14px; line-height:1.5; overflow-y:auto; height:334px; }
+.skillRow{ margin-bottom:10px; }
+.skillRow .lbl{ display:flex; justify-content:space-between; font-size:13px; }
+.barOuter{ background:#00000022; border:1px solid var(--bark); height:9px; margin-top:3px; }
+.barInner{ background:var(--forest-mid); height:100%; }
+.barInner.xp{ background:var(--gold); }
+.barInner.busy{ background:var(--ember); }
+.barInner.energy{ background:var(--energy); }
+.itemRow{ display:flex; justify-content:space-between; align-items:center; padding:6px 0;
+  border-bottom:1px dashed var(--bark); gap:8px; flex-wrap:wrap; }
+.itemRow .qty{ color:var(--forest-dark); font-weight:bold; }
+button.action{ font-family:inherit; font-size:13px; padding:8px 12px; background:var(--forest-mid);
+  color:#eee; border:2px solid var(--forest-dark); cursor:pointer; min-height:38px; }
+button.action:disabled{ background:#999; color:#ddd; border-color:#666; cursor:not-allowed; }
+button.action:hover:not(:disabled){ background:var(--forest-dark); }
+button.action.danger{ background:var(--ember); border-color:#7a2e14; }
+button.action.danger:hover:not(:disabled){ background:#8f3a1e; }
+button.action.small{ padding:4px 8px; font-size:11px; min-height:auto; }
+.recipeCard{ border:2px solid var(--bark); padding:8px; margin-bottom:10px; background:var(--parchment-dk); }
+.recipeCard.ready{ border-color:var(--forest-dark); background:#dcd2a0; }
+.recipeCard h4{ margin:0 0 4px 0; font-size:14px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:4px; }
+.recipeCard .tag{ font-size:10px; background:var(--forest-mid); color:#fff; padding:2px 6px; }
+.recipeCard .need{ font-size:12px; margin-bottom:4px; }
+.need.bad{ color:var(--ember); }
+
+/* ---------- PROGRESSO / LOG ---------- */
+#progressWrap{ margin-top:10px; background:var(--forest-dark); border:3px solid #0c1a12;
+  box-shadow: inset 0 0 0 2px #d4af3755; padding:8px 12px;
+  font-size:13px; color:var(--parchment); display:flex; flex-direction:column; gap:5px; }
+#progressTop{ display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; }
+#progressWrap .barOuter{ height:11px; background:#00000055; border-color:#000; }
+#cancelMoveBtn{ display:none; }
+#log{ margin-top:10px; background:#0c1a12; color:#bfe6c8; font-size:13px; border:3px solid var(--forest-dark);
+  padding:8px 12px; height:66px; overflow-y:auto; font-family:"Courier New",monospace; }
+#log div{ opacity:0.85; }
+#log div.new{ color:var(--gold); opacity:1; }
+.hint{ font-size:12px; color:#5a4a30; margin-top:8px; line-height:1.4; }
+
+/* ---------- MODAIS ---------- */
+.modalOverlay{ position:fixed; inset:0; background:#000000cc; display:none; align-items:center;
+  justify-content:center; z-index:50; padding:12px; }
+.modalOverlay.open{ display:flex; }
+.modalBox{ background:var(--parchment); border:4px solid var(--bark); box-shadow: inset 0 0 0 3px #4a322155;
+  padding:12px; max-width:95vw; max-height:92vh; overflow:auto; line-height:1.4; }
+.modalHeader{ display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;
+  font-size:14px; font-weight:bold; }
+#bigMinimapCanvas{ image-rendering:pixelated; cursor:pointer; max-width:100%; display:block;
+  border:2px solid var(--bark); }
+#bigMinimapInfo{ margin-top:8px; font-size:13px; min-height:20px; }
+#bigMinimapInfo b{ color:var(--forest-dark); }
+#saveModal .modalBox{ min-width:280px; }
+
+@media (max-width:700px){
+  html,body{ height:100%; overflow:hidden; }
+  #app{ height:100dvh; height:100vh; margin:0; border-width:3px; padding:6px;
+    display:flex; flex-direction:column; gap:6px; overflow:hidden; min-height:0; }
+  h1{ flex:0 0 auto; font-size:10px; margin:0; padding-bottom:6px; flex-wrap:nowrap; gap:6px; }
+  h1 .titleText{ flex:1 1 auto; min-width:0; }
+  h1 span.sub{ display:none; }
+  #fullscreenBtn .btnLabel{ display:none; }
+  #fullscreenBtn{ padding:6px 8px; min-height:30px; font-size:14px; }
+  #topbar{ flex:0 0 auto; font-size:11px; padding:5px 8px; margin:0; gap:4px; }
+  #layout{ flex:1 1 auto; min-height:0; display:flex; flex-direction:column; gap:6px; }
+  #mapWrap{ flex:1.4 1 0; min-height:130px; width:100%; height:auto; }
+  #sidebar{ flex:1 1 0; min-width:0; min-height:110px; }
+  #tabContent{ flex:1 1 auto; height:auto; min-height:0; }
+  .tabBtn{ font-size:12px; padding:9px 2px; }
+  #minimapCanvas{ width:66px; }
+  #progressWrap{ flex:0 0 auto; margin:0; padding:6px 10px; font-size:12px; }
+  #log{ flex:0 0 auto; margin:0; height:34px; font-size:11px; padding:4px 8px; }
+  .hint{ display:none; }
+  button.action{ padding:9px 10px; font-size:13px; min-height:40px; }
+  button.action.small{ padding:6px 8px; min-height:34px; font-size:12px; }
+  .modalBox{ padding:8px; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <h1><span class="titleText">Trilhas de Aldeceira</span> <span class="sub">protótipo v10</span>
+    <button class="action small" id="fullscreenBtn"><span class="btnIcon">⛶</span><span class="btnLabel"> Tela cheia</span></button>
+  </h1>
+  <div id="topbar">
+    <div class="stat">🗺️ <b id="regionLbl">-</b></div>
+    <div class="stat">🎒 <b id="weightLbl">0/0</b></div>
+    <div class="stat">🪙 <b id="goldLbl">0</b></div>
+    <div class="stat">⚡ <b id="energyLbl">0/100</b></div>
+    <button class="action small" id="saveMenuBtn" title="Salvar / Carregar">💾</button>
+  </div>
+
+  <div id="layout">
+    <div id="mapWrap">
+      <div id="mapInner">
+        <canvas id="mapCanvas"></canvas>
+        <div id="minimapBox">
+          <canvas id="minimapCanvas"></canvas>
+          <button class="action small" id="recenterBtn" title="Centralizar no jogador">🎯</button>
+          <button class="action small" id="expandMinimapBtn" title="Ampliar mapa">🔍</button>
+        </div>
+        <div id="hoverTip"></div>
+
+        <div id="travelPanel">
+          <div id="travelText">-</div>
+          <div class="row">
+            <button class="action small" id="travelYes">Ir até lá</button>
+            <button class="action small" id="travelNo">Cancelar</button>
+          </div>
+        </div>
+
+        <div id="confirmPanel">
+          <div id="confirmText">-</div>
+          <div class="row">
+            <button class="action small" id="confirmYes">Sim, fazer</button>
+            <button class="action small" id="confirmNo">Não, ficar aqui</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="sidebar">
+      <div id="tabs">
+        <button class="tabBtn active" data-tab="status">Status</button>
+        <button class="tabBtn" data-tab="inv">Inventário</button>
+        <button class="tabBtn" data-tab="craft">Crafting</button>
+        <button class="tabBtn" data-tab="local">Local</button>
+      </div>
+      <div id="tabContent"></div>
+    </div>
+  </div>
+
+  <div id="progressWrap">
+    <div id="progressTop">
+      <span id="progressLbl">Ocioso — toque num ponto do mapa.</span>
+      <button class="action danger small" id="cancelMoveBtn">Cancelar</button>
+    </div>
+    <div class="barOuter"><div id="progressBar" class="barInner busy" style="width:0%"></div></div>
+  </div>
+
+  <div id="log"></div>
+  <div class="hint">Arraste o mapa para explorar sem andar. Toque num local parado para ver o que é e confirmar. 💾 no topo para salvar/carregar/reiniciar.</div>
+</div>
+
+<div id="minimapModal" class="modalOverlay">
+  <div class="modalBox">
+    <div class="modalHeader"><span>Mapa Explorado</span><button class="action small" id="closeMinimapBtn">Fechar ✕</button></div>
+    <canvas id="bigMinimapCanvas"></canvas>
+    <div id="bigMinimapInfo" class="hint" style="display:block;">Toque em qualquer ponto do mapa para ver o que há lá.</div>
+  </div>
+</div>
+
+<div id="saveModal" class="modalOverlay">
+  <div class="modalBox">
+    <div class="modalHeader"><span>Salvar / Carregar</span><button class="action small" id="closeSaveBtn">Fechar ✕</button></div>
+    <div id="saveSlots"></div>
+    <button class="action danger" id="resetBtn" style="margin-top:12px; width:100%;">Reiniciar todo o progresso</button>
+    <div class="hint" style="display:block; margin-top:8px;">Progresso fica salvo neste navegador (localStorage). Se abrir o arquivo em outra página/domínio, os slots não são compartilhados entre eles.</div>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   NOTAS DE PORTABILIDADE PARA CONSTRUCT 3
+   - manualCamera / drag no canvas -> Scroll-to desabilitado manualmente
+     + comportamento "Drag" num objeto de câmera
+   - fog no mapa principal          -> Tilemap de "fog" com opacidade,
+     sobreposta na camada de cima, igual ao minimapa
+   - craftQty / repeatQty            -> uma Variável de Instância "fila"
+     no objeto de UI, decrementada a cada conclusão de Timer
+   - save/load                       -> LocalStorage / Webstorage plugin
+   ===================================================================== */
+
+// ---------- CONSTANTES DE MUNDO ----------
+const TILE_PX = 48;
+const SPEED_PX_PER_SEC = TILE_PX;
+const WORLD_W = 2200, WORLD_H = 1000;
+const VIEW_W = 640, VIEW_H = 420;
+const ISLAND_GATE_X = 1100;
+const STONE_GATE_X = 1500;
+const SWAMP_GATE_X = 1830;
+const WALK_ENERGY_PER_SQM = 0.4;
+
+// ---------- FOG OF WAR ----------
+const FOG_CELL = 40;
+const FOG_COLS = Math.ceil(WORLD_W/FOG_CELL);
+const FOG_ROWS = Math.ceil(WORLD_H/FOG_CELL);
+const FOG_REVEAL_RADIUS = 3;
+const MM_SCALE = 4;
+const BIG_MM_SCALE = 10;
+let revealed = Array.from({length:FOG_ROWS}, ()=> new Array(FOG_COLS).fill(false));
+
+// ---------- ITENS ----------
+const ITEMS = {
+  wood:      { name:"Madeira",              weight:1 },
+  ore:       { name:"Minério de Ferro",     weight:2 },
+  rareOre:   { name:"Minério Raro",         weight:3 },
+  goldOre:   { name:"Pepita de Ouro",       weight:2 },
+  stone:     { name:"Pedra",                weight:2 },
+  meat:      { name:"Carne de Praga",       weight:2 },
+  fish:      { name:"Peixe",                weight:2 },
+  herb:      { name:"Erva Medicinal",       weight:1 },
+  mushroom:  { name:"Cogumelo Sombrio",     weight:1 },
+  hide:      { name:"Couro",                weight:2 },
+  gem:       { name:"Gema Bruta",           weight:1 },
+  pearl:     { name:"Pérola",               weight:1 },
+  magicEssence:{ name:"Essência Mágica",    weight:0 },
+  ration:    { name:"Suprimento de Viagem", weight:1, restoreEnergy:15 },
+  cookedMeat:{ name:"Carne Assada",         weight:1, restoreEnergy:25 },
+  cookedFish:{ name:"Peixe Grelhado",       weight:1, restoreEnergy:30 },
+  mealPack:  { name:"Refeição Reforçada",   weight:1, restoreEnergy:45 },
+  vigorPotion:{ name:"Poção de Vigor",      weight:1, restoreEnergy:35 },
+  arcaneElixir:{ name:"Elixir Arcano",      weight:1, restoreEnergy:60 },
+  cutGem:    { name:"Joia Lapidada",        weight:1 },
+  pearlNecklace:{ name:"Colar de Pérolas",  weight:1 },
+  ironPick:  { name:"Picareta de Ferro",    weight:3 },
+  ironAxe:   { name:"Machado de Ferro",     weight:3 },
+  boatTicket:{ name:"Passagem de Barco",    weight:0 },
+};
+
+// ---------- RECEITAS ----------
+const RECIPES = [
+  { id:"ironPick", name:"Picareta de Ferro", inputs:{wood:2,ore:3}, output:"ironPick", outQty:1,
+    skill:"crafting", minLevel:1, xp:25, time:4000, desc:"Aumenta a velocidade de mineração." },
+  { id:"cookedMeat", name:"Carne Assada", inputs:{meat:1}, output:"cookedMeat", outQty:1,
+    skill:"crafting", minLevel:1, xp:8, time:2000, desc:"Restaura mais energia que o suprimento comum." },
+  { id:"cookedFish", name:"Peixe Grelhado", inputs:{fish:1}, output:"cookedFish", outQty:1,
+    skill:"crafting", minLevel:1, xp:10, time:2200, desc:"Suprimento leve e nutritivo." },
+  { id:"ironAxe", name:"Machado de Ferro", inputs:{wood:3,ore:2}, output:"ironAxe", outQty:1,
+    skill:"crafting", minLevel:2, xp:30, time:4500, desc:"Aumenta a velocidade de corte de madeira." },
+  { id:"travelMeal", name:"Refeição Reforçada", inputs:{ration:1,meat:1}, output:"mealPack", outQty:1,
+    skill:"crafting", minLevel:2, xp:15, time:2500, desc:"Suprimento potente para expedições longas." },
+  { id:"vigorPotion", name:"Poção de Vigor", inputs:{herb:2,ration:1}, output:"vigorPotion", outQty:1,
+    skill:"crafting", minLevel:2, xp:18, time:3000, desc:"Restaura bastante energia com ervas medicinais." },
+  { id:"fishingRod", name:"Vara de Pesca Reforçada", inputs:{stone:2,wood:2}, special:"rod",
+    skill:"crafting", minLevel:2, xp:22, time:4000, desc:"Aumenta a velocidade de pesca." },
+  { id:"bigBag", name:"Alforje Reforçado", inputs:{wood:4,rareOre:2}, special:"bag",
+    skill:"crafting", minLevel:3, xp:35, time:5000, desc:"Aumenta permanentemente a capacidade de carga em +20." },
+  { id:"leatherCloak", name:"Capa de Couro", inputs:{hide:3,wood:1}, special:"cloak",
+    skill:"crafting", minLevel:3, xp:30, time:4500, desc:"Reduz em 20% o gasto de energia ao caminhar." },
+  { id:"cutGem", name:"Joia Lapidada", inputs:{gem:2}, output:"cutGem", outQty:1,
+    skill:"crafting", minLevel:3, xp:25, time:3500, desc:"Mercadoria de valor — só para vender." },
+  { id:"pearlNecklace", name:"Colar de Pérolas", inputs:{pearl:2,goldOre:1}, output:"pearlNecklace", outQty:1,
+    skill:"crafting", minLevel:4, xp:45, time:6000, desc:"Item de luxo raríssimo — alto valor de venda." },
+  { id:"arcaneElixir", name:"Elixir Arcano", inputs:{mushroom:3,magicEssence:1}, output:"arcaneElixir", outQty:1,
+    skill:"crafting", minLevel:5, xp:60, time:5000, desc:"O suprimento mais potente do jogo." },
+];
+
+// ---------- HABILIDADES ----------
+const SKILL_DEFS = {
+  lumberjack:{ name:"Lenhador" }, mining:{ name:"Mineração" }, hunting:{ name:"Caça/Combate" },
+  fishing:{ name:"Pesca" }, crafting:{ name:"Culinária/Crafting" }, trading:{ name:"Comércio" },
+};
+
+// ---------- DESCRIÇÕES CURTAS POR TIPO ----------
+const TYPE_DESC = {
+  tree:"Árvore — fonte de Madeira.",
+  ore:"Depósito de Minério de Ferro. Às vezes solta uma Gema Bruta.",
+  rareOre:"Depósito de Minério Raro.",
+  goldOre:"Veio de Pepitas de Ouro — raro e valioso.",
+  stone:"Pedreira — bloco de rocha comum, fornece Pedra (sem valor de minério).",
+  hunt:"Ponto de Caça — Carne de Praga. Às vezes solta Couro.",
+  fish:"Ponto de Pesca — Peixe. Às vezes traz uma Pérola.",
+  herb:"Arbusto de Ervas Medicinais.",
+  mushroom:"Cogumelos Sombrios do Pântano — ingrediente raro.",
+  essence:"Fonte de Essência Mágica — extremamente rara.",
+  berry:"Arbusto de frutas — fornece Suprimento de Viagem.",
+  shop:"Mercador — compra seus itens por ouro.",
+  craft:"Bancada de Crafting — produza itens com materiais da mochila.",
+  blacksmith:"Ferreiro — compra upgrades de ferramenta direto por ouro.",
+  dock:"Doca — venda de Passagem de Barco para a Ilha Vizinha.",
+  inn:"Estalagem — pague para recuperar energia na hora.",
+};
+
+// ---------- OBJETOS DO MUNDO ----------
+const OBJECTS = [
+  { id:"tree1", type:"tree", x:170, y:150, label:"Árvore", hitRadius:24, item:"wood", skill:"lumberjack",
+    xp:8, energyCost:10, time:3000, maxUses:3, usesLeft:3, cooldownMs:15000, cooldownUntil:0 },
+  { id:"tree2", type:"tree", x:380, y:230, label:"Árvore", hitRadius:24, item:"wood", skill:"lumberjack",
+    xp:8, energyCost:10, time:3000, maxUses:3, usesLeft:3, cooldownMs:15000, cooldownUntil:0 },
+  { id:"tree3", type:"tree", x:220, y:650, label:"Árvore", hitRadius:24, item:"wood", skill:"lumberjack",
+    xp:8, energyCost:10, time:3000, maxUses:3, usesLeft:3, cooldownMs:15000, cooldownUntil:0 },
+  { id:"tree4", type:"tree", x:520, y:760, label:"Árvore", hitRadius:24, item:"wood", skill:"lumberjack",
+    xp:8, energyCost:10, time:3000, maxUses:3, usesLeft:3, cooldownMs:15000, cooldownUntil:0 },
+  { id:"tree5", type:"tree", x:600, y:180, label:"Árvore", hitRadius:24, item:"wood", skill:"lumberjack",
+    xp:8, energyCost:10, time:3000, maxUses:3, usesLeft:3, cooldownMs:15000, cooldownUntil:0 },
+  { id:"ore1", type:"ore", x:460, y:150, label:"Minério", hitRadius:24, item:"ore", skill:"mining",
+    xp:12, energyCost:12, time:4000, maxUses:3, usesLeft:3, cooldownMs:18000, cooldownUntil:0, bonusItem:"gem", bonusChance:0.12 },
+  { id:"ore2", type:"ore", x:150, y:470, label:"Minério", hitRadius:24, item:"ore", skill:"mining",
+    xp:12, energyCost:12, time:4000, maxUses:3, usesLeft:3, cooldownMs:18000, cooldownUntil:0, bonusItem:"gem", bonusChance:0.12 },
+  { id:"ore3", type:"ore", x:520, y:650, label:"Minério", hitRadius:24, item:"ore", skill:"mining",
+    xp:12, energyCost:12, time:4000, maxUses:3, usesLeft:3, cooldownMs:18000, cooldownUntil:0, bonusItem:"gem", bonusChance:0.12 },
+  { id:"ore4", type:"ore", x:280, y:250, label:"Minério", hitRadius:24, item:"ore", skill:"mining",
+    xp:12, energyCost:12, time:4000, maxUses:3, usesLeft:3, cooldownMs:18000, cooldownUntil:0, bonusItem:"gem", bonusChance:0.12 },
+  { id:"herbF1", type:"herb", x:400, y:550, label:"Ervas Medicinais", hitRadius:20, item:"herb", skill:"crafting",
+    xp:9, energyCost:5, time:1800, maxUses:4, usesLeft:4, cooldownMs:12000, cooldownUntil:0 },
+  { id:"berryF", type:"berry", x:280, y:420, label:"Arbusto de Frutas", hitRadius:22, item:"ration",
+    skill:null, xp:0, energyCost:3, time:1500, maxUses:5, usesLeft:5, cooldownMs:8000, cooldownUntil:0 },
+  { id:"shopF", type:"shop", x:110, y:760, label:"Mercador da Floresta", hitRadius:26,
+    prices:{ wood:2, ore:2, rareOre:4, meat:3, ration:1, herb:2, stone:1 } },
+
+  { id:"stoneV1", type:"stone", x:640, y:780, label:"Pedreira", hitRadius:22, item:"stone", skill:"mining",
+    xp:10, energyCost:10, time:3200, maxUses:3, usesLeft:3, cooldownMs:16000, cooldownUntil:0 },
+  { id:"fishV1", type:"fish", x:1075, y:300, label:"Ponto de Pesca", hitRadius:22, item:"fish", skill:"fishing",
+    xp:14, energyCost:10, time:3800, maxUses:3, usesLeft:3, cooldownMs:15000, cooldownUntil:0, bonusItem:"pearl", bonusChance:0.15 },
+  { id:"berryV", type:"berry", x:760, y:540, label:"Arbusto de Frutas", hitRadius:22, item:"ration",
+    skill:null, xp:0, energyCost:3, time:1500, maxUses:5, usesLeft:5, cooldownMs:8000, cooldownUntil:0 },
+  { id:"shopV", type:"shop", x:760, y:150, label:"Mercador da Vila", hitRadius:26,
+    prices:{ wood:5, ore:4, rareOre:8, meat:6, ration:2, goldOre:15, fish:4, hide:5, gem:18, cutGem:40,
+             pearl:10, pearlNecklace:85, mushroom:6, magicEssence:25 } },
+  { id:"craftV", type:"craft", x:860, y:430, label:"Bancada de Crafting", hitRadius:26 },
+  { id:"blacksmith", type:"blacksmith", x:700, y:650, label:"Ferreiro", hitRadius:26,
+    sells:[ {tool:"pickaxe", name:"Picareta de Ferro", price:70}, {tool:"axe", name:"Machado de Ferro", price:70},
+            {tool:"rod", name:"Vara de Pesca Reforçada", price:60}, {tool:"cloak", name:"Capa de Couro", price:90} ] },
+  { id:"innV", type:"inn", x:820, y:700, label:"Estalagem", hitRadius:26, price:20 },
+  { id:"dockV", type:"dock", x:1010, y:700, label:"Doca da Vila", hitRadius:28 },
+
+  { id:"fishI1", type:"fish", x:1125, y:600, label:"Ponto de Pesca", hitRadius:22, item:"fish", skill:"fishing",
+    xp:14, energyCost:10, time:3800, maxUses:3, usesLeft:3, cooldownMs:15000, cooldownUntil:0, bonusItem:"pearl", bonusChance:0.15 },
+  { id:"herbI1", type:"herb", x:1250, y:680, label:"Ervas Medicinais", hitRadius:20, item:"herb", skill:"crafting",
+    xp:9, energyCost:5, time:1800, maxUses:4, usesLeft:4, cooldownMs:12000, cooldownUntil:0 },
+  { id:"rareOre1", type:"rareOre", x:1180, y:200, label:"Minério Raro", hitRadius:24, item:"rareOre",
+    skill:"mining", xp:20, energyCost:15, time:5000, maxUses:2, usesLeft:2, cooldownMs:25000, cooldownUntil:0 },
+  { id:"rareOre2", type:"rareOre", x:1350, y:620, label:"Minério Raro", hitRadius:24, item:"rareOre",
+    skill:"mining", xp:20, energyCost:15, time:5000, maxUses:2, usesLeft:2, cooldownMs:25000, cooldownUntil:0 },
+  { id:"rareOre3", type:"rareOre", x:1300, y:420, label:"Minério Raro", hitRadius:24, item:"rareOre",
+    skill:"mining", xp:20, energyCost:15, time:5000, maxUses:2, usesLeft:2, cooldownMs:25000, cooldownUntil:0 },
+  { id:"hunt1", type:"hunt", x:1250, y:380, label:"Ponto de Caça", hitRadius:24, item:"meat",
+    skill:"hunting", xp:15, energyCost:15, time:4500, maxUses:2, usesLeft:2, cooldownMs:20000, cooldownUntil:0, bonusItem:"hide", bonusChance:0.35 },
+  { id:"hunt2", type:"hunt", x:1400, y:190, label:"Ponto de Caça", hitRadius:24, item:"meat",
+    skill:"hunting", xp:15, energyCost:15, time:4500, maxUses:2, usesLeft:2, cooldownMs:20000, cooldownUntil:0, bonusItem:"hide", bonusChance:0.35 },
+  { id:"hunt3", type:"hunt", x:1180, y:560, label:"Ponto de Caça", hitRadius:24, item:"meat",
+    skill:"hunting", xp:15, energyCost:15, time:4500, maxUses:2, usesLeft:2, cooldownMs:20000, cooldownUntil:0, bonusItem:"hide", bonusChance:0.35 },
+  { id:"berryI", type:"berry", x:1160, y:720, label:"Arbusto de Frutas", hitRadius:22, item:"ration",
+    skill:null, xp:0, energyCost:3, time:1500, maxUses:5, usesLeft:5, cooldownMs:8000, cooldownUntil:0 },
+
+  { id:"stoneC1", type:"stone", x:1560, y:420, label:"Pedreira", hitRadius:22, item:"stone", skill:"mining",
+    xp:10, energyCost:10, time:3200, maxUses:3, usesLeft:3, cooldownMs:16000, cooldownUntil:0 },
+  { id:"ore5", type:"ore", x:1470, y:700, label:"Minério", hitRadius:24, item:"ore", skill:"mining",
+    xp:12, energyCost:12, time:4000, maxUses:3, usesLeft:3, cooldownMs:18000, cooldownUntil:0, bonusItem:"gem", bonusChance:0.12 },
+  { id:"goldOre1", type:"goldOre", x:1610, y:250, label:"Veio de Ouro", hitRadius:24, item:"goldOre",
+    skill:"mining", xp:28, energyCost:18, time:5500, maxUses:2, usesLeft:2, cooldownMs:30000, cooldownUntil:0 },
+  { id:"goldOre2", type:"goldOre", x:1720, y:600, label:"Veio de Ouro", hitRadius:24, item:"goldOre",
+    skill:"mining", xp:28, energyCost:18, time:5500, maxUses:2, usesLeft:2, cooldownMs:30000, cooldownUntil:0 },
+
+  { id:"mush1", type:"mushroom", x:1900, y:250, label:"Cogumelo Sombrio", hitRadius:22, item:"mushroom", skill:"hunting",
+    xp:24, energyCost:14, time:4200, maxUses:3, usesLeft:3, cooldownMs:22000, cooldownUntil:0 },
+  { id:"mush2", type:"mushroom", x:2050, y:600, label:"Cogumelo Sombrio", hitRadius:22, item:"mushroom", skill:"hunting",
+    xp:24, energyCost:14, time:4200, maxUses:3, usesLeft:3, cooldownMs:22000, cooldownUntil:0 },
+  { id:"mush3", type:"mushroom", x:1950, y:480, label:"Cogumelo Sombrio", hitRadius:22, item:"mushroom", skill:"hunting",
+    xp:24, energyCost:14, time:4200, maxUses:3, usesLeft:3, cooldownMs:22000, cooldownUntil:0 },
+  { id:"essence1", type:"essence", x:2130, y:400, label:"Fonte de Essência", hitRadius:22, item:"magicEssence", skill:"crafting",
+    xp:50, energyCost:25, time:7000, maxUses:1, usesLeft:1, cooldownMs:60000, cooldownUntil:0 },
+];
+
+// ---------- CENÁRIO DECORATIVO ----------
+const DECOR = [
+  {type:"rock", x:230,y:530}, {type:"rock", x:610,y:340}, {type:"rock", x:900,y:250},
+  {type:"flower", x:340,y:480}, {type:"flower", x:130,y:230}, {type:"flower", x:500,y:600}, {type:"flower", x:950,y:600},
+  {type:"tuft", x:90,y:340}, {type:"tuft", x:420,y:520}, {type:"tuft", x:250,y:720}, {type:"tuft", x:1000,y:340},
+  {type:"rock", x:1230,y:300}, {type:"rock", x:1420,y:520}, {type:"tuft", x:1250,y:650}, {type:"flower", x:1400,y:700},
+  {type:"rock", x:1560,y:180}, {type:"rock", x:1650,y:500}, {type:"rock", x:1750,y:320}, {type:"rock", x:1580,y:700},
+  {type:"tuft", x:1880,y:350}, {type:"tuft", x:2020,y:250}, {type:"rock", x:1970,y:700}, {type:"tuft", x:2100,y:550},
+];
+
+// ---------- ESTRADAS ----------
+const ROADS = [
+  [ {x:170,y:300}, {x:150,y:460}, {x:120,y:620}, {x:110,y:760} ],
+  [ {x:170,y:300}, {x:280,y:340}, {x:420,y:360}, {x:560,y:360}, {x:680,y:340} ],
+  [ {x:680,y:340}, {x:760,y:280}, {x:760,y:150} ],
+  [ {x:680,y:340}, {x:760,y:400}, {x:860,y:430} ],
+  [ {x:860,y:430}, {x:800,y:560}, {x:700,y:650} ],
+  [ {x:700,y:650}, {x:760,y:690}, {x:820,y:700} ],
+  [ {x:820,y:700}, {x:920,y:700}, {x:1010,y:700} ],
+  [ {x:700,y:650}, {x:660,y:730}, {x:640,y:780} ],
+];
+
+// ---------- ESTADO DO JOGADOR ----------
+const player = {
+  pos:{ x:170, y:300 },
+  gold:15,
+  energy:100, maxEnergy:100,
+  maxWeight:60,
+  tools:{ axe:1, pickaxe:1, rod:1, cloak:1 },
+  inventory:{ wood:0, ore:0, rareOre:0, goldOre:0, stone:0, meat:0, fish:0, herb:0, mushroom:0, hide:0,
+    gem:0, pearl:0, magicEssence:0, ration:0, cookedMeat:0, cookedFish:0, mealPack:0, vigorPotion:0,
+    arcaneElixir:0, cutGem:0, pearlNecklace:0, ironPick:0, ironAxe:0, boatTicket:0 },
+  skills:{ lumberjack:{xp:0}, mining:{xp:0}, hunting:{xp:0}, fishing:{xp:0}, crafting:{xp:0}, trading:{xp:0} }
+};
+
+// snapshot do estado inicial — usado pelo botão "reiniciar progresso"
+const INITIAL_PLAYER = JSON.parse(JSON.stringify(player));
+const INITIAL_OBJECT_STATES = OBJECTS.map(o=>({ id:o.id, usesLeft:o.usesLeft, cooldownUntil:o.cooldownUntil }));
+
+let move = null, task = null, confirmObj = null, travelTarget = null, nearBuilding = null, activeTab = "status";
+let bigMapSelected = null, repeatQty = 1, craftQty = {};
+let manualCamera = null; // quando definido, a câmera para de seguir o jogador (modo "arrastar mapa")
+
+// =====================================================================
+// XP / SKILLS
+// =====================================================================
+function levelFromXp(xp){ return Math.floor(xp/100)+1; }
+function xpIntoLevel(xp){ return xp % 100; }
+function gainXp(skillKey, amount){ if(skillKey) player.skills[skillKey].xp += amount; }
+function skillLevel(skillKey){ return levelFromXp(player.skills[skillKey].xp); }
+
+// =====================================================================
+// INVENTÁRIO
+// =====================================================================
+function currentWeight(){
+  let w=0; for(const id in player.inventory) w += player.inventory[id]*(ITEMS[id].weight||0);
+  return w;
+}
+function canCarry(id, qty){ return currentWeight() + qty*(ITEMS[id].weight||0) <= player.maxWeight; }
+function addItem(id, qty){
+  if(!canCarry(id, qty)){ log("Inventário cheio! Venda ou use itens.", true); return false; }
+  player.inventory[id] = (player.inventory[id]||0) + qty; return true;
+}
+function removeItem(id, qty){ player.inventory[id] = Math.max(0, (player.inventory[id]||0) - qty); }
+function hasItems(map){ for(const id in map){ if((player.inventory[id]||0) < map[id]) return false; } return true; }
+function maxCraftable(rec){
+  let max = Infinity;
+  for(const id in rec.inputs){ max = Math.min(max, Math.floor((player.inventory[id]||0)/rec.inputs[id])); }
+  return isFinite(max) ? Math.max(0,max) : 0;
+}
+
+// =====================================================================
+// LOG
+// =====================================================================
+function log(msg, highlight){
+  const el = document.getElementById("log");
+  const div = document.createElement("div");
+  if(highlight) div.className = "new";
+  div.textContent = "» " + msg;
+  el.prepend(div);
+  while(el.children.length > 40) el.removeChild(el.lastChild);
+}
+
+// =====================================================================
+// MOVIMENTO LIVRE (TWEEN)
+// =====================================================================
+function dist(a,b){ return Math.hypot(a.x-b.x, a.y-b.y); }
+
+function findObjectNear(worldX, worldY){
+  let best=null, bestD=Infinity;
+  for(const o of OBJECTS){
+    const d = dist({x:worldX,y:worldY},{x:o.x,y:o.y});
+    if(d <= o.hitRadius && d < bestD){ best=o; bestD=d; }
+  }
+  return best;
+}
+
+function computeMoveTarget(targetX, targetY, targetObj){
+  let ex=targetX, ey=targetY, already=false;
+  if(targetObj){
+    const d = dist(player.pos, {x:targetObj.x,y:targetObj.y});
+    if(d <= targetObj.hitRadius + 4){ already = true; }
+    else {
+      const dirX=(targetObj.x-player.pos.x)/d, dirY=(targetObj.y-player.pos.y)/d;
+      ex = targetObj.x - dirX*(targetObj.hitRadius-6);
+      ey = targetObj.y - dirY*(targetObj.hitRadius-6);
+    }
+  }
+  const distance = already ? 0 : dist(player.pos, {x:ex,y:ey});
+  return { ex, ey, already, distance };
+}
+
+function checkGate(gateX){
+  if(gateX >= ISLAND_GATE_X && player.inventory.boatTicket < 1){
+    return "A água impede a travessia — você precisa de uma Passagem de Barco na Doca da Vila.";
+  }
+  if(gateX >= STONE_GATE_X && skillLevel("mining") < 3){
+    return "As Colinas de Pedra exigem Mineração Nv.3 para atravessar com segurança.";
+  }
+  if(gateX >= SWAMP_GATE_X && skillLevel("crafting") < 4){
+    return "As névoas do Pântano Nebuloso exigem Culinária/Crafting Nv.4 (conhecimento de antídotos).";
+  }
+  return null;
+}
+
+function startMoveTo(targetX, targetY, targetObj){
+  const gateX = targetObj ? targetObj.x : targetX;
+  const blocked = checkGate(gateX);
+  if(blocked){ log(blocked, true); return; }
+
+  const { ex, ey, already, distance } = computeMoveTarget(targetX, targetY, targetObj);
+  if(already){ onArrive(targetObj); return; }
+
+  const duration = Math.max(150, (distance/SPEED_PX_PER_SEC)*1000);
+  move = { sx:player.pos.x, sy:player.pos.y, ex, ey, start:performance.now(), end:performance.now()+duration, targetObj };
+  manualCamera = null; // ao confirmar a viagem, a câmera volta a seguir o jogador
+  hideConfirmPanel(); hideTravelPanel();
+  log(`Caminhando... (${(duration/1000).toFixed(1)}s)`);
+}
+
+function cancelMove(){
+  if(!move) return;
+  const now = performance.now();
+  const t = Math.min(1, (now-move.start)/(move.end-move.start));
+  player.pos.x = move.sx + (move.ex-move.sx)*t;
+  player.pos.y = move.sy + (move.ey-move.sy)*t;
+  move = null;
+  log("Movimento cancelado.", true);
+}
+
+const GATHER_TYPES = ["tree","ore","rareOre","goldOre","stone","hunt","fish","herb","mushroom","essence","berry"];
+
+function onArrive(obj){
+  if(!obj){ hideConfirmPanel(); return; }
+  if(GATHER_TYPES.includes(obj.type)){
+    if(obj.usesLeft <= 0){
+      const secs = Math.ceil((obj.cooldownUntil-performance.now())/1000);
+      log(`${obj.label} esgotado(a). Regenera em ~${Math.max(0,secs)}s.`, true);
+      return;
+    }
+    showConfirmPanel(obj);
+  } else if(["shop","dock","blacksmith","inn"].includes(obj.type)){
+    nearBuilding = obj; setTab("local");
+  } else if(obj.type === "craft"){
+    nearBuilding = obj; setTab("craft");
+  }
+}
+
+// =====================================================================
+// PASSO 1 — PAINEL DE INFO/VIAGEM
+// =====================================================================
+function showTravelPanel(obj){
+  hideConfirmPanel();
+  travelTarget = obj;
+  const { already, distance } = computeMoveTarget(obj.x, obj.y, obj);
+  let costLine;
+  if(already){
+    costLine = "Você já está bem perto — nenhum deslocamento necessário.";
+  } else {
+    const duration = Math.max(150, (distance/SPEED_PX_PER_SEC)*1000);
+    const energyCost = (distance/TILE_PX)*WALK_ENERGY_PER_SQM*(player.tools.cloak>=2?0.8:1);
+    costLine = `Custo da viagem: ~${energyCost.toFixed(0)}⚡ · ${(duration/1000).toFixed(1)}s`;
+  }
+  document.getElementById("travelText").innerHTML =
+    `<b>${obj.label}</b><br>${TYPE_DESC[obj.type]||""}<br>${costLine}`;
+  document.getElementById("travelPanel").style.display = "block";
+}
+function hideTravelPanel(){ travelTarget = null; document.getElementById("travelPanel").style.display = "none"; }
+document.getElementById("travelYes").addEventListener("click", ()=>{
+  if(travelTarget){ const o=travelTarget; hideTravelPanel(); startMoveTo(o.x, o.y, o); }
+});
+document.getElementById("travelNo").addEventListener("click", hideTravelPanel);
+
+// =====================================================================
+// PASSO 2 — CONFIRMAÇÃO DE TAREFA (com seletor de repetições)
+// =====================================================================
+function renderConfirmText(obj){
+  const maxQty = obj.usesLeft;
+  repeatQty = Math.min(repeatQty, maxQty);
+  let html = `${obj.label}: ${obj.energyCost}⚡ · ${(obj.time/1000).toFixed(1)}s cada · (${obj.usesLeft}/${obj.maxUses} usos)`;
+  if(obj.bonusItem) html += `<br><span style="font-size:11px;">Chance de bônus: ${ITEMS[obj.bonusItem].name} (${Math.round(obj.bonusChance*100)}%)</span>`;
+  if(maxQty > 1){
+    html += `<div class="qtyRow">Repetir: <button class="action small" id="qtyMinus">−</button> <b id="qtyVal">${repeatQty}</b> <button class="action small" id="qtyPlus">+</button>
+      <span style="font-size:11px; color:#5a4a30;">(máx. ${maxQty})</span></div>`;
+  }
+  document.getElementById("confirmText").innerHTML = html;
+}
+function showConfirmPanel(obj){
+  hideTravelPanel();
+  confirmObj = obj;
+  repeatQty = 1;
+  renderConfirmText(obj);
+  document.getElementById("confirmPanel").style.display = "block";
+}
+function hideConfirmPanel(){ confirmObj = null; document.getElementById("confirmPanel").style.display = "none"; }
+document.getElementById("confirmPanel").addEventListener("click", (ev)=>{
+  if(!confirmObj) return;
+  if(ev.target.id === "qtyMinus"){ repeatQty = Math.max(1, repeatQty-1); renderConfirmText(confirmObj); }
+  else if(ev.target.id === "qtyPlus"){ repeatQty = Math.min(confirmObj.usesLeft, repeatQty+1); renderConfirmText(confirmObj); }
+});
+document.getElementById("confirmYes").addEventListener("click", ()=>{
+  if(confirmObj) startGatherTask(confirmObj, repeatQty);
+});
+document.getElementById("confirmNo").addEventListener("click", hideConfirmPanel);
+document.getElementById("cancelMoveBtn").addEventListener("click", cancelMove);
+
+// =====================================================================
+// COLETA (com repetição automática de N cargas + item de drop bônus)
+// =====================================================================
+function startGatherTask(obj, remainingRepeats){
+  if(obj.usesLeft <= 0){ hideConfirmPanel(); return; }
+  if(player.energy < obj.energyCost){
+    log("Energia insuficiente! Use um Suprimento de Viagem ou descanse na Estalagem.", true);
+    hideConfirmPanel();
+    return;
+  }
+  let time = obj.time - (obj.skill ? (skillLevel(obj.skill)-1)*150 : 0);
+  if(obj.type === "tree" && player.tools.axe >= 2) time *= 0.7;
+  if(["ore","rareOre","goldOre","stone"].includes(obj.type) && player.tools.pickaxe >= 2) time *= 0.7;
+  if(obj.type === "fish" && player.tools.rod >= 2) time *= 0.7;
+  time = Math.max(1000, time);
+
+  player.energy = Math.max(0, player.energy - obj.energyCost);
+  hideConfirmPanel();
+  task = { type:"gather", start:performance.now(), end:performance.now()+time, meta:{obj, remainingRepeats} };
+  const repTxt = remainingRepeats > 1 ? ` (restam ${remainingRepeats-1} repetições)` : "";
+  log(`Coletando ${obj.label}...${repTxt} (${(time/1000).toFixed(1)}s)`);
+}
+function finishGather(meta){
+  const obj = meta.obj;
+  const ok = addItem(obj.item, 1);
+  if(ok){
+    gainXp(obj.skill, obj.xp);
+    const xpTxt = obj.skill ? `  (+${obj.xp} XP ${SKILL_DEFS[obj.skill].name})` : "";
+    log(`+1 ${ITEMS[obj.item].name}${xpTxt}`, true);
+    if(obj.bonusItem && Math.random() < (obj.bonusChance||0)){
+      if(addItem(obj.bonusItem, 1)) log(`✨ Bônus! +1 ${ITEMS[obj.bonusItem].name}`, true);
+    }
+  }
+  obj.usesLeft -= 1;
+  const stillHere = dist(player.pos, {x:obj.x,y:obj.y}) <= obj.hitRadius + 6;
+
+  if(obj.usesLeft <= 0){
+    obj.cooldownUntil = performance.now() + obj.cooldownMs;
+    log(`${obj.label} ficou esgotado(a) e entrou em descanso.`, true);
+    return;
+  }
+  const left = (meta.remainingRepeats || 1) - 1;
+  if(left > 0 && stillHere && player.energy >= obj.energyCost){
+    startGatherTask(obj, left);
+  } else if(stillHere){
+    showConfirmPanel(obj);
+  }
+}
+
+// =====================================================================
+// CRAFTING (com quantidade selecionável)
+// =====================================================================
+function tryCraft(recipeId){
+  if(move || task) return;
+  const rec = RECIPES.find(r=>r.id===recipeId);
+  if(!rec) return;
+  if(skillLevel(rec.skill) < rec.minLevel){ log("Nível de habilidade insuficiente.", true); return; }
+  const maxQ = maxCraftable(rec);
+  if(maxQ < 1){ log("Materiais insuficientes.", true); return; }
+  const qty = Math.min(craftQty[recipeId]||1, maxQ);
+  startCraftTask(rec, qty);
+}
+function startCraftTask(rec, remainingRepeats){
+  for(const id in rec.inputs) removeItem(id, rec.inputs[id]);
+  task = { type:"craft", start:performance.now(), end:performance.now()+rec.time, meta:{rec, remainingRepeats} };
+  const repTxt = remainingRepeats > 1 ? ` (restam ${remainingRepeats-1})` : "";
+  log(`Produzindo ${rec.name}...${repTxt} (${(rec.time/1000).toFixed(1)}s)`);
+  renderTab();
+}
+function finishCraft(meta){
+  const rec = meta.rec;
+  if(rec.special === "bag"){
+    player.maxWeight += 20;
+    log(`Alforje reforçado! Capacidade agora é ${player.maxWeight}.`, true);
+  } else if(rec.special === "cloak"){
+    player.tools.cloak = 2;
+    log("Capa de Couro pronta! Caminhar agora gasta 20% menos energia.", true);
+  } else if(rec.special === "rod"){
+    player.tools.rod = 2;
+    log("Vara de Pesca Reforçada pronta! Pesca mais rápida.", true);
+  } else {
+    addItem(rec.output, rec.outQty);
+    log(`Criado: ${ITEMS[rec.output].name}  (+${rec.xp} XP ${SKILL_DEFS[rec.skill].name})`, true);
+    if(rec.output === "ironPick") player.tools.pickaxe = 2;
+    if(rec.output === "ironAxe") player.tools.axe = 2;
+  }
+  gainXp(rec.skill, rec.xp);
+
+  const left = (meta.remainingRepeats||1) - 1;
+  if(left > 0 && maxCraftable(rec) >= 1 && skillLevel(rec.skill) >= rec.minLevel){
+    startCraftTask(rec, left);
+  } else {
+    renderTab();
+  }
+}
+
+// =====================================================================
+// CONSUMÍVEIS
+// =====================================================================
+function useConsumable(id){
+  const def = ITEMS[id];
+  if(!def || !def.restoreEnergy) return;
+  if((player.inventory[id]||0) < 1) return;
+  removeItem(id, 1);
+  player.energy = Math.min(player.maxEnergy, player.energy + def.restoreEnergy);
+  log(`Usou ${def.name}: +${def.restoreEnergy} energia.`, true);
+  renderTab();
+}
+
+// =====================================================================
+// COMÉRCIO
+// =====================================================================
+function trySell(shopObj, itemId){
+  const price = shopObj.prices[itemId];
+  if(!price || (player.inventory[itemId]||0) < 1) return;
+  removeItem(itemId, 1);
+  player.gold += price;
+  gainXp("trading", Math.max(1, Math.round(price*0.4)));
+  log(`Vendido: ${ITEMS[itemId].name} por ${price} ouro.`, true);
+  renderTab();
+}
+
+// =====================================================================
+// FERREIRO / ESTALAGEM
+// =====================================================================
+function tryBuyToolUpgrade(toolKey, price){
+  if(player.tools[toolKey] >= 2){ log("Você já possui essa ferramenta."); return; }
+  if(player.gold < price){ log("Ouro insuficiente.", true); return; }
+  player.gold -= price;
+  player.tools[toolKey] = 2;
+  const names = {pickaxe:"Picareta de Ferro", axe:"Machado de Ferro", rod:"Vara de Pesca Reforçada", cloak:"Capa de Couro"};
+  log(`Comprou: ${names[toolKey]}!`, true);
+  renderTab();
+}
+function tryRest(price){
+  if(player.energy >= player.maxEnergy){ log("Energia já está cheia."); return; }
+  if(player.gold < price){ log("Ouro insuficiente.", true); return; }
+  player.gold -= price;
+  player.energy = player.maxEnergy;
+  log("Descansou na Estalagem: energia totalmente recuperada!", true);
+  renderTab();
+}
+const BOAT_PRICE = 100;
+function tryBuyTicket(){
+  if(player.inventory.boatTicket >= 1){ log("Você já possui uma passagem."); return; }
+  if(player.gold < BOAT_PRICE){ log("Ouro insuficiente para a passagem.", true); return; }
+  player.gold -= BOAT_PRICE;
+  addItem("boatTicket", 1);
+  log("Passagem de Barco comprada! A Ilha Vizinha está liberada.", true);
+  renderTab();
+}
+
+// =====================================================================
+// SALVAR / CARREGAR / REINICIAR
+// =====================================================================
+const SAVE_SLOTS = [1,2,3];
+const SAVE_KEY_PREFIX = "trilhasAldeceira_slot_";
+
+function serializeGame(){
+  return {
+    v:1,
+    savedAt: Date.now(),
+    player:{
+      pos:{ x:player.pos.x, y:player.pos.y },
+      gold:player.gold, energy:player.energy, maxEnergy:player.maxEnergy, maxWeight:player.maxWeight,
+      tools:Object.assign({}, player.tools),
+      inventory:Object.assign({}, player.inventory),
+      skills:Object.fromEntries(Object.entries(player.skills).map(([k,v])=>[k,{xp:v.xp}]))
+    },
+    objectStates: OBJECTS.map(o=>({ id:o.id, usesLeft:o.usesLeft, cooldownUntil:o.cooldownUntil })),
+    revealed: revealed.map(row=>row.map(v=>v?1:0))
+  };
+}
+function applySave(data){
+  player.pos.x = data.player.pos.x; player.pos.y = data.player.pos.y;
+  player.gold = data.player.gold; player.energy = data.player.energy;
+  player.maxEnergy = data.player.maxEnergy; player.maxWeight = data.player.maxWeight;
+  Object.assign(player.tools, data.player.tools);
+  for(const k in player.inventory) player.inventory[k] = data.player.inventory[k] || 0;
+  for(const k in player.skills) player.skills[k] = { xp:(data.player.skills[k] && data.player.skills[k].xp) || 0 };
+  const stateById = {}; (data.objectStates||[]).forEach(s=> stateById[s.id]=s);
+  OBJECTS.forEach(o=>{ const s=stateById[o.id]; if(s){ o.usesLeft=s.usesLeft; o.cooldownUntil=s.cooldownUntil; } });
+  if(data.revealed) revealed = data.revealed.map(row=>row.map(v=>!!v));
+  move=null; task=null; manualCamera=null; nearBuilding=null;
+  hideConfirmPanel(); hideTravelPanel();
+  log("Progresso carregado.", true);
+  renderTab();
+}
+function saveToSlot(n){
+  try{
+    localStorage.setItem(SAVE_KEY_PREFIX+n, JSON.stringify(serializeGame()));
+    log(`Progresso salvo no slot ${n}.`, true);
+  } catch(e){ log("Não foi possível salvar (armazenamento indisponível).", true); }
+  renderSaveModal();
+}
+function loadFromSlot(n){
+  const raw = localStorage.getItem(SAVE_KEY_PREFIX+n);
+  if(!raw){ log("Slot vazio."); return; }
+  try{ applySave(JSON.parse(raw)); } catch(e){ log("Save corrompido.", true); }
+  renderSaveModal();
+}
+function deleteSlot(n){
+  localStorage.removeItem(SAVE_KEY_PREFIX+n);
+  log(`Slot ${n} apagado.`, true);
+  renderSaveModal();
+}
+function resetProgress(){
+  if(!confirm("Reiniciar todo o progresso atual? Isso não apaga os slots salvos, só o que está em jogo agora.")) return;
+  player.pos.x = INITIAL_PLAYER.pos.x; player.pos.y = INITIAL_PLAYER.pos.y;
+  player.gold = INITIAL_PLAYER.gold; player.energy = INITIAL_PLAYER.energy;
+  player.maxEnergy = INITIAL_PLAYER.maxEnergy; player.maxWeight = INITIAL_PLAYER.maxWeight;
+  Object.assign(player.tools, INITIAL_PLAYER.tools);
+  for(const k in player.inventory) player.inventory[k] = 0;
+  for(const k in player.skills) player.skills[k] = { xp:0 };
+  const stateById = {}; INITIAL_OBJECT_STATES.forEach(s=> stateById[s.id]=s);
+  OBJECTS.forEach(o=>{ const s=stateById[o.id]; o.usesLeft=s.usesLeft; o.cooldownUntil=s.cooldownUntil; });
+  revealed = Array.from({length:FOG_ROWS}, ()=> new Array(FOG_COLS).fill(false));
+  move=null; task=null; manualCamera=null; nearBuilding=null;
+  hideConfirmPanel(); hideTravelPanel();
+  log("Progresso reiniciado.", true);
+  renderTab();
+}
+function fmtDate(ts){
+  const d = new Date(ts), pad = n=>String(n).padStart(2,"0");
+  return `${pad(d.getDate())}/${pad(d.getMonth()+1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function renderSaveModal(){
+  const el = document.getElementById("saveSlots");
+  let html = "";
+  SAVE_SLOTS.forEach(n=>{
+    const raw = localStorage.getItem(SAVE_KEY_PREFIX+n);
+    let info = "Slot vazio.", hasData = false;
+    if(raw){
+      try{
+        const data = JSON.parse(raw);
+        info = `${data.player.gold}g · ${regionAt(data.player.pos.x)} · salvo em ${fmtDate(data.savedAt)}`;
+        hasData = true;
+      } catch(e){ info = "Save corrompido."; }
+    }
+    html += `<div class="itemRow"><span><b>Slot ${n}</b><br><span style="font-size:11px;">${info}</span></span>
+      <span style="display:flex; gap:4px; flex-wrap:wrap;">
+        <button class="action small" data-saveslot="${n}">Salvar</button>
+        <button class="action small" data-loadslot="${n}" ${hasData?"":"disabled"}>Carregar</button>
+        <button class="action small danger" data-delslot="${n}" ${hasData?"":"disabled"}>Apagar</button>
+      </span></div>`;
+  });
+  el.innerHTML = html;
+}
+document.getElementById("saveSlots").addEventListener("click", (ev)=>{
+  const t = ev.target;
+  if(t.dataset.saveslot) saveToSlot(parseInt(t.dataset.saveslot));
+  else if(t.dataset.loadslot) loadFromSlot(parseInt(t.dataset.loadslot));
+  else if(t.dataset.delslot){ if(confirm(`Apagar o Slot ${t.dataset.delslot}?`)) deleteSlot(parseInt(t.dataset.delslot)); }
+});
+document.getElementById("resetBtn").addEventListener("click", resetProgress);
+
+const saveModal = document.getElementById("saveModal");
+document.getElementById("saveMenuBtn").addEventListener("click", ()=>{ renderSaveModal(); saveModal.classList.add("open"); });
+document.getElementById("closeSaveBtn").addEventListener("click", ()=> saveModal.classList.remove("open"));
+saveModal.addEventListener("click", (ev)=>{ if(ev.target===saveModal) saveModal.classList.remove("open"); });
+
+// =====================================================================
+// TELA CHEIA
+// =====================================================================
+document.getElementById("fullscreenBtn").addEventListener("click", ()=>{
+  const el = document.getElementById("app");
+  if(!document.fullscreenElement){
+    (el.requestFullscreen || el.webkitRequestFullscreen || function(){}).call(el);
+  } else {
+    (document.exitFullscreen || document.webkitExitFullscreen || function(){}).call(document);
+  }
+});
+
+// =====================================================================
+// CANVAS / CÂMERA
+// =====================================================================
+const canvas = document.getElementById("mapCanvas");
+canvas.width = VIEW_W; canvas.height = VIEW_H;
+const ctx = canvas.getContext("2d");
+ctx.imageSmoothingEnabled = false;
+
+const minimap = document.getElementById("minimapCanvas");
+minimap.width = FOG_COLS*MM_SCALE; minimap.height = FOG_ROWS*MM_SCALE;
+const mctx = minimap.getContext("2d");
+
+const bigMinimap = document.getElementById("bigMinimapCanvas");
+bigMinimap.width = FOG_COLS*BIG_MM_SCALE; bigMinimap.height = FOG_ROWS*BIG_MM_SCALE;
+const bmctx = bigMinimap.getContext("2d");
+
+const mapWrapEl = document.getElementById("mapWrap");
+const mapInnerEl = document.getElementById("mapInner");
+function fitMapInner(){
+  const rect = mapWrapEl.getBoundingClientRect();
+  const availW = Math.max(1, rect.width), availH = Math.max(1, rect.height);
+  const ratio = VIEW_W/VIEW_H;
+  let w = availW, h = w/ratio;
+  if(h > availH){ h = availH; w = h*ratio; }
+  mapInnerEl.style.width = Math.floor(w)+"px";
+  mapInnerEl.style.height = Math.floor(h)+"px";
+}
+window.addEventListener("resize", fitMapInner);
+window.addEventListener("orientationchange", ()=> setTimeout(fitMapInner,60));
+document.addEventListener("fullscreenchange", ()=> setTimeout(fitMapInner,60));
+window.addEventListener("load", fitMapInner);
+
+function getCamera(){
+  if(manualCamera) return manualCamera;
+  const cx = Math.min(Math.max(player.pos.x - VIEW_W/2, 0), WORLD_W - VIEW_W);
+  const cy = Math.min(Math.max(player.pos.y - VIEW_H/2, 0), WORLD_H - VIEW_H);
+  return { x:cx, y:cy };
+}
+
+function toWorld(ev){
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width/rect.width, scaleY = canvas.height/rect.height;
+  const cam = getCamera();
+  const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
+  const clientY = ev.touches ? ev.touches[0].clientY : ev.clientY;
+  return { wx:(clientX-rect.left)*scaleX + cam.x, wy:(clientY-rect.top)*scaleY + cam.y, clientX, clientY, rect };
+}
+
+function regionAt(x){
+  if(x < 620) return "Floresta Inicial";
+  if(x < ISLAND_GATE_X) return "Vila Portuária";
+  if(x < STONE_GATE_X) return "Ilha Vizinha";
+  if(x < SWAMP_GATE_X) return "Colinas de Pedra";
+  return "Pântano Nebuloso";
+}
+function regionColorAt(x){
+  if(x < 620) return "#2f5a3c";
+  if(x < ISLAND_GATE_X - 30) return "#6b5638";
+  if(x < ISLAND_GATE_X + 50) return "#204a63";
+  if(x < STONE_GATE_X) return "#3a6b4f";
+  if(x < SWAMP_GATE_X) return "#5c5850";
+  return "#4a3a5c";
+}
+
+// =====================================================================
+// SPRITES EM PIXEL ART
+// =====================================================================
+function drawSprite(c, cx, cy, grid, palette, px){
+  const h = grid.length, w = grid[0].length;
+  const ox = cx - (w*px)/2, oy = cy - (h*px)/2;
+  for(let r=0;r<h;r++){
+    for(let col=0; col<w; col++){
+      const ch = grid[r][col];
+      if(ch === "." ) continue;
+      c.fillStyle = palette[ch];
+      c.fillRect(ox+col*px, oy+r*px, px, px);
+    }
+  }
+}
+
+const SPR_TREE = ["..LLLL..","LLDDDDLL","LDDDDDDL","LDDDDDDL",".DDDDDD.","..DDDD..","...TT...","...TT...","...TT..."];
+const SPR_ORE  = [".GGGGG.","GGGGGGG","GGSGGGG","GGGGGSG",".GGGGG.","..GGG.."];
+// pedreira: pilha de rochas achatada, sem brilho — silhueta e paleta diferentes do minério
+const SPR_STONE= [".GgGGgG.","GGGGGGGG","GgGGGGgG",".GGGGGG.","..GGGG.."];
+const SPR_HUNT = ["..RRR..",".RRRRR.","RRRRRRR","RR...RR","EEEEEEE"];
+const SPR_BERRY= [".GGGGG.","GGGGGGG","GRGRGRG",".GGGGG.","..GGG.."];
+const SPR_HERB = [".L.L.L.","LLLLLLL",".LLLLL.","..LPL.."];
+const SPR_FISH = ["..FFFF..",".FFFFFFT","FFFFFFFT",".FFFFFFT","..FFFF.."];
+const SPR_MUSH = ["..CCC..",".CCCCC.","CCoCoCC",".CCCCC.","..SSS..","..SSS.."];
+const SPR_ESSENCE=["..GGG..",".GWWWG.","GWWWWWG","GWWWWWG",".GWWWG.","..GGG.."];
+const SPR_HOUSE= ["..RRRR..",".RRRRRR.","RRRRRRRR","WWWWWWWW","WWWAAWWW","WWWAAWWW","WWWWWWWW"];
+const SPR_DOCK = ["WwWwWwWwWw","WWWWWWWWWW"];
+const SPR_PLAYER=["..HHH..",".HSSSH.","..SSS..",".BBBBB.","BBBBBBB",".B.B.B.","..L.L.."];
+
+function drawObject(o){
+  const now = performance.now();
+  const onCooldown = (o.usesLeft !== undefined) && o.usesLeft <= 0;
+  ctx.save();
+  if(onCooldown) ctx.globalAlpha = 0.35;
+
+  if(o.type === "tree"){
+    drawSprite(ctx, o.x, o.y, SPR_TREE, {L:"#4a8f52", D:"#1f5030", T:"#5b3a22"}, 3);
+  } else if(o.type === "ore"){
+    drawSprite(ctx, o.x, o.y, SPR_ORE, {G:"#7a7a72", S:"#eae0c0"}, 3.2);
+  } else if(o.type === "rareOre"){
+    drawSprite(ctx, o.x, o.y, SPR_ORE, {G:"#6a5a8a", S:"#ffe27a"}, 3.2);
+  } else if(o.type === "goldOre"){
+    drawSprite(ctx, o.x, o.y, SPR_ORE, {G:"#5c5850", S:"#ffd464"}, 3.2);
+  } else if(o.type === "stone"){
+    drawSprite(ctx, o.x, o.y, SPR_STONE, {G:"#9a8f80", g:"#6e6152"}, 3.2);
+  } else if(o.type === "hunt"){
+    drawSprite(ctx, o.x, o.y, SPR_HUNT, {R:"#8a3a2e", E:"#c9a878"}, 3.2);
+  } else if(o.type === "berry"){
+    drawSprite(ctx, o.x, o.y, SPR_BERRY, {G:"#2f6b3a", R:"#c1502e"}, 3.2);
+  } else if(o.type === "herb"){
+    drawSprite(ctx, o.x, o.y, SPR_HERB, {L:"#3f8a4a", P:"#caa24a"}, 3.4);
+  } else if(o.type === "fish"){
+    drawSprite(ctx, o.x, o.y, SPR_FISH, {F:"#7fb8e0", T:"#3f7fbf"}, 3.2);
+  } else if(o.type === "mushroom"){
+    drawSprite(ctx, o.x, o.y, SPR_MUSH, {C:"#8a3a7a", o:"#e0c9a6", S:"#d8cbb0"}, 3.2);
+  } else if(o.type === "essence"){
+    const pulse = 0.75 + 0.25*Math.sin(now/300);
+    ctx.globalAlpha = onCooldown ? 0.35 : pulse;
+    drawSprite(ctx, o.x, o.y, SPR_ESSENCE, {G:"#7a5a9a", W:"#e8d8ff"}, 3.4);
+  } else if(o.type === "shop"){
+    drawSprite(ctx, o.x, o.y, SPR_HOUSE, {R:"#caa24a", W:"#d8c39a", A:"#7a5a2a"}, 3.4);
+  } else if(o.type === "craft"){
+    drawSprite(ctx, o.x, o.y, SPR_HOUSE, {R:"#9a7148", W:"#c9b48a", A:"#d4af37"}, 3.4);
+  } else if(o.type === "blacksmith"){
+    drawSprite(ctx, o.x, o.y, SPR_HOUSE, {R:"#4a4a52", W:"#8a8a82", A:"#c1502e"}, 3.4);
+  } else if(o.type === "inn"){
+    drawSprite(ctx, o.x, o.y, SPR_HOUSE, {R:"#7a5a2a", W:"#e0c9a6", A:"#caa24a"}, 3.4);
+  } else if(o.type === "dock"){
+    drawSprite(ctx, o.x, o.y+2, SPR_DOCK, {W:"#8a6a3a", w:"#6b4e28"}, 4.5);
+    ctx.font="15px sans-serif"; ctx.textAlign="center"; ctx.fillStyle="#fff"; ctx.fillText("⛵", o.x, o.y-12);
+  }
+  ctx.restore();
+
+  if(o.usesLeft !== undefined){
+    ctx.fillStyle = "#fff"; ctx.font="11px monospace"; ctx.textAlign="center";
+    if(onCooldown){
+      const secs = Math.max(0, Math.ceil((o.cooldownUntil-now)/1000));
+      ctx.fillText(`⏳${secs}s`, o.x, o.y-24);
+    } else {
+      ctx.fillText(`${o.usesLeft}/${o.maxUses}`, o.x, o.y-24);
+    }
+  }
+}
+
+function drawPlayer(){
+  drawSprite(ctx, player.pos.x, player.pos.y, SPR_PLAYER, {H:"#2b2116", S:"#e0b58a", B:"#c1502e", L:"#3a2a18"}, 3);
+}
+
+// =====================================================================
+// PRÉ-RENDER DO CENÁRIO ESTÁTICO
+// =====================================================================
+const bgCanvas = document.createElement("canvas");
+bgCanvas.width = WORLD_W; bgCanvas.height = WORLD_H;
+const bgCtx = bgCanvas.getContext("2d");
+bgCtx.imageSmoothingEnabled = false;
+
+const SPECKLE = {
+  "#2f5a3c": ["#3a6f47","#254a32"],
+  "#6b5638": ["#7d6748","#5a4830"],
+  "#204a63": ["#2c5a78","#173d52"],
+  "#3a6b4f": ["#437c59","#2f5942"],
+  "#5c5850": ["#6c675e","#4c473f"],
+  "#4a3a5c": ["#5c4a70","#3a2c48"],
+};
+function hash2(x,y){ const h = Math.sin(x*127.1+y*311.7)*43758.5453; return h - Math.floor(h); }
+
+function renderStaticBackground(){
+  const c = bgCtx;
+  for(let ty=0; ty<WORLD_H; ty+=TILE_PX){
+    for(let tx=0; tx<WORLD_W; tx+=TILE_PX){
+      const base = regionColorAt(tx+TILE_PX/2);
+      c.fillStyle = base;
+      c.fillRect(tx, ty, TILE_PX, TILE_PX);
+      const variants = SPECKLE[base];
+      for(let i=0;i<4;i++){
+        const hx = hash2(tx*3+i, ty*7+i*2), hy = hash2(tx*5+i*3, ty*2+i);
+        if(hx > 0.72){
+          c.fillStyle = variants[hy>0.5?0:1];
+          const sx = tx + hx*(TILE_PX-4), sy = ty + hy*(TILE_PX-4);
+          if(base === "#204a63"){ c.fillRect(sx, sy, 6, 2); }
+          else { c.fillRect(sx, sy, 3, 3); }
+        }
+      }
+    }
+  }
+  c.strokeStyle = "#00000015";
+  for(let x=0;x<WORLD_W;x+=TILE_PX){ c.beginPath(); c.moveTo(x,0); c.lineTo(x,WORLD_H); c.stroke(); }
+  for(let y=0;y<WORLD_H;y+=TILE_PX){ c.beginPath(); c.moveTo(0,y); c.lineTo(WORLD_W,y); c.stroke(); }
+
+  ROADS.forEach(points=>{
+    c.strokeStyle = "#4a3220"; c.lineWidth = 12; c.lineJoin="round"; c.lineCap="round";
+    c.beginPath(); points.forEach((p,i)=> i===0?c.moveTo(p.x,p.y):c.lineTo(p.x,p.y)); c.stroke();
+    c.strokeStyle = "#a9855a"; c.lineWidth = 7;
+    c.beginPath(); points.forEach((p,i)=> i===0?c.moveTo(p.x,p.y):c.lineTo(p.x,p.y)); c.stroke();
+    c.strokeStyle = "#c4a578"; c.lineWidth = 2;
+    c.beginPath(); points.forEach((p,i)=> i===0?c.moveTo(p.x,p.y):c.lineTo(p.x,p.y)); c.stroke();
+  });
+
+  DECOR.forEach(d=>{
+    if(d.type === "rock"){
+      c.fillStyle="#00000022"; c.beginPath(); c.ellipse(d.x+2,d.y+4,10,5,0,0,Math.PI*2); c.fill();
+      c.fillStyle="#8a8a82"; c.beginPath(); c.ellipse(d.x,d.y,9,6,0,0,Math.PI*2); c.fill();
+      c.fillStyle="#a8a8a0"; c.beginPath(); c.ellipse(d.x-2,d.y-2,4,3,0,0,Math.PI*2); c.fill();
+    } else if(d.type === "flower"){
+      [[-4,0],[4,0],[0,-4],[0,4]].forEach(p=>{
+        c.fillStyle="#e08fae"; c.beginPath(); c.arc(d.x+p[0],d.y+p[1],2.2,0,Math.PI*2); c.fill();
+      });
+      c.fillStyle="#f2d24a"; c.beginPath(); c.arc(d.x,d.y,2,0,Math.PI*2); c.fill();
+    } else if(d.type === "tuft"){
+      c.strokeStyle="#2f6b3a"; c.lineWidth=2;
+      [-5,0,5].forEach(dx=>{ c.beginPath(); c.moveTo(d.x+dx,d.y+6); c.lineTo(d.x+dx*0.6,d.y-6); c.stroke(); });
+    }
+  });
+}
+
+// ---------- FOG OF WAR (revelação) ----------
+function revealAround(x,y,radiusCells){
+  const cx = Math.floor(x/FOG_CELL), cy = Math.floor(y/FOG_CELL);
+  for(let dy=-radiusCells; dy<=radiusCells; dy++){
+    for(let dx=-radiusCells; dx<=radiusCells; dx++){
+      const gx=cx+dx, gy=cy+dy;
+      if(gx<0||gy<0||gx>=FOG_COLS||gy>=FOG_ROWS) continue;
+      if(Math.hypot(dx,dy) <= radiusCells) revealed[gy][gx] = true;
+    }
+  }
+}
+
+// névoa desenhada no mapa principal (mesmo modelo binário do minimapa):
+// só as células já reveladas ficam visíveis; o resto fica encoberto.
+function drawFogOverlay(){
+  const cam = getCamera();
+  const startGX = Math.max(0, Math.floor(cam.x/FOG_CELL));
+  const endGX = Math.min(FOG_COLS-1, Math.ceil((cam.x+VIEW_W)/FOG_CELL));
+  const startGY = Math.max(0, Math.floor(cam.y/FOG_CELL));
+  const endGY = Math.min(FOG_ROWS-1, Math.ceil((cam.y+VIEW_H)/FOG_CELL));
+  ctx.fillStyle = "rgba(6,10,8,0.94)";
+  for(let gy=startGY; gy<=endGY; gy++){
+    for(let gx=startGX; gx<=endGX; gx++){
+      if(revealed[gy][gx]) continue;
+      ctx.fillRect(gx*FOG_CELL, gy*FOG_CELL, FOG_CELL, FOG_CELL);
+    }
+  }
+}
+
+function drawMap(){
+  const cam = getCamera();
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.save();
+  ctx.translate(-cam.x, -cam.y);
+  ctx.drawImage(bgCanvas, 0, 0);
+  OBJECTS.forEach(drawObject);
+  if(move){
+    ctx.strokeStyle="#d4af37"; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(move.ex, move.ey, 6, 0, Math.PI*2); ctx.stroke();
+  }
+  drawPlayer();
+  drawFogOverlay();
+  ctx.restore();
+}
+
+const OBJECT_DOT_COLOR = {
+  tree:"#e8b473", ore:"#c9c1a0", rareOre:"#ffe27a", goldOre:"#ffd464", stone:"#a89880", hunt:"#ff6b4a",
+  berry:"#9be36f", herb:"#8fe06b", fish:"#7fb8e0", mushroom:"#e08fce", essence:"#e8d8ff",
+  shop:"#ffd464", craft:"#ffe27a", blacksmith:"#ff6b4a", inn:"#f2ddb0", dock:"#c9dce8"
+};
+
+function drawMinimapOn(c, canvasEl, scale, big){
+  c.clearRect(0,0,canvasEl.width,canvasEl.height);
+  c.fillStyle = "#000"; c.fillRect(0,0,canvasEl.width,canvasEl.height);
+  for(let gy=0; gy<FOG_ROWS; gy++){
+    for(let gx=0; gx<FOG_COLS; gx++){
+      if(!revealed[gy][gx]) continue;
+      c.fillStyle = regionColorAt(gx*FOG_CELL);
+      c.fillRect(gx*scale, gy*scale, scale, scale);
+    }
+  }
+  OBJECTS.forEach(o=>{
+    const gx = Math.floor(o.x/FOG_CELL), gy = Math.floor(o.y/FOG_CELL);
+    if(gx<0||gy<0||gx>=FOG_COLS||gy>=FOG_ROWS || !revealed[gy][gx]) return;
+    const r = big ? 3.2 : 2;
+    const px = o.x/FOG_CELL*scale, py = o.y/FOG_CELL*scale;
+    c.beginPath(); c.arc(px, py, r, 0, Math.PI*2);
+    c.fillStyle = OBJECT_DOT_COLOR[o.type] || "#fff"; c.fill();
+    c.lineWidth = big ? 1 : 0.75; c.strokeStyle = "#00000099"; c.stroke();
+    if(big && bigMapSelected && !bigMapSelected.isPoint && o===bigMapSelected){
+      c.strokeStyle="#fff"; c.lineWidth=2;
+      c.beginPath(); c.arc(px, py, r+4, 0, Math.PI*2); c.stroke();
+    }
+  });
+  if(big && bigMapSelected && bigMapSelected.isPoint){
+    const px = bigMapSelected.x/FOG_CELL*scale, py = bigMapSelected.y/FOG_CELL*scale;
+    c.strokeStyle="#fff"; c.lineWidth=2;
+    c.beginPath(); c.moveTo(px-7,py); c.lineTo(px+7,py); c.moveTo(px,py-7); c.lineTo(px,py+7); c.stroke();
+  }
+  const cam = getCamera();
+  c.strokeStyle = "#ffffff88"; c.lineWidth = 1;
+  c.strokeRect(cam.x/FOG_CELL*scale, cam.y/FOG_CELL*scale, VIEW_W/FOG_CELL*scale, VIEW_H/FOG_CELL*scale);
+  c.beginPath(); c.arc(player.pos.x/FOG_CELL*scale, player.pos.y/FOG_CELL*scale, big?4:2.5, 0, Math.PI*2);
+  c.fillStyle = "#ff5a3c"; c.fill(); c.lineWidth=1; c.strokeStyle="#000"; c.stroke();
+}
+
+// =====================================================================
+// INTERAÇÃO NO MAPA — arrastar (pan) vs tocar (viajar)
+// =====================================================================
+function hideHoverTip(){ document.getElementById("hoverTip").style.display = "none"; }
+
+function handleMapTap(ev){
+  if(task || move) return;
+  const { wx, wy } = toWorld(ev);
+  const obj = findObjectNear(wx, wy);
+  if(obj){ showTravelPanel(obj); return; }
+  hideTravelPanel();
+  startMoveTo(wx, wy, null);
+}
+
+let dragState = null;
+canvas.addEventListener("pointerdown", (ev)=>{
+  hideHoverTip();
+  dragState = { startX:ev.clientX, startY:ev.clientY, camStart:getCamera(), moved:false };
+  try{ canvas.setPointerCapture(ev.pointerId); }catch(e){}
+  canvas.style.cursor = "grabbing";
+});
+canvas.addEventListener("pointermove", (ev)=>{
+  if(!dragState) return;
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width/rect.width, scaleY = canvas.height/rect.height;
+  const dx = (ev.clientX-dragState.startX)*scaleX, dy = (ev.clientY-dragState.startY)*scaleY;
+  if(Math.hypot(dx,dy) > 5) dragState.moved = true;
+  if(dragState.moved){
+    let nx = dragState.camStart.x - dx, ny = dragState.camStart.y - dy;
+    nx = Math.min(Math.max(nx,0), WORLD_W-VIEW_W);
+    ny = Math.min(Math.max(ny,0), WORLD_H-VIEW_H);
+    manualCamera = { x:nx, y:ny };
+  }
+});
+function endDrag(ev){
+  canvas.style.cursor = "grab";
+  if(!dragState) return;
+  if(!dragState.moved) handleMapTap(ev);
+  dragState = null;
+}
+canvas.addEventListener("pointerup", endDrag);
+canvas.addEventListener("pointercancel", ()=>{ dragState=null; canvas.style.cursor="grab"; });
+
+document.getElementById("recenterBtn").addEventListener("click", ()=>{ manualCamera = null; });
+
+const supportsHover = !!(window.matchMedia && window.matchMedia("(hover:hover) and (pointer:fine)").matches);
+if(supportsHover){
+  canvas.addEventListener("mousemove", (ev)=>{
+    if(dragState && dragState.moved){ hideHoverTip(); return; }
+    const { wx, wy, clientX, clientY, rect } = toWorld(ev);
+    const obj = findObjectNear(wx, wy);
+    const tip = document.getElementById("hoverTip");
+    if(obj && !travelTarget && !confirmObj){
+      tip.textContent = obj.label;
+      tip.style.left = (clientX-rect.left+14)+"px";
+      tip.style.top = (clientY-rect.top-22)+"px";
+      tip.style.display = "block";
+    } else {
+      tip.style.display = "none";
+    }
+  });
+  canvas.addEventListener("mouseleave", hideHoverTip);
+}
+
+// =====================================================================
+// MINIMAPA AMPLIADO
+// =====================================================================
+const minimapModal = document.getElementById("minimapModal");
+document.getElementById("expandMinimapBtn").addEventListener("click", ()=>{
+  bigMapSelected = null;
+  document.getElementById("bigMinimapInfo").textContent = "Toque em qualquer ponto do mapa para ver o que há lá.";
+  minimapModal.classList.add("open");
+});
+document.getElementById("closeMinimapBtn").addEventListener("click", ()=> minimapModal.classList.remove("open"));
+minimapModal.addEventListener("click", (ev)=>{ if(ev.target === minimapModal) minimapModal.classList.remove("open"); });
+
+bigMinimap.addEventListener("click", (ev)=>{
+  const rect = bigMinimap.getBoundingClientRect();
+  const scaleX = bigMinimap.width/rect.width, scaleY = bigMinimap.height/rect.height;
+  const mx = (ev.clientX-rect.left)*scaleX, my=(ev.clientY-rect.top)*scaleY;
+  const infoEl = document.getElementById("bigMinimapInfo");
+
+  let best=null, bestD=Infinity;
+  OBJECTS.forEach(o=>{
+    const gx=Math.floor(o.x/FOG_CELL), gy=Math.floor(o.y/FOG_CELL);
+    if(gx<0||gy<0||gx>=FOG_COLS||gy>=FOG_ROWS||!revealed[gy][gx]) return;
+    const ox=o.x/FOG_CELL*BIG_MM_SCALE, oy=o.y/FOG_CELL*BIG_MM_SCALE;
+    const d=Math.hypot(mx-ox,my-oy);
+    if(d<16 && d<bestD){ best=o; bestD=d; }
+  });
+
+  if(best){
+    bigMapSelected = best;
+    infoEl.innerHTML = `<b>${best.label}</b> — ${TYPE_DESC[best.type]||""}<br><button class="action small" id="bigTravelBtn">Ir até lá</button>`;
+    return;
+  }
+
+  const worldX = Math.min(WORLD_W, Math.max(0, mx/BIG_MM_SCALE*FOG_CELL));
+  const worldY = Math.min(WORLD_H, Math.max(0, my/BIG_MM_SCALE*FOG_CELL));
+  const gx = Math.floor(worldX/FOG_CELL), gy = Math.floor(worldY/FOG_CELL);
+  const isRevealed = gx>=0 && gy>=0 && gx<FOG_COLS && gy<FOG_ROWS && revealed[gy][gx];
+  bigMapSelected = { x:worldX, y:worldY, isPoint:true };
+  const label = isRevealed ? regionAt(worldX) : "Área inexplorada";
+  infoEl.innerHTML = `<b>${label}</b><br><button class="action small" id="bigTravelBtn">Ir até aqui</button>`;
+});
+document.getElementById("bigMinimapInfo").addEventListener("click", (ev)=>{
+  if(ev.target.id === "bigTravelBtn" && bigMapSelected){
+    const o = bigMapSelected;
+    minimapModal.classList.remove("open");
+    if(!task && !move) startMoveTo(o.x, o.y, o.isPoint ? null : o);
+  }
+});
+
+// =====================================================================
+// ABAS DO PAINEL LATERAL
+// =====================================================================
+document.querySelectorAll(".tabBtn").forEach(btn=>{
+  btn.addEventListener("click", ()=> setTab(btn.dataset.tab));
+});
+function setTab(tab){
+  activeTab = tab;
+  document.querySelectorAll(".tabBtn").forEach(b=> b.classList.toggle("active", b.dataset.tab===tab));
+  renderTab();
+}
+
+document.getElementById("tabContent").addEventListener("click", (ev)=>{
+  const t = ev.target;
+  if(t.dataset.craft) tryCraft(t.dataset.craft);
+  else if(t.dataset.craftqtyminus){
+    const id = t.dataset.craftqtyminus;
+    craftQty[id] = Math.max(1, (craftQty[id]||1)-1);
+    renderTab();
+  } else if(t.dataset.craftqtyplus){
+    const id = t.dataset.craftqtyplus;
+    const rec = RECIPES.find(r=>r.id===id);
+    const maxQ = maxCraftable(rec);
+    craftQty[id] = Math.min(maxQ, (craftQty[id]||1)+1);
+    renderTab();
+  }
+  else if(t.dataset.use) useConsumable(t.dataset.use);
+  else if(t.dataset.sell) trySell(nearBuilding, t.dataset.sell);
+  else if(t.dataset.buytool){ const [tool,price] = t.dataset.buytool.split(":"); tryBuyToolUpgrade(tool, parseInt(price)); }
+  else if(t.id === "buyTicketBtn") tryBuyTicket();
+  else if(t.id === "restBtn") tryRest(nearBuilding.price);
+});
+
+function renderTab(){
+  const el = document.getElementById("tabContent");
+  if(activeTab==="status") el.innerHTML = renderStatusTab();
+  else if(activeTab==="inv") el.innerHTML = renderInvTab();
+  else if(activeTab==="craft") el.innerHTML = renderCraftTab();
+  else if(activeTab==="local") el.innerHTML = renderLocalTab();
+}
+
+function renderStatusTab(){
+  let html = "";
+  for(const key in SKILL_DEFS){
+    const xp = player.skills[key].xp, lvl = levelFromXp(xp), pct = xpIntoLevel(xp);
+    html += `<div class="skillRow">
+      <div class="lbl"><span>${SKILL_DEFS[key].name}</span><span>Nv. ${lvl}</span></div>
+      <div class="barOuter"><div class="barInner xp" style="width:${pct}%"></div></div>
+    </div>`;
+  }
+  html += `<div class="skillRow"><div class="lbl"><span>Energia</span><span>${player.energy.toFixed(0)}/${player.maxEnergy}</span></div>
+    <div class="barOuter"><div class="barInner energy" style="width:${player.energy}%"></div></div></div>`;
+  html += `<div class="hint" style="display:block;">Machado Nv.${player.tools.axe} · Picareta Nv.${player.tools.pickaxe} · Vara Nv.${player.tools.rod} · Capa ${player.tools.cloak>=2?"✔":"—"} · Capacidade ${player.maxWeight}</div>`;
+  return html;
+}
+
+function renderInvTab(){
+  let html = ""; let any=false;
+  for(const id in player.inventory){
+    const qty = player.inventory[id];
+    if(qty<=0) continue;
+    any=true;
+    const useBtn = ITEMS[id].restoreEnergy ? `<button class="action small" data-use="${id}">Usar (+${ITEMS[id].restoreEnergy}⚡)</button>` : "";
+    html += `<div class="itemRow"><span>${ITEMS[id].name}</span><span class="qty">${qty}</span>${useBtn}</div>`;
+  }
+  if(!any) html = `<div class="hint" style="display:block;">Inventário vazio. Colete madeira, minério ou frutas no mapa.</div>`;
+  return html;
+}
+
+function renderCraftTab(){
+  const withStatus = RECIPES.map(rec=>{
+    const maxQ = maxCraftable(rec);
+    const lvlOk = skillLevel(rec.skill) >= rec.minLevel;
+    return { rec, maxQ, lvlOk, ok: maxQ>=1 && lvlOk };
+  });
+  withStatus.sort((a,b)=> (b.ok?1:0) - (a.ok?1:0));
+
+  let html = "";
+  withStatus.forEach(({rec, maxQ, lvlOk, ok})=>{
+    const needTxt = Object.keys(rec.inputs).map(id=>`${rec.inputs[id]}x ${ITEMS[id].name} (${player.inventory[id]||0})`).join(" + ");
+    const lvlNote = !lvlOk ? ` — requer ${SKILL_DEFS[rec.skill].name} Nv.${rec.minLevel}` : "";
+    const haveTxt = rec.output ? `<span style="font-weight:normal; font-size:11px; color:#5a4a30;"> (você tem: ${player.inventory[rec.output]||0})</span>` : "";
+    const qty = ok ? Math.min(craftQty[rec.id]||1, maxQ) : 1;
+    const qtyRow = (ok && maxQ>1) ? `<div class="qtyRow">Fazer: <button class="action small" data-craftqtyminus="${rec.id}">−</button> <b>${qty}</b>
+      <button class="action small" data-craftqtyplus="${rec.id}">+</button> <span style="font-size:11px; color:#5a4a30;">(máx. ${maxQ})</span></div>` : "";
+    html += `<div class="recipeCard ${ok?'ready':''}">
+      <h4>${rec.name}${haveTxt} ${ok?'<span class="tag">Pronto</span>':''}</h4>
+      <div class="need ${ok?'':'bad'}">${needTxt}${lvlNote}</div>
+      <div class="hint" style="display:block; margin:0 0 6px 0;">${rec.desc}</div>
+      ${qtyRow}
+      <button class="action small" data-craft="${rec.id}" ${(!ok||move||task)?"disabled":""}>Produzir${(ok&&maxQ>1)?` (${qty}x)`:""}</button>
+    </div>`;
+  });
+  return html;
+}
+
+function renderLocalTab(){
+  if(!nearBuilding) return `<div class="hint" style="display:block;">Ande até um mercador, o ferreiro, a estalagem ou a doca para interagir aqui.</div>`;
+  const b = nearBuilding;
+  let html = `<div class="hint" style="display:block; margin-bottom:8px;">${b.label}</div>`;
+  if(b.type === "shop"){
+    for(const id in b.prices){
+      const qty = player.inventory[id]||0;
+      html += `<div class="itemRow"><span>${ITEMS[id].name} — ${b.prices[id]}g cada</span>
+        <button class="action small" data-sell="${id}" ${qty<1?"disabled":""}>Vender (${qty})</button></div>`;
+    }
+  } else if(b.type === "blacksmith"){
+    b.sells.forEach(s=>{
+      const owned = player.tools[s.tool] >= 2;
+      html += `<div class="itemRow"><span>${s.name} — ${s.price}g</span>
+        <button class="action small" data-buytool="${s.tool}:${s.price}" ${(owned||player.gold<s.price)?"disabled":""}>
+          ${owned ? "Já possui" : "Comprar"}</button></div>`;
+    });
+  } else if(b.type === "inn"){
+    html += `<div class="itemRow"><span>Descansar — recupera toda a energia</span>
+      <button class="action small" id="restBtn" ${(player.energy>=player.maxEnergy||player.gold<b.price)?"disabled":""}>Pagar ${b.price}g</button></div>`;
+  } else if(b.type === "dock"){
+    html += `<div class="itemRow"><span>Passagem de Barco (${BOAT_PRICE}g)</span>
+      <button class="action small" id="buyTicketBtn" ${(player.inventory.boatTicket>=1||player.gold<BOAT_PRICE)?"disabled":""}>
+        ${player.inventory.boatTicket>=1 ? "Possui" : "Comprar"}
+      </button></div>`;
+  }
+  return html;
+}
+
+// =====================================================================
+// TOPO / PROGRESSO
+// =====================================================================
+function renderTopbar(){
+  document.getElementById("regionLbl").textContent = regionAt(player.pos.x);
+  document.getElementById("goldLbl").textContent = player.gold;
+  document.getElementById("weightLbl").textContent = `${currentWeight()}/${player.maxWeight}`;
+  document.getElementById("energyLbl").textContent = `${player.energy.toFixed(0)}/${player.maxEnergy}`;
+}
+
+function renderProgress(){
+  const lbl = document.getElementById("progressLbl");
+  const bar = document.getElementById("progressBar");
+  const cancelBtn = document.getElementById("cancelMoveBtn");
+  if(move){
+    const now = performance.now();
+    const pct = Math.min(100, ((now-move.start)/(move.end-move.start))*100);
+    lbl.textContent = "Caminhando...";
+    bar.style.width = pct+"%";
+    cancelBtn.style.display = "inline-block";
+  } else if(task){
+    const now = performance.now();
+    const pct = Math.min(100, ((now-task.start)/(task.end-task.start))*100);
+    lbl.textContent = task.type === "gather" ? "Coletando..." : "Produzindo...";
+    bar.style.width = pct+"%";
+    cancelBtn.style.display = "none";
+  } else {
+    lbl.textContent = manualCamera ? "Mapa livre — toque 🎯 para recentralizar." : "Ocioso — toque num ponto do mapa.";
+    bar.style.width = "0%";
+    cancelBtn.style.display = "none";
+  }
+}
+
+// =====================================================================
+// LOOP PRINCIPAL
+// =====================================================================
+function updateMove(){
+  if(!move) return;
+  const before = { x:player.pos.x, y:player.pos.y };
+  const now = performance.now();
+  const t = Math.min(1, (now-move.start)/(move.end-move.start));
+  player.pos.x = move.sx + (move.ex-move.sx)*t;
+  player.pos.y = move.sy + (move.ey-move.sy)*t;
+
+  const stepDist = dist(before, player.pos);
+  const cloakMul = player.tools.cloak >= 2 ? 0.8 : 1;
+  player.energy = Math.max(0, player.energy - (stepDist/TILE_PX)*WALK_ENERGY_PER_SQM*cloakMul);
+
+  if(t >= 1){
+    const arrivedObj = move.targetObj;
+    move = null;
+    onArrive(arrivedObj);
+  }
+}
+
+function updateTask(){
+  if(!task) return;
+  if(performance.now() >= task.end){
+    const t = task; task = null;
+    if(t.type === "gather") finishGather(t.meta);
+    else if(t.type === "craft") finishCraft(t.meta);
+  }
+}
+
+function updateCooldowns(){
+  const now = performance.now();
+  for(const o of OBJECTS){
+    if(o.usesLeft !== undefined && o.usesLeft <= 0 && o.cooldownUntil && now >= o.cooldownUntil){
+      o.usesLeft = o.maxUses; o.cooldownUntil = 0;
+    }
+  }
+}
+
+function gameLoop(){
+  updateMove();
+  updateTask();
+  updateCooldowns();
+  revealAround(player.pos.x, player.pos.y, FOG_REVEAL_RADIUS);
+  drawMap();
+  drawMinimapOn(mctx, minimap, MM_SCALE, false);
+  if(minimapModal.classList.contains("open")) drawMinimapOn(bmctx, bigMinimap, BIG_MM_SCALE, true);
+  renderProgress();
+  renderTopbar();
+  requestAnimationFrame(gameLoop);
+}
+
+// =====================================================================
+// INICIALIZAÇÃO
+// =====================================================================
+renderStaticBackground();
+fitMapInner();
+log("Bem-vindo à Floresta Inicial. Arraste o mapa para explorar ou toque para caminhar.", true);
+setTab("status");
+gameLoop();
+</script>
+</body>
+</html>
