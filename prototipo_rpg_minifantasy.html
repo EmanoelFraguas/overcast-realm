@@ -1466,7 +1466,10 @@ function drawFogOverlay(){
   const endGX = Math.min(FOG_COLS-1, Math.ceil((cam.x+VIEW_W)/FOG_CELL));
   const startGY = Math.max(0, Math.floor(cam.y/FOG_CELL));
   const endGY = Math.min(FOG_ROWS-1, Math.ceil((cam.y+VIEW_H)/FOG_CELL));
-  ctx.fillStyle = "rgba(6,10,8,0.94)";
+  // cor sólida (não translúcida): compositar alpha em ~176 blocos, 60x/s,
+  // era o que estava pesando no celular logo de cara (a névoa cobre quase
+  // a tela toda quando "revealed" está zerado, como logo após reiniciar)
+  ctx.fillStyle = "#070b09";
   for(let gy=startGY; gy<=endGY; gy++){
     for(let gx=startGX; gx<=endGX; gx++){
       if(revealed[gy][gx]) continue;
