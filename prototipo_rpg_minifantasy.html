@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-<title>Trilhas de Aldeceira — Protótipo v10</title>
+<title>Trilhas de Aldeceira — Protótipo v12</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
 :root{
   --forest-dark:#1e3a2b; --forest-mid:#3f6b4a; --bark:#4a3221;
   --parchment:#e8dcb5; --parchment-dk:#cbb989; --ink:#2b2116;
-  --gold:#d4af37; --ember:#c1502e; --energy:#3f7fbf; --stone:#8a8a86;
+  --gold:#d4af37; --ember:#c1502e; --energy:#3f7fbf; --hp:#c1502e; --stone:#8a8a86;
 }
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
 html,body{ margin:0; padding:0; height:100%; background:#10120d; color:var(--ink);
@@ -76,9 +76,11 @@ h1 span.sub{ font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Aria
 .barInner.xp{ background:var(--gold); }
 .barInner.busy{ background:var(--ember); }
 .barInner.energy{ background:var(--energy); }
+.barInner.hp{ background:var(--hp); }
 .itemRow{ display:flex; justify-content:space-between; align-items:center; padding:6px 0;
   border-bottom:1px dashed var(--bark); gap:8px; flex-wrap:wrap; }
 .itemRow .qty{ color:var(--forest-dark); font-weight:bold; }
+.equippedTag{ font-size:10px; background:var(--forest-dark); color:#bfe6c8; padding:2px 6px; margin-left:4px; }
 button.action{ font-family:inherit; font-size:13px; padding:8px 12px; background:var(--forest-mid);
   color:#eee; border:2px solid var(--forest-dark); cursor:pointer; min-height:38px; }
 button.action:disabled{ background:#999; color:#ddd; border-color:#666; cursor:not-allowed; }
@@ -120,6 +122,18 @@ button.action.small{ padding:4px 8px; font-size:11px; min-height:auto; }
 #bigMinimapInfo b{ color:var(--forest-dark); }
 #saveModal .modalBox{ min-width:280px; }
 
+/* ---------- BATALHA ---------- */
+#battleModal .modalBox{ min-width:280px; max-width:420px; border-color:#7a2e14; box-shadow: inset 0 0 0 3px #c1502e55; }
+#battleTitle{ color:#7a2e14; }
+#battleArea{ display:flex; gap:14px; margin-bottom:8px; flex-wrap:wrap; }
+.battleSide{ flex:1 1 140px; font-size:12px; }
+.battleSide b{ font-size:13px; }
+.battleSide .barOuter{ height:13px; margin-top:3px; }
+#battleLog{ display:block; min-height:44px; background:#0c1a12; color:#bfe6c8; padding:6px 8px;
+  font-family:"Courier New",monospace; font-size:12px; margin-top:6px; }
+#battleActions{ display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
+#battleItems{ display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+
 @media (max-width:700px){
   html,body{ height:100%; overflow:hidden; }
   #app{ height:100dvh; height:100vh; margin:0; border-width:3px; padding:6px;
@@ -147,14 +161,15 @@ button.action.small{ padding:4px 8px; font-size:11px; min-height:auto; }
 </head>
 <body>
 <div id="app">
-  <h1><span class="titleText">Trilhas de Aldeceira</span> <span class="sub">protótipo v10</span>
+  <h1><span class="titleText">Trilhas de Aldeceira</span> <span class="sub">protótipo v12 — vida &amp; combate</span>
     <button class="action small" id="fullscreenBtn"><span class="btnIcon">⛶</span><span class="btnLabel"> Tela cheia</span></button>
   </h1>
   <div id="topbar">
     <div class="stat">🗺️ <b id="regionLbl">-</b></div>
+    <div class="stat">❤️ <b id="hpLbl">100/100</b></div>
+    <div class="stat">⚡ <b id="energyLbl">0/100</b></div>
     <div class="stat">🎒 <b id="weightLbl">0/0</b></div>
     <div class="stat">🪙 <b id="goldLbl">0</b></div>
-    <div class="stat">⚡ <b id="energyLbl">0/100</b></div>
     <button class="action small" id="saveMenuBtn" title="Salvar / Carregar">💾</button>
   </div>
 
@@ -207,7 +222,7 @@ button.action.small{ padding:4px 8px; font-size:11px; min-height:auto; }
   </div>
 
   <div id="log"></div>
-  <div class="hint">Arraste o mapa para explorar sem andar. Toque num local parado para ver o que é e confirmar. 💾 no topo para salvar/carregar/reiniciar.</div>
+  <div class="hint">Inimigos (⚔️ no mapa) iniciam combate automaticamente ao serem alcançados — não dá pra passar sem lutar ou fugir. Fugir sempre te recua pra trás do inimigo, nunca deixa você passar.</div>
 </div>
 
 <div id="minimapModal" class="modalOverlay">
@@ -223,20 +238,47 @@ button.action.small{ padding:4px 8px; font-size:11px; min-height:auto; }
     <div class="modalHeader"><span>Salvar / Carregar</span><button class="action small" id="closeSaveBtn">Fechar ✕</button></div>
     <div id="saveSlots"></div>
     <button class="action danger" id="resetBtn" style="margin-top:12px; width:100%;">Reiniciar todo o progresso</button>
-    <div class="hint" style="display:block; margin-top:8px;">Progresso fica salvo neste navegador (localStorage). Se abrir o arquivo em outra página/domínio, os slots não são compartilhados entre eles.</div>
+    <div class="hint" style="display:block; margin-top:8px;">Progresso fica salvo neste navegador (localStorage).</div>
+  </div>
+</div>
+
+<!-- Combate: sem botão de fechar — só sai lutando até vencer, ou fugindo -->
+<div id="battleModal" class="modalOverlay">
+  <div class="modalBox">
+    <div class="modalHeader"><span id="battleTitle">Combate</span></div>
+    <div id="battleArea">
+      <div class="battleSide">
+        <div><b>Você</b></div>
+        <div class="barOuter"><div id="battlePlayerHp" class="barInner hp" style="width:100%"></div></div>
+        <div id="battlePlayerHpTxt"></div>
+      </div>
+      <div class="battleSide">
+        <div><b id="battleEnemyName">Inimigo</b></div>
+        <div class="barOuter"><div id="battleEnemyHp" class="barInner hp" style="width:100%"></div></div>
+        <div id="battleEnemyHpTxt"></div>
+      </div>
+    </div>
+    <div id="battleLog"></div>
+    <div id="battleActions">
+      <button class="action" id="battleAttackBtn">⚔️ Atacar</button>
+      <button class="action" id="battleDefendBtn">🛡️ Defender</button>
+      <button class="action danger" id="battleFleeBtn">🏃 Fugir</button>
+    </div>
+    <div id="battleItems"></div>
   </div>
 </div>
 
 <script>
 /* =====================================================================
    NOTAS DE PORTABILIDADE PARA CONSTRUCT 3
-   - manualCamera / drag no canvas -> Scroll-to desabilitado manualmente
-     + comportamento "Drag" num objeto de câmera
-   - fog no mapa principal          -> Tilemap de "fog" com opacidade,
-     sobreposta na camada de cima, igual ao minimapa
-   - craftQty / repeatQty            -> uma Variável de Instância "fila"
-     no objeto de UI, decrementada a cada conclusão de Timer
-   - save/load                       -> LocalStorage / Webstorage plugin
+   - player.hp/maxHp                -> Variáveis Globais separadas de energia
+   - player.equipment{weapon,armor}  -> igual ao equipped de ferramentas,
+     mas guardando o ID do item em vez de um boolean (só 1 slot por tipo)
+   - battle{}                        -> uma Layer de UI de combate; cada
+     botão dispara um evento que resolve o "round" e atualiza duas Progress
+     Bars (vida do jogador / vida do inimigo)
+   - inimigos com cooldownUntil      -> igual aos nós de recurso, mas sem
+     usesLeft — "derrotado" = 1 uso só, que reseta depois do cooldown
    ===================================================================== */
 
 // ---------- CONSTANTES DE MUNDO ----------
@@ -273,39 +315,65 @@ const ITEMS = {
   gem:       { name:"Gema Bruta",           weight:1 },
   pearl:     { name:"Pérola",               weight:1 },
   magicEssence:{ name:"Essência Mágica",    weight:0 },
-  ration:    { name:"Suprimento de Viagem", weight:1, restoreEnergy:15 },
-  cookedMeat:{ name:"Carne Assada",         weight:1, restoreEnergy:25 },
-  cookedFish:{ name:"Peixe Grelhado",       weight:1, restoreEnergy:30 },
-  mealPack:  { name:"Refeição Reforçada",   weight:1, restoreEnergy:45 },
-  vigorPotion:{ name:"Poção de Vigor",      weight:1, restoreEnergy:35 },
-  arcaneElixir:{ name:"Elixir Arcano",      weight:1, restoreEnergy:60 },
+  ration:    { name:"Suprimento de Viagem", weight:1, restoreEnergy:15, restoreHp:5 },
+  cookedMeat:{ name:"Carne Assada",         weight:1, restoreEnergy:25, restoreHp:8 },
+  cookedFish:{ name:"Peixe Grelhado",       weight:1, restoreEnergy:30, restoreHp:8 },
+  mealPack:  { name:"Refeição Reforçada",   weight:1, restoreEnergy:45, restoreHp:15 },
+  vigorPotion:{ name:"Poção de Vigor",      weight:1, restoreEnergy:35, restoreHp:10 },
+  arcaneElixir:{ name:"Elixir Arcano",      weight:1, restoreEnergy:60, restoreHp:20 },
+  healPotionSmall:{ name:"Poção de Vida Pequena", weight:1, restoreHp:30 },
+  healPotion:{ name:"Poção de Vida",        weight:1, restoreHp:60 },
   cutGem:    { name:"Joia Lapidada",        weight:1 },
   pearlNecklace:{ name:"Colar de Pérolas",  weight:1 },
   ironPick:  { name:"Picareta de Ferro",    weight:3 },
   ironAxe:   { name:"Machado de Ferro",     weight:3 },
+  fishingRod:{ name:"Vara de Pesca Reforçada", weight:3 },
+  leatherCloak:{ name:"Capa de Couro",      weight:2 },
+  ironDagger:{ name:"Adaga de Ferro",       weight:2 },
+  ironSword: { name:"Espada de Ferro",      weight:3 },
+  leatherArmor:{ name:"Armadura de Couro",  weight:3 },
+  reinforcedArmor:{ name:"Armadura Reforçada", weight:4 },
   boatTicket:{ name:"Passagem de Barco",    weight:0 },
 };
+
+const TOOL_ITEMS = { axe:"ironAxe", pickaxe:"ironPick", rod:"fishingRod", cloak:"leatherCloak" };
+const OUTPUT_TO_TOOL = { ironAxe:"axe", ironPick:"pickaxe", fishingRod:"rod", leatherCloak:"cloak" };
+const WEAPON_ITEMS = { ironDagger:{atk:5}, ironSword:{atk:12} };
+const ARMOR_ITEMS = { leatherArmor:{def:5}, reinforcedArmor:{def:12} };
+const OUTPUT_TO_SLOT = { ironDagger:"weapon", ironSword:"weapon", leatherArmor:"armor", reinforcedArmor:"armor" };
 
 // ---------- RECEITAS ----------
 const RECIPES = [
   { id:"ironPick", name:"Picareta de Ferro", inputs:{wood:2,ore:3}, output:"ironPick", outQty:1,
-    skill:"crafting", minLevel:1, xp:25, time:4000, desc:"Aumenta a velocidade de mineração." },
+    skill:"crafting", minLevel:1, xp:25, time:4000, desc:"Aumenta a velocidade de mineração. Equipe no Inventário." },
   { id:"cookedMeat", name:"Carne Assada", inputs:{meat:1}, output:"cookedMeat", outQty:1,
-    skill:"crafting", minLevel:1, xp:8, time:2000, desc:"Restaura mais energia que o suprimento comum." },
+    skill:"crafting", minLevel:1, xp:8, time:2000, desc:"Restaura energia e um pouco de vida." },
   { id:"cookedFish", name:"Peixe Grelhado", inputs:{fish:1}, output:"cookedFish", outQty:1,
-    skill:"crafting", minLevel:1, xp:10, time:2200, desc:"Suprimento leve e nutritivo." },
+    skill:"crafting", minLevel:1, xp:10, time:2200, desc:"Suprimento leve, nutritivo." },
+  { id:"healPotionSmall", name:"Poção de Vida Pequena", inputs:{herb:2}, output:"healPotionSmall", outQty:1,
+    skill:"crafting", minLevel:1, xp:10, time:2000, desc:"Cura 30 de vida (não dá energia)." },
+  { id:"ironDagger", name:"Adaga de Ferro", inputs:{wood:1,ore:2}, output:"ironDagger", outQty:1,
+    skill:"crafting", minLevel:1, xp:20, time:3500, desc:"Arma básica: Ataque +5. Equipe no Inventário." },
+  { id:"leatherArmor", name:"Armadura de Couro", inputs:{hide:3}, output:"leatherArmor", outQty:1,
+    skill:"crafting", minLevel:1, xp:20, time:3500, desc:"Defesa básica +5. Equipe no Inventário." },
   { id:"ironAxe", name:"Machado de Ferro", inputs:{wood:3,ore:2}, output:"ironAxe", outQty:1,
-    skill:"crafting", minLevel:2, xp:30, time:4500, desc:"Aumenta a velocidade de corte de madeira." },
+    skill:"crafting", minLevel:2, xp:30, time:4500, desc:"Aumenta a velocidade de corte de madeira. Equipe no Inventário." },
   { id:"travelMeal", name:"Refeição Reforçada", inputs:{ration:1,meat:1}, output:"mealPack", outQty:1,
     skill:"crafting", minLevel:2, xp:15, time:2500, desc:"Suprimento potente para expedições longas." },
   { id:"vigorPotion", name:"Poção de Vigor", inputs:{herb:2,ration:1}, output:"vigorPotion", outQty:1,
     skill:"crafting", minLevel:2, xp:18, time:3000, desc:"Restaura bastante energia com ervas medicinais." },
-  { id:"fishingRod", name:"Vara de Pesca Reforçada", inputs:{stone:2,wood:2}, special:"rod",
-    skill:"crafting", minLevel:2, xp:22, time:4000, desc:"Aumenta a velocidade de pesca." },
+  { id:"fishingRod", name:"Vara de Pesca Reforçada", inputs:{stone:2,wood:2}, output:"fishingRod", outQty:1,
+    skill:"crafting", minLevel:2, xp:22, time:4000, desc:"Aumenta a velocidade de pesca. Equipe no Inventário." },
   { id:"bigBag", name:"Alforje Reforçado", inputs:{wood:4,rareOre:2}, special:"bag",
     skill:"crafting", minLevel:3, xp:35, time:5000, desc:"Aumenta permanentemente a capacidade de carga em +20." },
-  { id:"leatherCloak", name:"Capa de Couro", inputs:{hide:3,wood:1}, special:"cloak",
-    skill:"crafting", minLevel:3, xp:30, time:4500, desc:"Reduz em 20% o gasto de energia ao caminhar." },
+  { id:"leatherCloak", name:"Capa de Couro", inputs:{hide:3,wood:1}, output:"leatherCloak", outQty:1,
+    skill:"crafting", minLevel:3, xp:30, time:4500, desc:"Reduz 20% do gasto de energia ao caminhar. Equipe no Inventário." },
+  { id:"healPotion", name:"Poção de Vida", inputs:{herb:3,mushroom:1}, output:"healPotion", outQty:1,
+    skill:"crafting", minLevel:3, xp:22, time:3200, desc:"Cura 60 de vida (não dá energia)." },
+  { id:"ironSword", name:"Espada de Ferro", inputs:{ore:4,rareOre:1}, output:"ironSword", outQty:1,
+    skill:"crafting", minLevel:3, xp:40, time:5500, desc:"Arma avançada: Ataque +12. Equipe no Inventário." },
+  { id:"reinforcedArmor", name:"Armadura Reforçada", inputs:{hide:4,stone:3}, output:"reinforcedArmor", outQty:1,
+    skill:"crafting", minLevel:3, xp:40, time:5500, desc:"Defesa avançada +12. Equipe no Inventário." },
   { id:"cutGem", name:"Joia Lapidada", inputs:{gem:2}, output:"cutGem", outQty:1,
     skill:"crafting", minLevel:3, xp:25, time:3500, desc:"Mercadoria de valor — só para vender." },
   { id:"pearlNecklace", name:"Colar de Pérolas", inputs:{pearl:2,goldOre:1}, output:"pearlNecklace", outQty:1,
@@ -319,6 +387,18 @@ const SKILL_DEFS = {
   lumberjack:{ name:"Lenhador" }, mining:{ name:"Mineração" }, hunting:{ name:"Caça/Combate" },
   fishing:{ name:"Pesca" }, crafting:{ name:"Culinária/Crafting" }, trading:{ name:"Comércio" },
 };
+
+// ---------- MISSÕES ----------
+const QUESTS = [
+  { id:"q1", title:"Reforçando a Cabana", desc:"A Anciã Elara precisa de madeira.",
+    need:{wood:5}, rewardGold:20, rewardXp:{skill:"lumberjack", amount:15}, done:false },
+  { id:"q2", title:"Minério para o Capitão", desc:"O Capitão Bruno quer Minério Raro para os reparos do navio.",
+    need:{rareOre:3}, rewardGold:50, rewardXp:{skill:"mining", amount:20}, done:false },
+  { id:"q3", title:"Fome na Ilha", desc:"O Caçador Perdido está faminto na Ilha Vizinha.",
+    need:{meat:2}, rewardGold:25, rewardXp:{skill:"hunting", amount:15}, rewardItem:{id:"ration", qty:3}, done:false },
+  { id:"q4", title:"Ritual do Pântano", desc:"O Eremita precisa de Essência Mágica para seu ritual.",
+    need:{magicEssence:1}, rewardGold:100, rewardXp:{skill:"crafting", amount:40}, rewardItem:{id:"arcaneElixir", qty:1}, done:false },
+];
 
 // ---------- DESCRIÇÕES CURTAS POR TIPO ----------
 const TYPE_DESC = {
@@ -337,7 +417,9 @@ const TYPE_DESC = {
   craft:"Bancada de Crafting — produza itens com materiais da mochila.",
   blacksmith:"Ferreiro — compra upgrades de ferramenta direto por ouro.",
   dock:"Doca — venda de Passagem de Barco para a Ilha Vizinha.",
-  inn:"Estalagem — pague para recuperar energia na hora.",
+  inn:"Estalagem — pague para recuperar energia e vida na hora.",
+  npc:"Personagem — pode ter uma missão para você.",
+  enemy:"Inimigo perigoso — o combate começa automaticamente ao se aproximar.",
 };
 
 // ---------- OBJETOS DO MUNDO ----------
@@ -366,6 +448,9 @@ const OBJECTS = [
     skill:null, xp:0, energyCost:3, time:1500, maxUses:5, usesLeft:5, cooldownMs:8000, cooldownUntil:0 },
   { id:"shopF", type:"shop", x:110, y:760, label:"Mercador da Floresta", hitRadius:26,
     prices:{ wood:2, ore:2, rareOre:4, meat:3, ration:1, herb:2, stone:1 } },
+  { id:"npcElara", type:"npc", x:200, y:700, label:"Anciã Elara", hitRadius:24, questId:"q1" },
+  { id:"enemyBoar", type:"enemy", x:520, y:300, label:"Javali Selvagem", hitRadius:24,
+    hp:30, maxHp:30, attack:6, defense:1, goldReward:12, xpReward:15, cooldownMs:80000, cooldownUntil:0 },
 
   { id:"stoneV1", type:"stone", x:640, y:780, label:"Pedreira", hitRadius:22, item:"stone", skill:"mining",
     xp:10, energyCost:10, time:3200, maxUses:3, usesLeft:3, cooldownMs:16000, cooldownUntil:0 },
@@ -375,13 +460,14 @@ const OBJECTS = [
     skill:null, xp:0, energyCost:3, time:1500, maxUses:5, usesLeft:5, cooldownMs:8000, cooldownUntil:0 },
   { id:"shopV", type:"shop", x:760, y:150, label:"Mercador da Vila", hitRadius:26,
     prices:{ wood:5, ore:4, rareOre:8, meat:6, ration:2, goldOre:15, fish:4, hide:5, gem:18, cutGem:40,
-             pearl:10, pearlNecklace:85, mushroom:6, magicEssence:25 } },
+             pearl:10, pearlNecklace:85, mushroom:6, magicEssence:25, ironPick:30, ironAxe:30, fishingRod:25, leatherCloak:35 } },
   { id:"craftV", type:"craft", x:860, y:430, label:"Bancada de Crafting", hitRadius:26 },
   { id:"blacksmith", type:"blacksmith", x:700, y:650, label:"Ferreiro", hitRadius:26,
     sells:[ {tool:"pickaxe", name:"Picareta de Ferro", price:70}, {tool:"axe", name:"Machado de Ferro", price:70},
             {tool:"rod", name:"Vara de Pesca Reforçada", price:60}, {tool:"cloak", name:"Capa de Couro", price:90} ] },
   { id:"innV", type:"inn", x:820, y:700, label:"Estalagem", hitRadius:26, price:20 },
   { id:"dockV", type:"dock", x:1010, y:700, label:"Doca da Vila", hitRadius:28 },
+  { id:"npcBruno", type:"npc", x:960, y:600, label:"Capitão Bruno", hitRadius:24, questId:"q2" },
 
   { id:"fishI1", type:"fish", x:1125, y:600, label:"Ponto de Pesca", hitRadius:22, item:"fish", skill:"fishing",
     xp:14, energyCost:10, time:3800, maxUses:3, usesLeft:3, cooldownMs:15000, cooldownUntil:0, bonusItem:"pearl", bonusChance:0.15 },
@@ -401,6 +487,9 @@ const OBJECTS = [
     skill:"hunting", xp:15, energyCost:15, time:4500, maxUses:2, usesLeft:2, cooldownMs:20000, cooldownUntil:0, bonusItem:"hide", bonusChance:0.35 },
   { id:"berryI", type:"berry", x:1160, y:720, label:"Arbusto de Frutas", hitRadius:22, item:"ration",
     skill:null, xp:0, energyCost:3, time:1500, maxUses:5, usesLeft:5, cooldownMs:8000, cooldownUntil:0 },
+  { id:"npcCacador", type:"npc", x:1300, y:300, label:"Caçador Perdido", hitRadius:24, questId:"q3" },
+  { id:"enemyWolf", type:"enemy", x:1350, y:280, label:"Lobo da Ilha", hitRadius:24,
+    hp:50, maxHp:50, attack:10, defense:4, goldReward:30, xpReward:35, cooldownMs:100000, cooldownUntil:0 },
 
   { id:"stoneC1", type:"stone", x:1560, y:420, label:"Pedreira", hitRadius:22, item:"stone", skill:"mining",
     xp:10, energyCost:10, time:3200, maxUses:3, usesLeft:3, cooldownMs:16000, cooldownUntil:0 },
@@ -410,6 +499,9 @@ const OBJECTS = [
     skill:"mining", xp:28, energyCost:18, time:5500, maxUses:2, usesLeft:2, cooldownMs:30000, cooldownUntil:0 },
   { id:"goldOre2", type:"goldOre", x:1720, y:600, label:"Veio de Ouro", hitRadius:24, item:"goldOre",
     skill:"mining", xp:28, energyCost:18, time:5500, maxUses:2, usesLeft:2, cooldownMs:30000, cooldownUntil:0 },
+  { id:"enemyBear", type:"enemy", x:1650, y:350, label:"Urso das Colinas", hitRadius:26,
+    hp:70, maxHp:70, attack:14, defense:6, goldReward:60, xpReward:50, cooldownMs:130000, cooldownUntil:0,
+    dropItem:{id:"hide", qty:2} },
 
   { id:"mush1", type:"mushroom", x:1900, y:250, label:"Cogumelo Sombrio", hitRadius:22, item:"mushroom", skill:"hunting",
     xp:24, energyCost:14, time:4200, maxUses:3, usesLeft:3, cooldownMs:22000, cooldownUntil:0 },
@@ -419,6 +511,10 @@ const OBJECTS = [
     xp:24, energyCost:14, time:4200, maxUses:3, usesLeft:3, cooldownMs:22000, cooldownUntil:0 },
   { id:"essence1", type:"essence", x:2130, y:400, label:"Fonte de Essência", hitRadius:22, item:"magicEssence", skill:"crafting",
     xp:50, energyCost:25, time:7000, maxUses:1, usesLeft:1, cooldownMs:60000, cooldownUntil:0 },
+  { id:"npcEremita", type:"npc", x:2000, y:400, label:"Eremita do Pântano", hitRadius:24, questId:"q4" },
+  { id:"enemyWraith", type:"enemy", x:2080, y:350, label:"Espectro do Pântano", hitRadius:26,
+    hp:95, maxHp:95, attack:18, defense:8, goldReward:100, xpReward:80, cooldownMs:160000, cooldownUntil:0,
+    dropItem:{id:"magicEssence", qty:1} },
 ];
 
 // ---------- CENÁRIO DECORATIVO ----------
@@ -447,22 +543,27 @@ const ROADS = [
 const player = {
   pos:{ x:170, y:300 },
   gold:15,
+  hp:100, maxHp:100,
   energy:100, maxEnergy:100,
   maxWeight:60,
   tools:{ axe:1, pickaxe:1, rod:1, cloak:1 },
+  equipped:{ axe:false, pickaxe:false, rod:false, cloak:false },
+  equipment:{ weapon:null, armor:null },
   inventory:{ wood:0, ore:0, rareOre:0, goldOre:0, stone:0, meat:0, fish:0, herb:0, mushroom:0, hide:0,
     gem:0, pearl:0, magicEssence:0, ration:0, cookedMeat:0, cookedFish:0, mealPack:0, vigorPotion:0,
-    arcaneElixir:0, cutGem:0, pearlNecklace:0, ironPick:0, ironAxe:0, boatTicket:0 },
+    arcaneElixir:0, healPotionSmall:0, healPotion:0, cutGem:0, pearlNecklace:0, ironPick:0, ironAxe:0,
+    fishingRod:0, leatherCloak:0, ironDagger:0, ironSword:0, leatherArmor:0, reinforcedArmor:0, boatTicket:0 },
   skills:{ lumberjack:{xp:0}, mining:{xp:0}, hunting:{xp:0}, fishing:{xp:0}, crafting:{xp:0}, trading:{xp:0} }
 };
 
-// snapshot do estado inicial — usado pelo botão "reiniciar progresso"
 const INITIAL_PLAYER = JSON.parse(JSON.stringify(player));
-const INITIAL_OBJECT_STATES = OBJECTS.map(o=>({ id:o.id, usesLeft:o.usesLeft, cooldownUntil:o.cooldownUntil }));
+const INITIAL_OBJECT_STATES = OBJECTS.filter(o=> o.usesLeft!==undefined || o.type==="enemy")
+  .map(o=>({ id:o.id, usesLeft:o.usesLeft, cooldownUntil:o.cooldownUntil }));
 
 let move = null, task = null, confirmObj = null, travelTarget = null, nearBuilding = null, activeTab = "status";
 let bigMapSelected = null, repeatQty = 1, craftQty = {};
-let manualCamera = null; // quando definido, a câmera para de seguir o jogador (modo "arrastar mapa")
+let manualCamera = null;
+let battle = null, battleBusy = false;
 
 // =====================================================================
 // XP / SKILLS
@@ -471,6 +572,120 @@ function levelFromXp(xp){ return Math.floor(xp/100)+1; }
 function xpIntoLevel(xp){ return xp % 100; }
 function gainXp(skillKey, amount){ if(skillKey) player.skills[skillKey].xp += amount; }
 function skillLevel(skillKey){ return levelFromXp(player.skills[skillKey].xp); }
+
+// =====================================================================
+// COMBATE — ataque/defesa vindos do equipamento
+// =====================================================================
+function getAttack(){ return 5 + (player.equipment.weapon ? WEAPON_ITEMS[player.equipment.weapon].atk : 0); }
+function getDefense(){ return 2 + (player.equipment.armor ? ARMOR_ITEMS[player.equipment.armor].def : 0); }
+function calcDamage(atk, def){
+  const base = Math.max(1, atk - Math.floor(def/2));
+  return Math.max(1, Math.round(base * (0.8 + Math.random()*0.4)));
+}
+function retreatFrom(obj, pixels){
+  const dx = player.pos.x - obj.x, dy = player.pos.y - obj.y;
+  const d = Math.hypot(dx,dy) || 1;
+  player.pos.x = Math.min(WORLD_W, Math.max(0, player.pos.x + (dx/d)*pixels));
+  player.pos.y = Math.min(WORLD_H, Math.max(0, player.pos.y + (dy/d)*pixels));
+}
+function startBattle(enemy){
+  battle = { enemy, enemyHp: enemy.maxHp, log:["Um combate começou!"] };
+  document.getElementById("battleTitle").textContent = `Combate: ${enemy.label}`;
+  document.getElementById("battleEnemyName").textContent = enemy.label;
+  renderBattleUI();
+  document.getElementById("battleModal").classList.add("open");
+}
+function closeBattle(){
+  document.getElementById("battleModal").classList.remove("open");
+  battle = null; battleBusy = false;
+  renderTopbar();
+}
+function winBattle(){
+  const e = battle.enemy;
+  player.gold += e.goldReward;
+  gainXp("hunting", e.xpReward);
+  let msg = `Vitória contra ${e.label}! +${e.goldReward}g +${e.xpReward} XP Caça/Combate`;
+  if(e.dropItem){ addItem(e.dropItem.id, e.dropItem.qty); msg += ` +${e.dropItem.qty}x ${ITEMS[e.dropItem.id].name}`; }
+  e.cooldownUntil = performance.now() + e.cooldownMs;
+  log(msg, true);
+  closeBattle();
+}
+function fleeBattleSuccess(){
+  retreatFrom(battle.enemy, 130);
+  log("Você fugiu do combate em segurança.", true);
+  closeBattle();
+}
+function loseBattle(){
+  retreatFrom(battle.enemy, 130);
+  player.hp = Math.max(1, Math.floor(player.maxHp*0.2));
+  log(`Você foi derrotado(a) por ${battle.enemy.label} e recuou ferido(a).`, true);
+  closeBattle();
+}
+function battleRound(action, itemId){
+  if(!battle || battleBusy) return;
+  battleBusy = true;
+  const atk = getAttack(), def = getDefense();
+  const lines = [];
+
+  if(action === "attack"){
+    const dmg = calcDamage(atk, battle.enemy.defense);
+    battle.enemyHp = Math.max(0, battle.enemyHp - dmg);
+    lines.push(`Você atacou e causou ${dmg} de dano.`);
+    if(battle.enemyHp <= 0){ battle.log = lines; renderBattleUI(); winBattle(); return; }
+    const edmg = calcDamage(battle.enemy.attack, def);
+    player.hp = Math.max(0, player.hp - edmg);
+    lines.push(`${battle.enemy.label} revidou causando ${edmg} de dano.`);
+  } else if(action === "defend"){
+    const edmg = Math.ceil(calcDamage(battle.enemy.attack, def)*0.5);
+    player.hp = Math.max(0, player.hp - edmg);
+    lines.push(`Você se defendeu — dano reduzido para ${edmg}.`);
+  } else if(action === "item"){
+    const item = ITEMS[itemId];
+    removeItem(itemId, 1);
+    const healed = Math.min(player.maxHp - player.hp, item.restoreHp||0);
+    player.hp += healed;
+    lines.push(`Você usou ${item.name} e recuperou ${healed} de vida.`);
+    const edmg = calcDamage(battle.enemy.attack, def);
+    player.hp = Math.max(0, player.hp - edmg);
+    lines.push(`${battle.enemy.label} atacou enquanto você se tratava: ${edmg} de dano.`);
+  } else if(action === "flee"){
+    if(Math.random() < 0.55){
+      lines.push("Você conseguiu fugir!");
+      battle.log = lines; renderBattleUI();
+      setTimeout(fleeBattleSuccess, 700);
+      return;
+    } else {
+      const edmg = calcDamage(battle.enemy.attack, def);
+      player.hp = Math.max(0, player.hp - edmg);
+      lines.push(`A fuga falhou! ${battle.enemy.label} causou ${edmg} de dano.`);
+    }
+  }
+
+  battle.log = lines;
+  if(player.hp <= 0){ renderBattleUI(); loseBattle(); return; }
+  renderBattleUI();
+  battleBusy = false;
+}
+function renderBattleUI(){
+  if(!battle) return;
+  const pPct = Math.max(0, Math.round((player.hp/player.maxHp)*100));
+  const ePct = Math.max(0, Math.round((battle.enemyHp/battle.enemy.maxHp)*100));
+  document.getElementById("battlePlayerHp").style.width = pPct+"%";
+  document.getElementById("battlePlayerHpTxt").textContent = `${Math.max(0,Math.round(player.hp))}/${player.maxHp}`;
+  document.getElementById("battleEnemyHp").style.width = ePct+"%";
+  document.getElementById("battleEnemyHpTxt").textContent = `${Math.max(0,Math.round(battle.enemyHp))}/${battle.enemy.maxHp}`;
+  document.getElementById("battleLog").innerHTML = battle.log.map(l=>`<div>» ${l}</div>`).join("");
+  const healables = Object.keys(player.inventory).filter(id => (ITEMS[id].restoreHp||0) > 0 && player.inventory[id] > 0);
+  document.getElementById("battleItems").innerHTML = healables.map(id =>
+    `<button class="action small" data-battleitem="${id}">${ITEMS[id].name} (+${ITEMS[id].restoreHp}❤) x${player.inventory[id]}</button>`
+  ).join(" ");
+}
+document.getElementById("battleAttackBtn").addEventListener("click", ()=> battleRound("attack"));
+document.getElementById("battleDefendBtn").addEventListener("click", ()=> battleRound("defend"));
+document.getElementById("battleFleeBtn").addEventListener("click", ()=> battleRound("flee"));
+document.getElementById("battleItems").addEventListener("click", (ev)=>{
+  if(ev.target.dataset.battleitem) battleRound("item", ev.target.dataset.battleitem);
+});
 
 // =====================================================================
 // INVENTÁRIO
@@ -490,6 +705,36 @@ function maxCraftable(rec){
   let max = Infinity;
   for(const id in rec.inputs){ max = Math.min(max, Math.floor((player.inventory[id]||0)/rec.inputs[id])); }
   return isFinite(max) ? Math.max(0,max) : 0;
+}
+
+// =====================================================================
+// EQUIPAMENTO
+// =====================================================================
+function autoEquipIfNone(toolKey){
+  if(!player.equipped[toolKey]){ player.equipped[toolKey] = true; player.tools[toolKey] = 2; }
+}
+function equipTool(toolKey){
+  const itemId = TOOL_ITEMS[toolKey];
+  if((player.inventory[itemId]||0) < 1){ log("Você não possui esse item.", true); return; }
+  player.equipped[toolKey] = true; player.tools[toolKey] = 2;
+  log(`${ITEMS[itemId].name} equipado(a).`, true);
+  renderTab();
+}
+function unequipTool(toolKey){
+  player.equipped[toolKey] = false; player.tools[toolKey] = 1;
+  log(`${ITEMS[TOOL_ITEMS[toolKey]].name} guardado(a) — voltando à ferramenta básica.`, true);
+  renderTab();
+}
+function equipSlot(slot, itemId){
+  player.equipment[slot] = itemId;
+  log(`${ITEMS[itemId].name} equipada.`, true);
+  renderTab();
+}
+function unequipSlot(slot){
+  const itemId = player.equipment[slot];
+  player.equipment[slot] = null;
+  if(itemId) log(`${ITEMS[itemId].name} guardada.`, true);
+  renderTab();
 }
 
 // =====================================================================
@@ -547,6 +792,7 @@ function checkGate(gateX){
 }
 
 function startMoveTo(targetX, targetY, targetObj){
+  if(battle) return;
   const gateX = targetObj ? targetObj.x : targetX;
   const blocked = checkGate(gateX);
   if(blocked){ log(blocked, true); return; }
@@ -556,7 +802,7 @@ function startMoveTo(targetX, targetY, targetObj){
 
   const duration = Math.max(150, (distance/SPEED_PX_PER_SEC)*1000);
   move = { sx:player.pos.x, sy:player.pos.y, ex, ey, start:performance.now(), end:performance.now()+duration, targetObj };
-  manualCamera = null; // ao confirmar a viagem, a câmera volta a seguir o jogador
+  manualCamera = null;
   hideConfirmPanel(); hideTravelPanel();
   log(`Caminhando... (${(duration/1000).toFixed(1)}s)`);
 }
@@ -575,6 +821,15 @@ const GATHER_TYPES = ["tree","ore","rareOre","goldOre","stone","hunt","fish","he
 
 function onArrive(obj){
   if(!obj){ hideConfirmPanel(); return; }
+  if(obj.type === "enemy"){
+    if(obj.cooldownUntil && performance.now() < obj.cooldownUntil){
+      const secs = Math.ceil((obj.cooldownUntil-performance.now())/1000);
+      log(`${obj.label} ainda está enfraquecido(a). Volta em ~${secs}s.`, true);
+      return;
+    }
+    startBattle(obj);
+    return;
+  }
   if(GATHER_TYPES.includes(obj.type)){
     if(obj.usesLeft <= 0){
       const secs = Math.ceil((obj.cooldownUntil-performance.now())/1000);
@@ -582,7 +837,7 @@ function onArrive(obj){
       return;
     }
     showConfirmPanel(obj);
-  } else if(["shop","dock","blacksmith","inn"].includes(obj.type)){
+  } else if(["shop","dock","blacksmith","inn","npc"].includes(obj.type)){
     nearBuilding = obj; setTab("local");
   } else if(obj.type === "craft"){
     nearBuilding = obj; setTab("craft");
@@ -615,7 +870,7 @@ document.getElementById("travelYes").addEventListener("click", ()=>{
 document.getElementById("travelNo").addEventListener("click", hideTravelPanel);
 
 // =====================================================================
-// PASSO 2 — CONFIRMAÇÃO DE TAREFA (com seletor de repetições)
+// PASSO 2 — CONFIRMAÇÃO DE TAREFA
 // =====================================================================
 function renderConfirmText(obj){
   const maxQty = obj.usesLeft;
@@ -648,7 +903,7 @@ document.getElementById("confirmNo").addEventListener("click", hideConfirmPanel)
 document.getElementById("cancelMoveBtn").addEventListener("click", cancelMove);
 
 // =====================================================================
-// COLETA (com repetição automática de N cargas + item de drop bônus)
+// COLETA
 // =====================================================================
 function startGatherTask(obj, remainingRepeats){
   if(obj.usesLeft <= 0){ hideConfirmPanel(); return; }
@@ -697,7 +952,7 @@ function finishGather(meta){
 }
 
 // =====================================================================
-// CRAFTING (com quantidade selecionável)
+// CRAFTING
 // =====================================================================
 function tryCraft(recipeId){
   if(move || task) return;
@@ -721,17 +976,13 @@ function finishCraft(meta){
   if(rec.special === "bag"){
     player.maxWeight += 20;
     log(`Alforje reforçado! Capacidade agora é ${player.maxWeight}.`, true);
-  } else if(rec.special === "cloak"){
-    player.tools.cloak = 2;
-    log("Capa de Couro pronta! Caminhar agora gasta 20% menos energia.", true);
-  } else if(rec.special === "rod"){
-    player.tools.rod = 2;
-    log("Vara de Pesca Reforçada pronta! Pesca mais rápida.", true);
   } else {
     addItem(rec.output, rec.outQty);
     log(`Criado: ${ITEMS[rec.output].name}  (+${rec.xp} XP ${SKILL_DEFS[rec.skill].name})`, true);
-    if(rec.output === "ironPick") player.tools.pickaxe = 2;
-    if(rec.output === "ironAxe") player.tools.axe = 2;
+    const toolKey = OUTPUT_TO_TOOL[rec.output];
+    const slot = OUTPUT_TO_SLOT[rec.output];
+    if(toolKey) autoEquipIfNone(toolKey);
+    else if(slot && !player.equipment[slot]) player.equipment[slot] = rec.output;
   }
   gainXp(rec.skill, rec.xp);
 
@@ -748,20 +999,32 @@ function finishCraft(meta){
 // =====================================================================
 function useConsumable(id){
   const def = ITEMS[id];
-  if(!def || !def.restoreEnergy) return;
+  if(!def || (!def.restoreEnergy && !def.restoreHp)) return;
   if((player.inventory[id]||0) < 1) return;
   removeItem(id, 1);
-  player.energy = Math.min(player.maxEnergy, player.energy + def.restoreEnergy);
-  log(`Usou ${def.name}: +${def.restoreEnergy} energia.`, true);
+  const parts = [];
+  if(def.restoreEnergy){ const b=player.energy; player.energy=Math.min(player.maxEnergy, player.energy+def.restoreEnergy); parts.push(`+${(player.energy-b).toFixed(0)}⚡`); }
+  if(def.restoreHp){ const b=player.hp; player.hp=Math.min(player.maxHp, player.hp+def.restoreHp); parts.push(`+${player.hp-b}❤`); }
+  log(`Usou ${def.name}: ${parts.join(" ")}.`, true);
   renderTab();
 }
 
 // =====================================================================
 // COMÉRCIO
 // =====================================================================
+function isReservedItem(itemId){
+  const toolKey = OUTPUT_TO_TOOL[itemId];
+  if(toolKey && player.equipped[toolKey] && player.inventory[itemId] <= 1) return true;
+  if((player.equipment.weapon===itemId || player.equipment.armor===itemId) && player.inventory[itemId] <= 1) return true;
+  return false;
+}
 function trySell(shopObj, itemId){
   const price = shopObj.prices[itemId];
   if(!price || (player.inventory[itemId]||0) < 1) return;
+  if(isReservedItem(itemId)){
+    log("Esse item está equipado — desequipe no Inventário antes de vender.", true);
+    return;
+  }
   removeItem(itemId, 1);
   player.gold += price;
   gainXp("trading", Math.max(1, Math.round(price*0.4)));
@@ -770,23 +1033,25 @@ function trySell(shopObj, itemId){
 }
 
 // =====================================================================
-// FERREIRO / ESTALAGEM
+// FERREIRO / ESTALAGEM / DOCA
 // =====================================================================
 function tryBuyToolUpgrade(toolKey, price){
-  if(player.tools[toolKey] >= 2){ log("Você já possui essa ferramenta."); return; }
+  const itemId = TOOL_ITEMS[toolKey];
+  if((player.inventory[itemId]||0) >= 1){ log("Você já possui essa ferramenta."); return; }
   if(player.gold < price){ log("Ouro insuficiente.", true); return; }
   player.gold -= price;
-  player.tools[toolKey] = 2;
-  const names = {pickaxe:"Picareta de Ferro", axe:"Machado de Ferro", rod:"Vara de Pesca Reforçada", cloak:"Capa de Couro"};
-  log(`Comprou: ${names[toolKey]}!`, true);
+  addItem(itemId, 1);
+  autoEquipIfNone(toolKey);
+  log(`Comprou: ${ITEMS[itemId].name}!`, true);
   renderTab();
 }
 function tryRest(price){
-  if(player.energy >= player.maxEnergy){ log("Energia já está cheia."); return; }
+  if(player.energy >= player.maxEnergy && player.hp >= player.maxHp){ log("Você já está descansado(a)."); return; }
   if(player.gold < price){ log("Ouro insuficiente.", true); return; }
   player.gold -= price;
   player.energy = player.maxEnergy;
-  log("Descansou na Estalagem: energia totalmente recuperada!", true);
+  player.hp = player.maxHp;
+  log("Descansou na Estalagem: energia e vida totalmente recuperadas!", true);
   renderTab();
 }
 const BOAT_PRICE = 100;
@@ -800,6 +1065,25 @@ function tryBuyTicket(){
 }
 
 // =====================================================================
+// MISSÕES
+// =====================================================================
+function tryTurnInQuest(questId){
+  const q = QUESTS.find(x=>x.id===questId);
+  if(!q || q.done) return;
+  if(!hasItems(q.need)){ log("Você ainda não tem os itens necessários.", true); return; }
+  for(const id in q.need) removeItem(id, q.need[id]);
+  q.done = true;
+  player.gold += q.rewardGold;
+  if(q.rewardXp) gainXp(q.rewardXp.skill, q.rewardXp.amount);
+  if(q.rewardItem) addItem(q.rewardItem.id, q.rewardItem.qty);
+  let rewardTxt = `+${q.rewardGold}g`;
+  if(q.rewardXp) rewardTxt += ` +${q.rewardXp.amount} XP ${SKILL_DEFS[q.rewardXp.skill].name}`;
+  if(q.rewardItem) rewardTxt += ` +${q.rewardItem.qty}x ${ITEMS[q.rewardItem.id].name}`;
+  log(`Missão concluída: ${q.title}! ${rewardTxt}`, true);
+  renderTab();
+}
+
+// =====================================================================
 // SALVAR / CARREGAR / REINICIAR
 // =====================================================================
 const SAVE_SLOTS = [1,2,3];
@@ -807,30 +1091,38 @@ const SAVE_KEY_PREFIX = "trilhasAldeceira_slot_";
 
 function serializeGame(){
   return {
-    v:1,
+    v:3,
     savedAt: Date.now(),
     player:{
       pos:{ x:player.pos.x, y:player.pos.y },
-      gold:player.gold, energy:player.energy, maxEnergy:player.maxEnergy, maxWeight:player.maxWeight,
+      gold:player.gold, hp:player.hp, maxHp:player.maxHp, energy:player.energy, maxEnergy:player.maxEnergy, maxWeight:player.maxWeight,
       tools:Object.assign({}, player.tools),
+      equipped:Object.assign({}, player.equipped),
+      equipment:Object.assign({}, player.equipment),
       inventory:Object.assign({}, player.inventory),
       skills:Object.fromEntries(Object.entries(player.skills).map(([k,v])=>[k,{xp:v.xp}]))
     },
-    objectStates: OBJECTS.map(o=>({ id:o.id, usesLeft:o.usesLeft, cooldownUntil:o.cooldownUntil })),
+    objectStates: OBJECTS.filter(o=> o.usesLeft!==undefined || o.type==="enemy").map(o=>({ id:o.id, usesLeft:o.usesLeft, cooldownUntil:o.cooldownUntil })),
+    quests: QUESTS.map(q=>({ id:q.id, done:q.done })),
     revealed: revealed.map(row=>row.map(v=>v?1:0))
   };
 }
 function applySave(data){
   player.pos.x = data.player.pos.x; player.pos.y = data.player.pos.y;
-  player.gold = data.player.gold; player.energy = data.player.energy;
-  player.maxEnergy = data.player.maxEnergy; player.maxWeight = data.player.maxWeight;
+  player.gold = data.player.gold;
+  player.hp = data.player.hp!==undefined ? data.player.hp : player.maxHp;
+  player.maxHp = data.player.maxHp || player.maxHp;
+  player.energy = data.player.energy; player.maxEnergy = data.player.maxEnergy; player.maxWeight = data.player.maxWeight;
   Object.assign(player.tools, data.player.tools);
-  for(const k in player.inventory) player.inventory[k] = data.player.inventory[k] || 0;
+  if(data.player.equipped) Object.assign(player.equipped, data.player.equipped);
+  if(data.player.equipment) Object.assign(player.equipment, data.player.equipment);
+  for(const k in player.inventory) player.inventory[k] = (data.player.inventory && data.player.inventory[k]) || 0;
   for(const k in player.skills) player.skills[k] = { xp:(data.player.skills[k] && data.player.skills[k].xp) || 0 };
   const stateById = {}; (data.objectStates||[]).forEach(s=> stateById[s.id]=s);
   OBJECTS.forEach(o=>{ const s=stateById[o.id]; if(s){ o.usesLeft=s.usesLeft; o.cooldownUntil=s.cooldownUntil; } });
+  if(data.quests){ const byId={}; data.quests.forEach(q=>byId[q.id]=q); QUESTS.forEach(q=>{ if(byId[q.id]) q.done=byId[q.id].done; }); }
   if(data.revealed) revealed = data.revealed.map(row=>row.map(v=>!!v));
-  move=null; task=null; manualCamera=null; nearBuilding=null;
+  move=null; task=null; manualCamera=null; nearBuilding=null; battle=null;
   hideConfirmPanel(); hideTravelPanel();
   log("Progresso carregado.", true);
   renderTab();
@@ -856,15 +1148,18 @@ function deleteSlot(n){
 function resetProgress(){
   if(!confirm("Reiniciar todo o progresso atual? Isso não apaga os slots salvos, só o que está em jogo agora.")) return;
   player.pos.x = INITIAL_PLAYER.pos.x; player.pos.y = INITIAL_PLAYER.pos.y;
-  player.gold = INITIAL_PLAYER.gold; player.energy = INITIAL_PLAYER.energy;
-  player.maxEnergy = INITIAL_PLAYER.maxEnergy; player.maxWeight = INITIAL_PLAYER.maxWeight;
+  player.gold = INITIAL_PLAYER.gold; player.hp = INITIAL_PLAYER.hp; player.maxHp = INITIAL_PLAYER.maxHp;
+  player.energy = INITIAL_PLAYER.energy; player.maxEnergy = INITIAL_PLAYER.maxEnergy; player.maxWeight = INITIAL_PLAYER.maxWeight;
   Object.assign(player.tools, INITIAL_PLAYER.tools);
+  Object.assign(player.equipped, INITIAL_PLAYER.equipped);
+  Object.assign(player.equipment, INITIAL_PLAYER.equipment);
   for(const k in player.inventory) player.inventory[k] = 0;
   for(const k in player.skills) player.skills[k] = { xp:0 };
+  QUESTS.forEach(q=> q.done=false);
   const stateById = {}; INITIAL_OBJECT_STATES.forEach(s=> stateById[s.id]=s);
-  OBJECTS.forEach(o=>{ const s=stateById[o.id]; o.usesLeft=s.usesLeft; o.cooldownUntil=s.cooldownUntil; });
+  OBJECTS.forEach(o=>{ const s=stateById[o.id]; if(s){ o.usesLeft=s.usesLeft; o.cooldownUntil=s.cooldownUntil; } });
   revealed = Array.from({length:FOG_ROWS}, ()=> new Array(FOG_COLS).fill(false));
-  move=null; task=null; manualCamera=null; nearBuilding=null;
+  move=null; task=null; manualCamera=null; nearBuilding=null; battle=null;
   hideConfirmPanel(); hideTravelPanel();
   log("Progresso reiniciado.", true);
   renderTab();
@@ -1002,7 +1297,6 @@ function drawSprite(c, cx, cy, grid, palette, px){
 
 const SPR_TREE = ["..LLLL..","LLDDDDLL","LDDDDDDL","LDDDDDDL",".DDDDDD.","..DDDD..","...TT...","...TT...","...TT..."];
 const SPR_ORE  = [".GGGGG.","GGGGGGG","GGSGGGG","GGGGGSG",".GGGGG.","..GGG.."];
-// pedreira: pilha de rochas achatada, sem brilho — silhueta e paleta diferentes do minério
 const SPR_STONE= [".GgGGgG.","GGGGGGGG","GgGGGGgG",".GGGGGG.","..GGGG.."];
 const SPR_HUNT = ["..RRR..",".RRRRR.","RRRRRRR","RR...RR","EEEEEEE"];
 const SPR_BERRY= [".GGGGG.","GGGGGGG","GRGRGRG",".GGGGG.","..GGG.."];
@@ -1012,11 +1306,13 @@ const SPR_MUSH = ["..CCC..",".CCCCC.","CCoCoCC",".CCCCC.","..SSS..","..SSS.."];
 const SPR_ESSENCE=["..GGG..",".GWWWG.","GWWWWWG","GWWWWWG",".GWWWG.","..GGG.."];
 const SPR_HOUSE= ["..RRRR..",".RRRRRR.","RRRRRRRR","WWWWWWWW","WWWAAWWW","WWWAAWWW","WWWWWWWW"];
 const SPR_DOCK = ["WwWwWwWwWw","WWWWWWWWWW"];
-const SPR_PLAYER=["..HHH..",".HSSSH.","..SSS..",".BBBBB.","BBBBBBB",".B.B.B.","..L.L.."];
+const SPR_PERSON=["..HHH..",".HSSSH.","..SSS..",".BBBBB.","BBBBBBB",".B.B.B.","..L.L.."];
+const SPR_ENEMY= ["..EEEE..",".EEEEEE.","EExEExEE","EEEEEEEE",".EE..EE."];
 
 function drawObject(o){
   const now = performance.now();
-  const onCooldown = (o.usesLeft !== undefined) && o.usesLeft <= 0;
+  const onEnemyCd = o.type === "enemy" && o.cooldownUntil && now < o.cooldownUntil;
+  const onCooldown = (o.usesLeft !== undefined && o.usesLeft <= 0) || onEnemyCd;
   ctx.save();
   if(onCooldown) ctx.globalAlpha = 0.35;
 
@@ -1055,6 +1351,15 @@ function drawObject(o){
   } else if(o.type === "dock"){
     drawSprite(ctx, o.x, o.y+2, SPR_DOCK, {W:"#8a6a3a", w:"#6b4e28"}, 4.5);
     ctx.font="15px sans-serif"; ctx.textAlign="center"; ctx.fillStyle="#fff"; ctx.fillText("⛵", o.x, o.y-12);
+  } else if(o.type === "npc"){
+    const q = QUESTS.find(x=>x.id===o.questId);
+    const bodyColor = q && q.done ? "#6b6b66" : "#3f7fbf";
+    drawSprite(ctx, o.x, o.y, SPR_PERSON, {H:"#2b2116", S:"#e0b58a", B:bodyColor, L:"#3a2a18"}, 3);
+    ctx.font="14px sans-serif"; ctx.textAlign="center";
+    if(q && !q.done){ ctx.fillStyle="#ffd464"; ctx.fillText("!", o.x, o.y-24); }
+    else if(q && q.done){ ctx.fillStyle="#9be36f"; ctx.fillText("✓", o.x, o.y-24); }
+  } else if(o.type === "enemy"){
+    drawSprite(ctx, o.x, o.y, SPR_ENEMY, {E:"#5a2a1e", x:"#ff3b2e"}, 3.6);
   }
   ctx.restore();
 
@@ -1066,11 +1371,15 @@ function drawObject(o){
     } else {
       ctx.fillText(`${o.usesLeft}/${o.maxUses}`, o.x, o.y-24);
     }
+  } else if(o.type === "enemy"){
+    ctx.fillStyle = "#fff"; ctx.font="12px monospace"; ctx.textAlign="center";
+    if(onEnemyCd){ const secs=Math.max(0,Math.ceil((o.cooldownUntil-now)/1000)); ctx.fillText(`⏳${secs}s`, o.x, o.y-24); }
+    else { ctx.fillText("⚔️", o.x, o.y-24); }
   }
 }
 
 function drawPlayer(){
-  drawSprite(ctx, player.pos.x, player.pos.y, SPR_PLAYER, {H:"#2b2116", S:"#e0b58a", B:"#c1502e", L:"#3a2a18"}, 3);
+  drawSprite(ctx, player.pos.x, player.pos.y, SPR_PERSON, {H:"#2b2116", S:"#e0b58a", B:"#c1502e", L:"#3a2a18"}, 3);
 }
 
 // =====================================================================
@@ -1140,7 +1449,7 @@ function renderStaticBackground(){
   });
 }
 
-// ---------- FOG OF WAR (revelação) ----------
+// ---------- FOG OF WAR ----------
 function revealAround(x,y,radiusCells){
   const cx = Math.floor(x/FOG_CELL), cy = Math.floor(y/FOG_CELL);
   for(let dy=-radiusCells; dy<=radiusCells; dy++){
@@ -1151,9 +1460,6 @@ function revealAround(x,y,radiusCells){
     }
   }
 }
-
-// névoa desenhada no mapa principal (mesmo modelo binário do minimapa):
-// só as células já reveladas ficam visíveis; o resto fica encoberto.
 function drawFogOverlay(){
   const cam = getCamera();
   const startGX = Math.max(0, Math.floor(cam.x/FOG_CELL));
@@ -1187,8 +1493,8 @@ function drawMap(){
 
 const OBJECT_DOT_COLOR = {
   tree:"#e8b473", ore:"#c9c1a0", rareOre:"#ffe27a", goldOre:"#ffd464", stone:"#a89880", hunt:"#ff6b4a",
-  berry:"#9be36f", herb:"#8fe06b", fish:"#7fb8e0", mushroom:"#e08fce", essence:"#e8d8ff",
-  shop:"#ffd464", craft:"#ffe27a", blacksmith:"#ff6b4a", inn:"#f2ddb0", dock:"#c9dce8"
+  berry:"#9be36f", herb:"#8fe06b", fish:"#7fb8e0", mushroom:"#e08fce", essence:"#e8d8ff", npc:"#ffd464",
+  shop:"#ffd464", craft:"#ffe27a", blacksmith:"#ff6b4a", inn:"#f2ddb0", dock:"#c9dce8", enemy:"#ff3b2e"
 };
 
 function drawMinimapOn(c, canvasEl, scale, big){
@@ -1232,7 +1538,7 @@ function drawMinimapOn(c, canvasEl, scale, big){
 function hideHoverTip(){ document.getElementById("hoverTip").style.display = "none"; }
 
 function handleMapTap(ev){
-  if(task || move) return;
+  if(task || move || battle) return;
   const { wx, wy } = toWorld(ev);
   const obj = findObjectNear(wx, wy);
   if(obj){ showTravelPanel(obj); return; }
@@ -1361,13 +1667,17 @@ document.getElementById("tabContent").addEventListener("click", (ev)=>{
   } else if(t.dataset.craftqtyplus){
     const id = t.dataset.craftqtyplus;
     const rec = RECIPES.find(r=>r.id===id);
-    const maxQ = maxCraftable(rec);
-    craftQty[id] = Math.min(maxQ, (craftQty[id]||1)+1);
+    craftQty[id] = Math.min(maxCraftable(rec), (craftQty[id]||1)+1);
     renderTab();
   }
   else if(t.dataset.use) useConsumable(t.dataset.use);
+  else if(t.dataset.equip) equipTool(t.dataset.equip);
+  else if(t.dataset.unequip) unequipTool(t.dataset.unequip);
+  else if(t.dataset.equipslot){ const [slot,id]=t.dataset.equipslot.split(":"); equipSlot(slot,id); }
+  else if(t.dataset.unequipslot) unequipSlot(t.dataset.unequipslot);
   else if(t.dataset.sell) trySell(nearBuilding, t.dataset.sell);
   else if(t.dataset.buytool){ const [tool,price] = t.dataset.buytool.split(":"); tryBuyToolUpgrade(tool, parseInt(price)); }
+  else if(t.dataset.turnin) tryTurnInQuest(t.dataset.turnin);
   else if(t.id === "buyTicketBtn") tryBuyTicket();
   else if(t.id === "restBtn") tryRest(nearBuilding.price);
 });
@@ -1389,8 +1699,11 @@ function renderStatusTab(){
       <div class="barOuter"><div class="barInner xp" style="width:${pct}%"></div></div>
     </div>`;
   }
+  html += `<div class="skillRow"><div class="lbl"><span>Vida</span><span>${Math.round(player.hp)}/${player.maxHp}</span></div>
+    <div class="barOuter"><div class="barInner hp" style="width:${(player.hp/player.maxHp)*100}%"></div></div></div>`;
   html += `<div class="skillRow"><div class="lbl"><span>Energia</span><span>${player.energy.toFixed(0)}/${player.maxEnergy}</span></div>
     <div class="barOuter"><div class="barInner energy" style="width:${player.energy}%"></div></div></div>`;
+  html += `<div class="hint" style="display:block;">Ataque ${getAttack()}${player.equipment.weapon?` (${ITEMS[player.equipment.weapon].name})`:' (desarmado)'} · Defesa ${getDefense()}${player.equipment.armor?` (${ITEMS[player.equipment.armor].name})`:' (sem armadura)'}</div>`;
   html += `<div class="hint" style="display:block;">Machado Nv.${player.tools.axe} · Picareta Nv.${player.tools.pickaxe} · Vara Nv.${player.tools.rod} · Capa ${player.tools.cloak>=2?"✔":"—"} · Capacidade ${player.maxWeight}</div>`;
   return html;
 }
@@ -1401,8 +1714,25 @@ function renderInvTab(){
     const qty = player.inventory[id];
     if(qty<=0) continue;
     any=true;
-    const useBtn = ITEMS[id].restoreEnergy ? `<button class="action small" data-use="${id}">Usar (+${ITEMS[id].restoreEnergy}⚡)</button>` : "";
-    html += `<div class="itemRow"><span>${ITEMS[id].name}</span><span class="qty">${qty}</span>${useBtn}</div>`;
+    const toolKey = OUTPUT_TO_TOOL[id];
+    const slot = OUTPUT_TO_SLOT[id];
+    let actionBtn = "";
+    if(toolKey){
+      actionBtn = player.equipped[toolKey]
+        ? `<span class="equippedTag">Equipado</span> <button class="action small" data-unequip="${toolKey}">Guardar</button>`
+        : `<button class="action small" data-equip="${toolKey}">Equipar</button>`;
+    } else if(slot){
+      const isEq = player.equipment[slot] === id;
+      actionBtn = isEq
+        ? `<span class="equippedTag">Equipada</span> <button class="action small" data-unequipslot="${slot}">Guardar</button>`
+        : `<button class="action small" data-equipslot="${slot}:${id}">Equipar</button>`;
+    } else if(ITEMS[id].restoreEnergy || ITEMS[id].restoreHp){
+      const effects = [];
+      if(ITEMS[id].restoreEnergy) effects.push(`+${ITEMS[id].restoreEnergy}⚡`);
+      if(ITEMS[id].restoreHp) effects.push(`+${ITEMS[id].restoreHp}❤`);
+      actionBtn = `<button class="action small" data-use="${id}">Usar (${effects.join(" ")})</button>`;
+    }
+    html += `<div class="itemRow"><span>${ITEMS[id].name}</span><span class="qty">${qty}</span>${actionBtn}</div>`;
   }
   if(!any) html = `<div class="hint" style="display:block;">Inventário vazio. Colete madeira, minério ou frutas no mapa.</div>`;
   return html;
@@ -1436,30 +1766,47 @@ function renderCraftTab(){
 }
 
 function renderLocalTab(){
-  if(!nearBuilding) return `<div class="hint" style="display:block;">Ande até um mercador, o ferreiro, a estalagem ou a doca para interagir aqui.</div>`;
+  if(!nearBuilding) return `<div class="hint" style="display:block;">Ande até um mercador, o ferreiro, a estalagem, a doca ou um NPC para interagir aqui.</div>`;
   const b = nearBuilding;
   let html = `<div class="hint" style="display:block; margin-bottom:8px;">${b.label}</div>`;
   if(b.type === "shop"){
     for(const id in b.prices){
       const qty = player.inventory[id]||0;
-      html += `<div class="itemRow"><span>${ITEMS[id].name} — ${b.prices[id]}g cada</span>
-        <button class="action small" data-sell="${id}" ${qty<1?"disabled":""}>Vender (${qty})</button></div>`;
+      const sellable = qty - (isReservedItem(id) ? 1 : 0);
+      html += `<div class="itemRow"><span>${ITEMS[id].name} — ${b.prices[id]}g cada${isReservedItem(id)?' <span class="equippedTag">equipado</span>':''}</span>
+        <button class="action small" data-sell="${id}" ${sellable<1?"disabled":""}>Vender (${Math.max(0,sellable)})</button></div>`;
     }
   } else if(b.type === "blacksmith"){
     b.sells.forEach(s=>{
-      const owned = player.tools[s.tool] >= 2;
+      const owned = (player.inventory[TOOL_ITEMS[s.tool]]||0) >= 1;
       html += `<div class="itemRow"><span>${s.name} — ${s.price}g</span>
         <button class="action small" data-buytool="${s.tool}:${s.price}" ${(owned||player.gold<s.price)?"disabled":""}>
           ${owned ? "Já possui" : "Comprar"}</button></div>`;
     });
   } else if(b.type === "inn"){
-    html += `<div class="itemRow"><span>Descansar — recupera toda a energia</span>
-      <button class="action small" id="restBtn" ${(player.energy>=player.maxEnergy||player.gold<b.price)?"disabled":""}>Pagar ${b.price}g</button></div>`;
+    html += `<div class="itemRow"><span>Descansar — recupera vida e energia</span>
+      <button class="action small" id="restBtn" ${(player.energy>=player.maxEnergy && player.hp>=player.maxHp)||player.gold<b.price?"disabled":""}>Pagar ${b.price}g</button></div>`;
   } else if(b.type === "dock"){
     html += `<div class="itemRow"><span>Passagem de Barco (${BOAT_PRICE}g)</span>
       <button class="action small" id="buyTicketBtn" ${(player.inventory.boatTicket>=1||player.gold<BOAT_PRICE)?"disabled":""}>
         ${player.inventory.boatTicket>=1 ? "Possui" : "Comprar"}
       </button></div>`;
+  } else if(b.type === "npc"){
+    const q = QUESTS.find(x=>x.id===b.questId);
+    if(!q){ html += `<div class="hint" style="display:block;">Nada a dizer no momento.</div>`; }
+    else if(q.done){
+      html += `<div class="hint" style="display:block;">✔ Missão concluída: <b>${q.title}</b>. Obrigado pela ajuda!</div>`;
+    } else {
+      const needTxt = Object.keys(q.need).map(id=>`${q.need[id]}x ${ITEMS[id].name} (${player.inventory[id]||0})`).join(" + ");
+      const ok = hasItems(q.need);
+      let rewardTxt = `${q.rewardGold}g`;
+      if(q.rewardXp) rewardTxt += ` + XP ${SKILL_DEFS[q.rewardXp.skill].name}`;
+      if(q.rewardItem) rewardTxt += ` + ${q.rewardItem.qty}x ${ITEMS[q.rewardItem.id].name}`;
+      html += `<div class="hint" style="display:block; margin-bottom:6px;"><b>${q.title}</b><br>${q.desc}</div>
+        <div class="need ${ok?'':'bad'}">${needTxt}</div>
+        <div class="hint" style="display:block; margin:4px 0 8px 0;">Recompensa: ${rewardTxt}</div>
+        <button class="action small" data-turnin="${q.id}" ${ok?"":"disabled"}>Entregar</button>`;
+    }
   }
   return html;
 }
@@ -1469,6 +1816,7 @@ function renderLocalTab(){
 // =====================================================================
 function renderTopbar(){
   document.getElementById("regionLbl").textContent = regionAt(player.pos.x);
+  document.getElementById("hpLbl").textContent = `${Math.round(player.hp)}/${player.maxHp}`;
   document.getElementById("goldLbl").textContent = player.gold;
   document.getElementById("weightLbl").textContent = `${currentWeight()}/${player.maxWeight}`;
   document.getElementById("energyLbl").textContent = `${player.energy.toFixed(0)}/${player.maxEnergy}`;
@@ -1537,14 +1885,20 @@ function updateCooldowns(){
   }
 }
 
+let lastMinimapDraw = 0;
+const MINIMAP_REDRAW_MS = 200;
+
 function gameLoop(){
-  updateMove();
-  updateTask();
+  if(!battle){ updateMove(); updateTask(); }
   updateCooldowns();
   revealAround(player.pos.x, player.pos.y, FOG_REVEAL_RADIUS);
   drawMap();
-  drawMinimapOn(mctx, minimap, MM_SCALE, false);
-  if(minimapModal.classList.contains("open")) drawMinimapOn(bmctx, bigMinimap, BIG_MM_SCALE, true);
+  const now = performance.now();
+  if(now - lastMinimapDraw > MINIMAP_REDRAW_MS){
+    drawMinimapOn(mctx, minimap, MM_SCALE, false);
+    if(minimapModal.classList.contains("open")) drawMinimapOn(bmctx, bigMinimap, BIG_MM_SCALE, true);
+    lastMinimapDraw = now;
+  }
   renderProgress();
   renderTopbar();
   requestAnimationFrame(gameLoop);
