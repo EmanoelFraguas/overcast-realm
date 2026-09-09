@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-<title>Trilhas de Aldeceira — Protótipo v12</title>
+<title>Trilhas de Aldeceira — Protótipo v14</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
@@ -166,7 +166,7 @@ button.action.small{ padding:4px 8px; font-size:11px; min-height:auto; }
 </head>
 <body>
 <div id="app">
-  <h1><span class="titleText">Trilhas de Aldeceira</span> <span class="sub">protótipo v12 — vida &amp; combate</span>
+  <h1><span class="titleText">Trilhas de Aldeceira</span> <span class="sub">protótipo v14 — tutorial &amp; mais inimigos</span>
     <button class="action small" id="fullscreenBtn"><span class="btnIcon">⛶</span><span class="btnLabel"> Tela cheia</span></button>
   </h1>
   <div id="topbar">
@@ -176,6 +176,7 @@ button.action.small{ padding:4px 8px; font-size:11px; min-height:auto; }
     <div class="stat">🎒 <b id="weightLbl">0/0</b></div>
     <div class="stat">🪙 <b id="goldLbl">0</b></div>
     <button class="action small" id="saveMenuBtn" title="Salvar / Carregar">💾</button>
+    <button class="action small" id="helpBtn" title="Ajuda / Tutorial">❓</button>
   </div>
 
   <div id="layout">
@@ -247,6 +248,18 @@ button.action.small{ padding:4px 8px; font-size:11px; min-height:auto; }
   </div>
 </div>
 
+<div id="tutorialModal" class="modalOverlay">
+  <div class="modalBox" style="max-width:420px;">
+    <div class="modalHeader"><span id="tutTitle">Bem-vindo!</span><button class="action small" id="closeTutBtn">Fechar ✕</button></div>
+    <div id="tutBody" class="hint" style="display:block; min-height:110px; font-size:13px;"></div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; gap:8px;">
+      <button class="action small" id="tutPrevBtn">◀ Anterior</button>
+      <span id="tutDots" style="font-size:11px; color:#5a4a30;"></span>
+      <button class="action small" id="tutNextBtn">Próximo ▶</button>
+    </div>
+  </div>
+</div>
+
 <!-- Combate: sem botão de fechar — só sai lutando até vencer, ou fugindo -->
 <div id="battleModal" class="modalOverlay">
   <div class="modalBox">
@@ -289,11 +302,12 @@ button.action.small{ padding:4px 8px; font-size:11px; min-height:auto; }
 // ---------- CONSTANTES DE MUNDO ----------
 const TILE_PX = 48;
 const SPEED_PX_PER_SEC = TILE_PX;
-const WORLD_W = 2200, WORLD_H = 1000;
+const WORLD_W = 2600, WORLD_H = 1000;
 const VIEW_W = 640, VIEW_H = 420;
 const ISLAND_GATE_X = 1100;
 const STONE_GATE_X = 1500;
 const SWAMP_GATE_X = 1830;
+const SNOW_GATE_X = 2200;
 const WALK_ENERGY_PER_SQM = 0.4;
 
 // ---------- FOG OF WAR ----------
@@ -320,6 +334,7 @@ const ITEMS = {
   gem:       { name:"Gema Bruta",           weight:1 },
   pearl:     { name:"Pérola",               weight:1 },
   magicEssence:{ name:"Essência Mágica",    weight:0 },
+  iceCrystal:{ name:"Cristal de Gelo",      weight:2 },
   ration:    { name:"Suprimento de Viagem", weight:1, restoreEnergy:15, restoreHp:5 },
   cookedMeat:{ name:"Carne Assada",         weight:1, restoreEnergy:25, restoreHp:8 },
   cookedFish:{ name:"Peixe Grelhado",       weight:1, restoreEnergy:30, restoreHp:8 },
@@ -338,14 +353,36 @@ const ITEMS = {
   ironSword: { name:"Espada de Ferro",      weight:3 },
   leatherArmor:{ name:"Armadura de Couro",  weight:3 },
   reinforcedArmor:{ name:"Armadura Reforçada", weight:4 },
+  frostBlade:{ name:"Lâmina Glacial",       weight:3 },
+  iceSculpture:{ name:"Escultura de Gelo Lapidada", weight:2 },
   boatTicket:{ name:"Passagem de Barco",    weight:0 },
 };
 
 const TOOL_ITEMS = { axe:"ironAxe", pickaxe:"ironPick", rod:"fishingRod", cloak:"leatherCloak" };
 const OUTPUT_TO_TOOL = { ironAxe:"axe", ironPick:"pickaxe", fishingRod:"rod", leatherCloak:"cloak" };
-const WEAPON_ITEMS = { ironDagger:{atk:5}, ironSword:{atk:12} };
+const WEAPON_ITEMS = { ironDagger:{atk:5}, ironSword:{atk:12}, frostBlade:{atk:18} };
 const ARMOR_ITEMS = { leatherArmor:{def:5}, reinforcedArmor:{def:12} };
-const OUTPUT_TO_SLOT = { ironDagger:"weapon", ironSword:"weapon", leatherArmor:"armor", reinforcedArmor:"armor" };
+const OUTPUT_TO_SLOT = { ironDagger:"weapon", ironSword:"weapon", frostBlade:"weapon", leatherArmor:"armor", reinforcedArmor:"armor" };
+
+// categoria de cada item — usada pelos filtros da aba Inventário
+const ITEM_CATEGORY = {
+  wood:"material", ore:"material", rareOre:"material", goldOre:"material", stone:"material",
+  meat:"material", fish:"material", herb:"material", mushroom:"material", hide:"material",
+  gem:"material", pearl:"material", magicEssence:"material", iceCrystal:"material",
+  ration:"consumable", cookedMeat:"consumable", cookedFish:"consumable", mealPack:"consumable",
+  vigorPotion:"consumable", arcaneElixir:"consumable", healPotionSmall:"consumable", healPotion:"consumable",
+  ironPick:"equipment", ironAxe:"equipment", fishingRod:"equipment", leatherCloak:"equipment",
+  ironDagger:"equipment", ironSword:"equipment", leatherArmor:"equipment", reinforcedArmor:"equipment",
+  frostBlade:"equipment",
+  cutGem:"other", pearlNecklace:"other", iceSculpture:"other", boatTicket:"other",
+};
+const INV_CATS = [
+  {id:"all", label:"Todos"},
+  {id:"material", label:"🪵 Materiais"},
+  {id:"consumable", label:"🍖 Consumíveis"},
+  {id:"equipment", label:"⚔️ Equipamento"},
+  {id:"other", label:"💎 Outros"},
+];
 
 // ---------- RECEITAS ----------
 // category: usada pelos filtros da aba Crafting (tool | combat | food | trade)
@@ -386,6 +423,10 @@ const RECIPES = [
     skill:"crafting", minLevel:4, xp:45, time:6000, desc:"Item de luxo raríssimo — alto valor de venda." },
   { id:"arcaneElixir", name:"Elixir Arcano", category:"food", inputs:{mushroom:3,magicEssence:1}, output:"arcaneElixir", outQty:1,
     skill:"crafting", minLevel:5, xp:60, time:5000, desc:"O suprimento mais potente do jogo." },
+  { id:"frostBlade", name:"Lâmina Glacial", category:"combat", inputs:{iceCrystal:3,rareOre:2}, output:"frostBlade", outQty:1,
+    skill:"crafting", minLevel:5, xp:55, time:6000, desc:"Arma suprema: Ataque +18. Equipe no Inventário." },
+  { id:"iceSculpture", name:"Escultura de Gelo Lapidada", category:"trade", inputs:{iceCrystal:4}, output:"iceSculpture", outQty:1,
+    skill:"crafting", minLevel:4, xp:35, time:4500, desc:"Item de luxo raríssimo — alto valor de venda." },
 ];
 const CRAFT_CATS = [
   {id:"all", label:"Todos"},
@@ -402,16 +443,38 @@ const SKILL_DEFS = {
 };
 
 // ---------- MISSÕES ----------
+// requires: id de outra missão que precisa estar concluída antes desta aparecer
 const QUESTS = [
-  { id:"q1", title:"Reforçando a Cabana", desc:"A Anciã Elara precisa de madeira.",
+  { id:"q1a", title:"Reforçando a Cabana", desc:"A Anciã Elara precisa de madeira.",
     need:{wood:5}, rewardGold:20, rewardXp:{skill:"lumberjack", amount:15}, done:false },
-  { id:"q2", title:"Minério para o Capitão", desc:"O Capitão Bruno quer Minério Raro para os reparos do navio.",
+  { id:"q1b", title:"Fogueira de Inverno", desc:"Elara quer se preparar pro frio que se aproxima.", requires:"q1a",
+    need:{wood:8, stone:3}, rewardGold:35, rewardXp:{skill:"lumberjack", amount:25}, rewardItem:{id:"ration", qty:2}, done:false },
+
+  { id:"q2a", title:"Minério para o Capitão", desc:"O Capitão Bruno quer Minério Raro para os reparos do navio.",
     need:{rareOre:3}, rewardGold:50, rewardXp:{skill:"mining", amount:20}, done:false },
-  { id:"q3", title:"Fome na Ilha", desc:"O Caçador Perdido está faminto na Ilha Vizinha.",
+  { id:"q2b", title:"Provisões pro Porto", desc:"Bruno agora precisa reabastecer a tripulação.", requires:"q2a",
+    need:{fish:4, meat:3}, rewardGold:70, rewardXp:{skill:"trading", amount:25}, rewardItem:{id:"ration", qty:3}, done:false },
+
+  { id:"q3a", title:"Fome na Ilha", desc:"O Caçador Perdido está faminto na Ilha Vizinha.",
     need:{meat:2}, rewardGold:25, rewardXp:{skill:"hunting", amount:15}, rewardItem:{id:"ration", qty:3}, done:false },
-  { id:"q4", title:"Ritual do Pântano", desc:"O Eremita precisa de Essência Mágica para seu ritual.",
+  { id:"q3b", title:"Couro para o Inverno", desc:"Ele quer se equipar antes do frio chegar.", requires:"q3a",
+    need:{hide:4}, rewardGold:45, rewardXp:{skill:"hunting", amount:30}, rewardItem:{id:"healPotionSmall", qty:2}, done:false },
+
+  { id:"q4a", title:"Ritual do Pântano", desc:"O Eremita precisa de Essência Mágica para seu ritual.",
     need:{magicEssence:1}, rewardGold:100, rewardXp:{skill:"crafting", amount:40}, rewardItem:{id:"arcaneElixir", qty:1}, done:false },
+  { id:"q4b", title:"Selar o Portal", desc:"O ritual precisa de mais cogumelos e essência para ser concluído.", requires:"q4a",
+    need:{mushroom:5, magicEssence:2}, rewardGold:200, rewardXp:{skill:"crafting", amount:60}, rewardItem:{id:"pearlNecklace", qty:1}, done:false },
+
+  { id:"q5a", title:"Aquecendo o Acampamento", desc:"A Exploradora Perdida está com frio nos Picos Gélidos.",
+    need:{wood:6}, rewardGold:30, rewardXp:{skill:"lumberjack", amount:20}, done:false },
+  { id:"q5b", title:"Amostras de Gelo", desc:"Ela quer levar Cristais de Gelo pra estudar.", requires:"q5a",
+    need:{iceCrystal:2}, rewardGold:90, rewardXp:{skill:"mining", amount:40}, rewardItem:{id:"healPotion", qty:2}, done:false },
 ];
+function isQuestDone(id){ const q = QUESTS.find(x=>x.id===id); return q ? q.done : false; }
+function getNpcQuestChain(npc){ return (npc.questIds||[]).map(id=>QUESTS.find(q=>q.id===id)).filter(Boolean); }
+function getActiveQuest(npc){
+  return getNpcQuestChain(npc).find(q => !q.done && (!q.requires || isQuestDone(q.requires)));
+}
 
 // ---------- DESCRIÇÕES CURTAS POR TIPO ----------
 const TYPE_DESC = {
@@ -425,6 +488,7 @@ const TYPE_DESC = {
   herb:"Arbusto de Ervas Medicinais.",
   mushroom:"Cogumelos Sombrios do Pântano — ingrediente raro.",
   essence:"Fonte de Essência Mágica — extremamente rara.",
+  ice:"Veio de Cristal de Gelo — só nos Picos Gélidos.",
   berry:"Arbusto de frutas — fornece Suprimento de Viagem.",
   shop:"Mercador — compra seus itens por ouro.",
   craft:"Bancada de Crafting — produza itens com materiais da mochila.",
@@ -461,9 +525,11 @@ const OBJECTS = [
     skill:null, xp:0, energyCost:3, time:1500, maxUses:5, usesLeft:5, cooldownMs:8000, cooldownUntil:0 },
   { id:"shopF", type:"shop", x:110, y:760, label:"Mercador da Floresta", hitRadius:26,
     prices:{ wood:2, ore:2, rareOre:4, meat:3, ration:1, herb:2, stone:1 } },
-  { id:"npcElara", type:"npc", x:200, y:700, label:"Anciã Elara", hitRadius:24, questId:"q1" },
+  { id:"npcElara", type:"npc", x:200, y:700, label:"Anciã Elara", hitRadius:24, questIds:["q1a","q1b"] },
   { id:"enemyBoar", type:"enemy", x:520, y:300, label:"Javali Selvagem", hitRadius:24,
     hp:30, maxHp:30, attack:6, defense:1, goldReward:12, xpReward:15, cooldownMs:80000, cooldownUntil:0 },
+  { id:"enemyForestWolf", type:"enemy", x:350, y:600, label:"Lobo Faminto", hitRadius:24,
+    hp:25, maxHp:25, attack:5, defense:0, goldReward:8, xpReward:12, cooldownMs:70000, cooldownUntil:0 },
 
   { id:"stoneV1", type:"stone", x:640, y:780, label:"Pedreira", hitRadius:22, item:"stone", skill:"mining",
     xp:10, energyCost:10, time:3200, maxUses:3, usesLeft:3, cooldownMs:16000, cooldownUntil:0 },
@@ -473,14 +539,15 @@ const OBJECTS = [
     skill:null, xp:0, energyCost:3, time:1500, maxUses:5, usesLeft:5, cooldownMs:8000, cooldownUntil:0 },
   { id:"shopV", type:"shop", x:760, y:150, label:"Mercador da Vila", hitRadius:26,
     prices:{ wood:5, ore:4, rareOre:8, meat:6, ration:2, goldOre:15, fish:4, hide:5, gem:18, cutGem:40,
-             pearl:10, pearlNecklace:85, mushroom:6, magicEssence:25, ironPick:30, ironAxe:30, fishingRod:25, leatherCloak:35 } },
+             pearl:10, pearlNecklace:85, mushroom:6, magicEssence:25, ironPick:30, ironAxe:30, fishingRod:25, leatherCloak:35,
+             iceCrystal:20, iceSculpture:95 } },
   { id:"craftV", type:"craft", x:860, y:430, label:"Bancada de Crafting", hitRadius:26 },
   { id:"blacksmith", type:"blacksmith", x:700, y:650, label:"Ferreiro", hitRadius:26,
     sells:[ {tool:"pickaxe", name:"Picareta de Ferro", price:70}, {tool:"axe", name:"Machado de Ferro", price:70},
             {tool:"rod", name:"Vara de Pesca Reforçada", price:60}, {tool:"cloak", name:"Capa de Couro", price:90} ] },
   { id:"innV", type:"inn", x:820, y:700, label:"Estalagem", hitRadius:26, price:20 },
   { id:"dockV", type:"dock", x:1010, y:700, label:"Doca da Vila", hitRadius:28 },
-  { id:"npcBruno", type:"npc", x:960, y:600, label:"Capitão Bruno", hitRadius:24, questId:"q2" },
+  { id:"npcBruno", type:"npc", x:960, y:600, label:"Capitão Bruno", hitRadius:24, questIds:["q2a","q2b"] },
 
   { id:"fishI1", type:"fish", x:1125, y:600, label:"Ponto de Pesca", hitRadius:22, item:"fish", skill:"fishing",
     xp:14, energyCost:10, time:3800, maxUses:3, usesLeft:3, cooldownMs:15000, cooldownUntil:0, bonusItem:"pearl", bonusChance:0.15 },
@@ -500,9 +567,11 @@ const OBJECTS = [
     skill:"hunting", xp:15, energyCost:15, time:4500, maxUses:2, usesLeft:2, cooldownMs:20000, cooldownUntil:0, bonusItem:"hide", bonusChance:0.35 },
   { id:"berryI", type:"berry", x:1160, y:720, label:"Arbusto de Frutas", hitRadius:22, item:"ration",
     skill:null, xp:0, energyCost:3, time:1500, maxUses:5, usesLeft:5, cooldownMs:8000, cooldownUntil:0 },
-  { id:"npcCacador", type:"npc", x:1300, y:300, label:"Caçador Perdido", hitRadius:24, questId:"q3" },
+  { id:"npcCacador", type:"npc", x:1300, y:300, label:"Caçador Perdido", hitRadius:24, questIds:["q3a","q3b"] },
   { id:"enemyWolf", type:"enemy", x:1350, y:280, label:"Lobo da Ilha", hitRadius:24,
     hp:50, maxHp:50, attack:10, defense:4, goldReward:30, xpReward:35, cooldownMs:100000, cooldownUntil:0 },
+  { id:"enemySpider", type:"enemy", x:1200, y:650, label:"Aranha Gigante", hitRadius:24,
+    hp:55, maxHp:55, attack:11, defense:3, goldReward:28, xpReward:32, cooldownMs:95000, cooldownUntil:0 },
 
   { id:"stoneC1", type:"stone", x:1560, y:420, label:"Pedreira", hitRadius:22, item:"stone", skill:"mining",
     xp:10, energyCost:10, time:3200, maxUses:3, usesLeft:3, cooldownMs:16000, cooldownUntil:0 },
@@ -515,6 +584,9 @@ const OBJECTS = [
   { id:"enemyBear", type:"enemy", x:1650, y:350, label:"Urso das Colinas", hitRadius:26,
     hp:70, maxHp:70, attack:14, defense:6, goldReward:60, xpReward:50, cooldownMs:130000, cooldownUntil:0,
     dropItem:{id:"hide", qty:2} },
+  { id:"enemyGolem", type:"enemy", x:1500, y:600, label:"Golem de Pedra", hitRadius:26,
+    hp:85, maxHp:85, attack:12, defense:10, goldReward:55, xpReward:55, cooldownMs:140000, cooldownUntil:0,
+    dropItem:{id:"stone", qty:3} },
 
   { id:"mush1", type:"mushroom", x:1900, y:250, label:"Cogumelo Sombrio", hitRadius:22, item:"mushroom", skill:"hunting",
     xp:24, energyCost:14, time:4200, maxUses:3, usesLeft:3, cooldownMs:22000, cooldownUntil:0 },
@@ -524,10 +596,25 @@ const OBJECTS = [
     xp:24, energyCost:14, time:4200, maxUses:3, usesLeft:3, cooldownMs:22000, cooldownUntil:0 },
   { id:"essence1", type:"essence", x:2130, y:400, label:"Fonte de Essência", hitRadius:22, item:"magicEssence", skill:"crafting",
     xp:50, energyCost:25, time:7000, maxUses:1, usesLeft:1, cooldownMs:60000, cooldownUntil:0 },
-  { id:"npcEremita", type:"npc", x:2000, y:400, label:"Eremita do Pântano", hitRadius:24, questId:"q4" },
+  { id:"npcEremita", type:"npc", x:2000, y:400, label:"Eremita do Pântano", hitRadius:24, questIds:["q4a","q4b"] },
   { id:"enemyWraith", type:"enemy", x:2080, y:350, label:"Espectro do Pântano", hitRadius:26,
     hp:95, maxHp:95, attack:18, defense:8, goldReward:100, xpReward:80, cooldownMs:160000, cooldownUntil:0,
     dropItem:{id:"magicEssence", qty:1} },
+  { id:"enemyLeech", type:"enemy", x:1870, y:550, label:"Sanguessuga Gigante", hitRadius:24,
+    hp:80, maxHp:80, attack:16, defense:5, goldReward:85, xpReward:70, cooldownMs:150000, cooldownUntil:0 },
+
+  // ---- Picos Gélidos (exige Capa de Couro equipada) ----
+  { id:"iceCrystal1", type:"ice", x:2320, y:250, label:"Veio de Cristal", hitRadius:24, item:"iceCrystal",
+    skill:"mining", xp:32, energyCost:20, time:5800, maxUses:2, usesLeft:2, cooldownMs:32000, cooldownUntil:0 },
+  { id:"iceCrystal2", type:"ice", x:2480, y:650, label:"Veio de Cristal", hitRadius:24, item:"iceCrystal",
+    skill:"mining", xp:32, energyCost:20, time:5800, maxUses:2, usesLeft:2, cooldownMs:32000, cooldownUntil:0 },
+  { id:"npcExplorer", type:"npc", x:2250, y:550, label:"Exploradora Perdida", hitRadius:24, questIds:["q5a","q5b"] },
+  { id:"enemyFrostWolf", type:"enemy", x:2400, y:450, label:"Lobo Glacial", hitRadius:26,
+    hp:110, maxHp:110, attack:20, defense:9, goldReward:130, xpReward:100, cooldownMs:180000, cooldownUntil:0,
+    dropItem:{id:"iceCrystal", qty:1} },
+  { id:"enemyPolarBear", type:"enemy", x:2550, y:300, label:"Urso Polar", hitRadius:26,
+    hp:120, maxHp:120, attack:19, defense:11, goldReward:140, xpReward:110, cooldownMs:190000, cooldownUntil:0,
+    dropItem:{id:"hide", qty:2} },
 ];
 
 // ---------- CENÁRIO DECORATIVO ----------
@@ -538,6 +625,7 @@ const DECOR = [
   {type:"rock", x:1230,y:300}, {type:"rock", x:1420,y:520}, {type:"tuft", x:1250,y:650}, {type:"flower", x:1400,y:700},
   {type:"rock", x:1560,y:180}, {type:"rock", x:1650,y:500}, {type:"rock", x:1750,y:320}, {type:"rock", x:1580,y:700},
   {type:"tuft", x:1880,y:350}, {type:"tuft", x:2020,y:250}, {type:"rock", x:1970,y:700}, {type:"tuft", x:2100,y:550},
+  {type:"rock", x:2260,y:300}, {type:"rock", x:2380,y:600}, {type:"rock", x:2520,y:250}, {type:"rock", x:2300,y:750},
 ];
 
 // ---------- ESTRADAS ----------
@@ -563,9 +651,9 @@ const player = {
   equipped:{ axe:false, pickaxe:false, rod:false, cloak:false },
   equipment:{ weapon:null, armor:null },
   inventory:{ wood:0, ore:0, rareOre:0, goldOre:0, stone:0, meat:0, fish:0, herb:0, mushroom:0, hide:0,
-    gem:0, pearl:0, magicEssence:0, ration:0, cookedMeat:0, cookedFish:0, mealPack:0, vigorPotion:0,
-    arcaneElixir:0, healPotionSmall:0, healPotion:0, cutGem:0, pearlNecklace:0, ironPick:0, ironAxe:0,
-    fishingRod:0, leatherCloak:0, ironDagger:0, ironSword:0, leatherArmor:0, reinforcedArmor:0, boatTicket:0 },
+    gem:0, pearl:0, magicEssence:0, iceCrystal:0, ration:0, cookedMeat:0, cookedFish:0, mealPack:0, vigorPotion:0,
+    arcaneElixir:0, healPotionSmall:0, healPotion:0, cutGem:0, pearlNecklace:0, iceSculpture:0, ironPick:0, ironAxe:0,
+    fishingRod:0, leatherCloak:0, ironDagger:0, ironSword:0, leatherArmor:0, reinforcedArmor:0, frostBlade:0, boatTicket:0 },
   skills:{ lumberjack:{xp:0}, mining:{xp:0}, hunting:{xp:0}, fishing:{xp:0}, crafting:{xp:0}, trading:{xp:0} }
 };
 
@@ -574,7 +662,7 @@ const INITIAL_OBJECT_STATES = OBJECTS.filter(o=> o.usesLeft!==undefined || o.typ
   .map(o=>({ id:o.id, usesLeft:o.usesLeft, cooldownUntil:o.cooldownUntil }));
 
 let move = null, task = null, confirmObj = null, travelTarget = null, nearBuilding = null, activeTab = "status";
-let bigMapSelected = null, repeatQty = 1, craftQty = {}, craftFilter = "all";
+let bigMapSelected = null, repeatQty = 1, craftQty = {}, craftFilter = "all", invFilter = "all";
 let manualCamera = null;
 let battle = null, battleBusy = false;
 
@@ -801,6 +889,9 @@ function checkGate(gateX){
   if(gateX >= SWAMP_GATE_X && skillLevel("crafting") < 4){
     return "As névoas do Pântano Nebuloso exigem Culinária/Crafting Nv.4 (conhecimento de antídotos).";
   }
+  if(gateX >= SNOW_GATE_X && player.tools.cloak < 2){
+    return "Os Picos Gélidos exigem uma Capa de Couro equipada para proteção contra o frio.";
+  }
   return null;
 }
 
@@ -830,7 +921,7 @@ function cancelMove(){
   log("Movimento cancelado.", true);
 }
 
-const GATHER_TYPES = ["tree","ore","rareOre","goldOre","stone","hunt","fish","herb","mushroom","essence","berry"];
+const GATHER_TYPES = ["tree","ore","rareOre","goldOre","stone","hunt","fish","herb","mushroom","essence","ice","berry"];
 
 function onArrive(obj){
   if(!obj){ hideConfirmPanel(); return; }
@@ -927,7 +1018,7 @@ function startGatherTask(obj, remainingRepeats){
   }
   let time = obj.time - (obj.skill ? (skillLevel(obj.skill)-1)*150 : 0);
   if(obj.type === "tree" && player.tools.axe >= 2) time *= 0.7;
-  if(["ore","rareOre","goldOre","stone"].includes(obj.type) && player.tools.pickaxe >= 2) time *= 0.7;
+  if(["ore","rareOre","goldOre","stone","ice"].includes(obj.type) && player.tools.pickaxe >= 2) time *= 0.7;
   if(obj.type === "fish" && player.tools.rod >= 2) time *= 0.7;
   time = Math.max(1000, time);
 
@@ -1217,6 +1308,39 @@ document.getElementById("closeSaveBtn").addEventListener("click", ()=> saveModal
 saveModal.addEventListener("click", (ev)=>{ if(ev.target===saveModal) saveModal.classList.remove("open"); });
 
 // =====================================================================
+// TUTORIAL
+// =====================================================================
+const TUTORIAL_SLIDES = [
+  { title:"Bem-vindo a Trilhas de Aldeceira", body:"Toque em qualquer ponto do mapa pra caminhar até lá. Arraste com o dedo (ou mouse) pra olhar áreas distantes sem se mover — solte sem arrastar muito e vira um toque normal." },
+  { title:"Coleta de Recursos", body:"Ao tocar num recurso, você vê o que é e o custo antes de ir. Ao chegar, escolha 'Sim, fazer'. Se o recurso tiver mais de 1 carga, dá pra escolher quantas coletar de uma vez, sem clicar toda hora." },
+  { title:"Energia & Vida", body:"⚡ Energia é gasta ao andar e coletar — repõe com comida. ❤️ Vida só é perdida em combate — repõe com poções de cura específicas. A Estalagem recupera as duas de uma vez." },
+  { title:"Crafting & Equipamento", body:"Produza itens na aba Crafting (use os filtros pra achar mais rápido) com os materiais da mochila. Ferramentas, armas e armaduras viram itens no Inventário — equipe uma pra ativar o bônus; itens equipados não podem ser vendidos até serem guardados." },
+  { title:"Zonas Perigosas", body:"Cada região tem uma exigência pra entrar (passagem, nível de skill ou equipamento). Inimigos (⚔️ no mapa) iniciam combate automático ao se aproximar — escolha Atacar, Defender, Fugir, ou use um item de cura direto na batalha." },
+  { title:"Missões & Progresso", body:"NPCs com '!' sobre a cabeça têm uma missão; completar uma libera a próxima da cadeia. Use o botão 💾 no topo pra salvar seu progresso em até 3 slots — o jogo não salva sozinho." },
+];
+let tutStep = 0;
+const tutorialModal = document.getElementById("tutorialModal");
+function renderTutorial(){
+  const s = TUTORIAL_SLIDES[tutStep];
+  document.getElementById("tutTitle").textContent = s.title;
+  document.getElementById("tutBody").textContent = s.body;
+  document.getElementById("tutDots").textContent = `${tutStep+1}/${TUTORIAL_SLIDES.length}`;
+  document.getElementById("tutPrevBtn").disabled = tutStep === 0;
+  document.getElementById("tutNextBtn").textContent = tutStep === TUTORIAL_SLIDES.length-1 ? "Começar a jogar" : "Próximo ▶";
+}
+function openTutorial(){ tutStep = 0; renderTutorial(); tutorialModal.classList.add("open"); }
+function closeTutorial(){
+  tutorialModal.classList.remove("open");
+  try{ localStorage.setItem("trilhasAldeceira_tutorialSeen", "1"); } catch(e){}
+}
+document.getElementById("tutPrevBtn").addEventListener("click", ()=>{ if(tutStep>0){ tutStep--; renderTutorial(); } });
+document.getElementById("tutNextBtn").addEventListener("click", ()=>{
+  if(tutStep < TUTORIAL_SLIDES.length-1){ tutStep++; renderTutorial(); } else { closeTutorial(); }
+});
+document.getElementById("closeTutBtn").addEventListener("click", closeTutorial);
+document.getElementById("helpBtn").addEventListener("click", openTutorial);
+
+// =====================================================================
 // TELA CHEIA
 // =====================================================================
 document.getElementById("fullscreenBtn").addEventListener("click", ()=>{
@@ -1281,7 +1405,8 @@ function regionAt(x){
   if(x < ISLAND_GATE_X) return "Vila Portuária";
   if(x < STONE_GATE_X) return "Ilha Vizinha";
   if(x < SWAMP_GATE_X) return "Colinas de Pedra";
-  return "Pântano Nebuloso";
+  if(x < SNOW_GATE_X) return "Pântano Nebuloso";
+  return "Picos Gélidos";
 }
 function regionColorAt(x){
   if(x < 620) return "#2f5a3c";
@@ -1289,7 +1414,8 @@ function regionColorAt(x){
   if(x < ISLAND_GATE_X + 50) return "#204a63";
   if(x < STONE_GATE_X) return "#3a6b4f";
   if(x < SWAMP_GATE_X) return "#5c5850";
-  return "#4a3a5c";
+  if(x < SNOW_GATE_X) return "#4a3a5c";
+  return "#d8e4ec";
 }
 
 // =====================================================================
@@ -1317,6 +1443,7 @@ const SPR_HERB = [".L.L.L.","LLLLLLL",".LLLLL.","..LPL.."];
 const SPR_FISH = ["..FFFF..",".FFFFFFT","FFFFFFFT",".FFFFFFT","..FFFF.."];
 const SPR_MUSH = ["..CCC..",".CCCCC.","CCoCoCC",".CCCCC.","..SSS..","..SSS.."];
 const SPR_ESSENCE=["..GGG..",".GWWWG.","GWWWWWG","GWWWWWG",".GWWWG.","..GGG.."];
+const SPR_ICE   = ["..III..",".IWWWI.","IWWWWWI","IWWWWWI",".IWWWI.","..III.."];
 const SPR_HOUSE= ["..RRRR..",".RRRRRR.","RRRRRRRR","WWWWWWWW","WWWAAWWW","WWWAAWWW","WWWWWWWW"];
 const SPR_DOCK = ["WwWwWwWwWw","WWWWWWWWWW"];
 const SPR_PERSON=["..HHH..",".HSSSH.","..SSS..",".BBBBB.","BBBBBBB",".B.B.B.","..L.L.."];
@@ -1353,6 +1480,8 @@ function drawObject(o){
     const pulse = 0.75 + 0.25*Math.sin(now/300);
     ctx.globalAlpha = onCooldown ? 0.35 : pulse;
     drawSprite(ctx, o.x, o.y, SPR_ESSENCE, {G:"#7a5a9a", W:"#e8d8ff"}, 3.4);
+  } else if(o.type === "ice"){
+    drawSprite(ctx, o.x, o.y, SPR_ICE, {I:"#7fb8e0", W:"#e8f4ff"}, 3.4);
   } else if(o.type === "shop"){
     drawSprite(ctx, o.x, o.y, SPR_HOUSE, {R:"#caa24a", W:"#d8c39a", A:"#7a5a2a"}, 3.4);
   } else if(o.type === "craft"){
@@ -1365,12 +1494,14 @@ function drawObject(o){
     drawSprite(ctx, o.x, o.y+2, SPR_DOCK, {W:"#8a6a3a", w:"#6b4e28"}, 4.5);
     ctx.font="15px sans-serif"; ctx.textAlign="center"; ctx.fillStyle="#fff"; ctx.fillText("⛵", o.x, o.y-12);
   } else if(o.type === "npc"){
-    const q = QUESTS.find(x=>x.id===o.questId);
-    const bodyColor = q && q.done ? "#6b6b66" : "#3f7fbf";
+    const active = getActiveQuest(o);
+    const chain = getNpcQuestChain(o);
+    const allDone = chain.length>0 && chain.every(q=>q.done);
+    const bodyColor = allDone ? "#6b6b66" : "#3f7fbf";
     drawSprite(ctx, o.x, o.y, SPR_PERSON, {H:"#2b2116", S:"#e0b58a", B:bodyColor, L:"#3a2a18"}, 3);
     ctx.font="14px sans-serif"; ctx.textAlign="center";
-    if(q && !q.done){ ctx.fillStyle="#ffd464"; ctx.fillText("!", o.x, o.y-24); }
-    else if(q && q.done){ ctx.fillStyle="#9be36f"; ctx.fillText("✓", o.x, o.y-24); }
+    if(active){ ctx.fillStyle="#ffd464"; ctx.fillText("!", o.x, o.y-24); }
+    else if(allDone){ ctx.fillStyle="#9be36f"; ctx.fillText("✓", o.x, o.y-24); }
   } else if(o.type === "enemy"){
     drawSprite(ctx, o.x, o.y, SPR_ENEMY, {E:"#5a2a1e", x:"#ff3b2e"}, 3.6);
   }
@@ -1410,6 +1541,7 @@ const SPECKLE = {
   "#3a6b4f": ["#437c59","#2f5942"],
   "#5c5850": ["#6c675e","#4c473f"],
   "#4a3a5c": ["#5c4a70","#3a2c48"],
+  "#d8e4ec": ["#eaf2f8","#c2d4e0"],
 };
 function hash2(x,y){ const h = Math.sin(x*127.1+y*311.7)*43758.5453; return h - Math.floor(h); }
 
@@ -1517,7 +1649,7 @@ function drawMap(){
 
 const OBJECT_DOT_COLOR = {
   tree:"#e8b473", ore:"#c9c1a0", rareOre:"#ffe27a", goldOre:"#ffd464", stone:"#a89880", hunt:"#ff6b4a",
-  berry:"#9be36f", herb:"#8fe06b", fish:"#7fb8e0", mushroom:"#e08fce", essence:"#e8d8ff", npc:"#ffd464",
+  berry:"#9be36f", herb:"#8fe06b", fish:"#7fb8e0", mushroom:"#e08fce", essence:"#e8d8ff", ice:"#bfe4ff", npc:"#ffd464",
   shop:"#ffd464", craft:"#ffe27a", blacksmith:"#ff6b4a", inn:"#f2ddb0", dock:"#c9dce8", enemy:"#ff3b2e"
 };
 
@@ -1696,6 +1828,7 @@ document.getElementById("tabContent").addEventListener("click", (ev)=>{
     renderTab();
   }
   else if(t.dataset.use) useConsumable(t.dataset.use);
+  else if(t.dataset.invfilter){ invFilter = t.dataset.invfilter; renderTab(); }
   else if(t.dataset.equip) equipTool(t.dataset.equip);
   else if(t.dataset.unequip) unequipTool(t.dataset.unequip);
   else if(t.dataset.equipslot){ const [slot,id]=t.dataset.equipslot.split(":"); equipSlot(slot,id); }
@@ -1734,11 +1867,23 @@ function renderStatusTab(){
 }
 
 function renderInvTab(){
-  let html = ""; let any=false;
-  for(const id in player.inventory){
+  const owned = Object.keys(player.inventory).filter(id => player.inventory[id] > 0);
+  const filtered = invFilter === "all" ? owned : owned.filter(id => ITEM_CATEGORY[id] === invFilter);
+
+  let html = `<div class="filterRow">` + INV_CATS.map(c=>
+    `<button class="filterChip ${invFilter===c.id?'active':''}" data-invfilter="${c.id}">${c.label}</button>`
+  ).join("") + `</div>`;
+
+  if(owned.length === 0){
+    html += `<div class="hint" style="display:block;">Inventário vazio. Colete madeira, minério ou frutas no mapa.</div>`;
+    return html;
+  }
+  if(filtered.length === 0){
+    html += `<div class="hint" style="display:block;">Nada nessa categoria ainda.</div>`;
+    return html;
+  }
+  filtered.forEach(id=>{
     const qty = player.inventory[id];
-    if(qty<=0) continue;
-    any=true;
     const toolKey = OUTPUT_TO_TOOL[id];
     const slot = OUTPUT_TO_SLOT[id];
     let actionBtn = "";
@@ -1758,8 +1903,7 @@ function renderInvTab(){
       actionBtn = `<button class="action small" data-use="${id}">Usar (${effects.join(" ")})</button>`;
     }
     html += `<div class="itemRow"><span>${ITEMS[id].name}</span><span class="qty">${qty}</span>${actionBtn}</div>`;
-  }
-  if(!any) html = `<div class="hint" style="display:block;">Inventário vazio. Colete madeira, minério ou frutas no mapa.</div>`;
+  });
   return html;
 }
 
@@ -1824,17 +1968,20 @@ function renderLocalTab(){
         ${player.inventory.boatTicket>=1 ? "Possui" : "Comprar"}
       </button></div>`;
   } else if(b.type === "npc"){
-    const q = QUESTS.find(x=>x.id===b.questId);
-    if(!q){ html += `<div class="hint" style="display:block;">Nada a dizer no momento.</div>`; }
-    else if(q.done){
-      html += `<div class="hint" style="display:block;">✔ Missão concluída: <b>${q.title}</b>. Obrigado pela ajuda!</div>`;
+    const active = getActiveQuest(b);
+    const chain = getNpcQuestChain(b);
+    const allDone = chain.length>0 && chain.every(q=>q.done);
+    if(!active){
+      html += `<div class="hint" style="display:block;">${allDone ? "✔ Todas as missões concluídas. Obrigado pela ajuda!" : "Nada a dizer no momento."}</div>`;
     } else {
+      const q = active;
       const needTxt = Object.keys(q.need).map(id=>`${q.need[id]}x ${ITEMS[id].name} (${player.inventory[id]||0})`).join(" + ");
       const ok = hasItems(q.need);
       let rewardTxt = `${q.rewardGold}g`;
       if(q.rewardXp) rewardTxt += ` + XP ${SKILL_DEFS[q.rewardXp.skill].name}`;
       if(q.rewardItem) rewardTxt += ` + ${q.rewardItem.qty}x ${ITEMS[q.rewardItem.id].name}`;
-      html += `<div class="hint" style="display:block; margin-bottom:6px;"><b>${q.title}</b><br>${q.desc}</div>
+      const stageTxt = chain.length>1 ? ` (${chain.indexOf(q)+1}/${chain.length})` : "";
+      html += `<div class="hint" style="display:block; margin-bottom:6px;"><b>${q.title}${stageTxt}</b><br>${q.desc}</div>
         <div class="need ${ok?'':'bad'}">${needTxt}</div>
         <div class="hint" style="display:block; margin:4px 0 8px 0;">Recompensa: ${rewardTxt}</div>
         <button class="action small" data-turnin="${q.id}" ${ok?"":"disabled"}>Entregar</button>`;
@@ -1944,6 +2091,9 @@ fitMapInner();
 log("Bem-vindo à Floresta Inicial. Arraste o mapa para explorar ou toque para caminhar.", true);
 setTab("status");
 gameLoop();
+try{
+  if(!localStorage.getItem("trilhasAldeceira_tutorialSeen")) openTutorial();
+} catch(e){}
 </script>
 </body>
 </html>
