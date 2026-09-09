@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-<title>Trilhas de Aldeceira — Protótipo v20</title>
+<title>Trilhas de Aldeceira — Protótipo v22</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
@@ -166,7 +166,7 @@ button.action.small{ padding:4px 8px; font-size:11px; min-height:auto; }
 </head>
 <body>
 <div id="app">
-  <h1><span class="titleText">Trilhas de Aldeceira</span> <span class="sub">protótipo v20 — cabe na tela também no navegador</span>
+  <h1><span class="titleText">Trilhas de Aldeceira</span> <span class="sub">protótipo v22 — economia expandida</span>
     <button class="action small" id="fullscreenBtn"><span class="btnIcon">⛶</span><span class="btnLabel"> Tela cheia</span></button>
   </h1>
   <div id="topbar">
@@ -345,6 +345,7 @@ const ITEMS = {
   healPotion:{ name:"Poção de Vida",        weight:1, restoreHp:60 },
   cutGem:    { name:"Joia Lapidada",        weight:1 },
   pearlNecklace:{ name:"Colar de Pérolas",  weight:1 },
+  tradeLicense:{ name:"Licença de Comerciante", weight:0 },
   ironPick:  { name:"Picareta de Ferro",    weight:3 },
   ironAxe:   { name:"Machado de Ferro",     weight:3 },
   fishingRod:{ name:"Vara de Pesca Reforçada", weight:3 },
@@ -374,7 +375,7 @@ const ITEM_CATEGORY = {
   ironPick:"equipment", ironAxe:"equipment", fishingRod:"equipment", leatherCloak:"equipment",
   ironDagger:"equipment", ironSword:"equipment", leatherArmor:"equipment", reinforcedArmor:"equipment",
   frostBlade:"equipment",
-  cutGem:"other", pearlNecklace:"other", iceSculpture:"other", boatTicket:"other",
+  cutGem:"other", pearlNecklace:"other", iceSculpture:"other", boatTicket:"other", tradeLicense:"other",
 };
 const INV_CATS = [
   {id:"all", label:"Todos"},
@@ -469,6 +470,11 @@ const QUESTS = [
     need:{wood:6}, rewardGold:30, rewardXp:{skill:"lumberjack", amount:20}, done:false },
   { id:"q5b", title:"Amostras de Gelo", desc:"Ela quer levar Cristais de Gelo pra estudar.", requires:"q5a",
     need:{iceCrystal:2}, rewardGold:90, rewardXp:{skill:"mining", amount:40}, rewardItem:{id:"healPotion", qty:2}, done:false },
+
+  { id:"q6a", title:"Provador de Mercadorias", desc:"A Guilda dos Mercadores quer avaliar sua mercadoria.",
+    need:{wood:5, ore:5}, rewardGold:25, rewardXp:{skill:"trading", amount:20}, done:false },
+  { id:"q6b", title:"Rota Comercial", desc:"Prove que consegue negociar bens de verdadeiro valor.", requires:"q6a",
+    need:{gem:2, pearl:2}, rewardGold:50, rewardXp:{skill:"trading", amount:40}, rewardItem:{id:"tradeLicense", qty:1}, done:false },
 ];
 function isQuestDone(id){ const q = QUESTS.find(x=>x.id===id); return q ? q.done : false; }
 function getNpcQuestChain(npc){ return (npc.questIds||[]).map(id=>QUESTS.find(q=>q.id===id)).filter(Boolean); }
@@ -528,9 +534,11 @@ const OBJECTS = [
     buy:{ ration:4, cookedMeat:8, wood:4, ore:5 }, market:{} },
   { id:"npcElara", type:"npc", x:200, y:700, label:"Anciã Elara", hitRadius:24, questIds:["q1a","q1b"] },
   { id:"enemyBoar", type:"enemy", x:520, y:300, label:"Javali Selvagem", hitRadius:24,
-    hp:30, maxHp:30, attack:6, defense:1, goldReward:12, xpReward:15, cooldownMs:80000, cooldownUntil:0 },
+    hp:30, maxHp:30, attack:6, defense:1, goldReward:12, xpReward:15, cooldownMs:80000, cooldownUntil:0,
+    dropItem:{id:"meat", qty:2} },
   { id:"enemyForestWolf", type:"enemy", x:350, y:600, label:"Lobo Faminto", hitRadius:24,
-    hp:25, maxHp:25, attack:5, defense:0, goldReward:8, xpReward:12, cooldownMs:70000, cooldownUntil:0 },
+    hp:25, maxHp:25, attack:5, defense:0, goldReward:8, xpReward:12, cooldownMs:70000, cooldownUntil:0,
+    dropItem:{id:"hide", qty:1} },
 
   { id:"stoneV1", type:"stone", x:640, y:780, label:"Pedreira", hitRadius:22, item:"stone", skill:"mining",
     xp:10, energyCost:10, time:3200, maxUses:3, usesLeft:3, cooldownMs:16000, cooldownUntil:0 },
@@ -539,9 +547,9 @@ const OBJECTS = [
   { id:"berryV", type:"berry", x:760, y:540, label:"Arbusto de Frutas", hitRadius:22, item:"ration",
     skill:null, xp:0, energyCost:3, time:1500, maxUses:5, usesLeft:5, cooldownMs:8000, cooldownUntil:0 },
   { id:"shopV", type:"shop", x:760, y:150, label:"Mercador da Vila", hitRadius:26,
-    sell:{ wood:5, ore:4, rareOre:8, meat:6, ration:2, goldOre:15, fish:4, hide:5, gem:18, cutGem:40,
-             pearl:10, pearlNecklace:85, mushroom:6, magicEssence:25, ironPick:30, ironAxe:30, fishingRod:25, leatherCloak:35,
-             iceCrystal:20, iceSculpture:95 },
+    sell:{ wood:5, ore:4, rareOre:10, meat:6, ration:2, goldOre:18, fish:4, hide:5, gem:20, cutGem:48,
+             pearl:12, pearlNecklace:100, mushroom:6, magicEssence:30, ironPick:30, ironAxe:30, fishingRod:25, leatherCloak:35,
+             iceCrystal:22, iceSculpture:110 },
     buy:{ ration:5, cookedMeat:10, cookedFish:12, mealPack:20, healPotionSmall:15, wood:8, ore:7, stone:3 }, market:{} },
   { id:"craftV", type:"craft", x:860, y:430, label:"Bancada de Crafting", hitRadius:26 },
   { id:"blacksmith", type:"blacksmith", x:700, y:650, label:"Ferreiro", hitRadius:26,
@@ -550,6 +558,7 @@ const OBJECTS = [
   { id:"innV", type:"inn", x:820, y:700, label:"Estalagem", hitRadius:26, price:20 },
   { id:"dockV", type:"dock", x:1075, y:700, label:"Doca da Vila", hitRadius:28 },
   { id:"npcBruno", type:"npc", x:960, y:600, label:"Capitão Bruno", hitRadius:24, questIds:["q2a","q2b"] },
+  { id:"npcGuild", type:"npc", x:820, y:520, label:"Guilda dos Mercadores", hitRadius:24, questIds:["q6a","q6b"] },
 
   { id:"fishI1", type:"fish", x:1125, y:600, label:"Ponto de Pesca", hitRadius:22, item:"fish", skill:"fishing",
     xp:14, energyCost:10, time:3800, maxUses:3, usesLeft:3, cooldownMs:15000, cooldownUntil:0, bonusItem:"pearl", bonusChance:0.15 },
@@ -570,10 +579,15 @@ const OBJECTS = [
   { id:"berryI", type:"berry", x:1160, y:720, label:"Arbusto de Frutas", hitRadius:22, item:"ration",
     skill:null, xp:0, energyCost:3, time:1500, maxUses:5, usesLeft:5, cooldownMs:8000, cooldownUntil:0 },
   { id:"npcCacador", type:"npc", x:1300, y:300, label:"Caçador Perdido", hitRadius:24, questIds:["q3a","q3b"] },
+  { id:"shopI", type:"shop", x:1280, y:500, label:"Mercador da Ilha", hitRadius:26,
+    sell:{ rareOre:6, meat:5, hide:4, fish:3, herb:2, pearl:8, goldOre:20, iceCrystal:26, mushroom:8 },
+    buy:{ ration:5, healPotionSmall:16, mealPack:22, wood:9 }, market:{} },
   { id:"enemyWolf", type:"enemy", x:1350, y:280, label:"Lobo da Ilha", hitRadius:24,
-    hp:50, maxHp:50, attack:10, defense:4, goldReward:30, xpReward:35, cooldownMs:100000, cooldownUntil:0 },
+    hp:50, maxHp:50, attack:10, defense:4, goldReward:30, xpReward:35, cooldownMs:100000, cooldownUntil:0,
+    dropItem:{id:"hide", qty:2} },
   { id:"enemySpider", type:"enemy", x:1200, y:650, label:"Aranha Gigante", hitRadius:24,
-    hp:55, maxHp:55, attack:11, defense:3, goldReward:28, xpReward:32, cooldownMs:95000, cooldownUntil:0 },
+    hp:55, maxHp:55, attack:11, defense:3, goldReward:28, xpReward:32, cooldownMs:95000, cooldownUntil:0,
+    dropItem:{id:"gem", qty:1} },
 
   { id:"stoneC1", type:"stone", x:1560, y:420, label:"Pedreira", hitRadius:22, item:"stone", skill:"mining",
     xp:10, energyCost:10, time:3200, maxUses:3, usesLeft:3, cooldownMs:16000, cooldownUntil:0 },
@@ -606,7 +620,11 @@ const OBJECTS = [
     hp:95, maxHp:95, attack:18, defense:8, goldReward:100, xpReward:80, cooldownMs:160000, cooldownUntil:0,
     dropItem:{id:"magicEssence", qty:1} },
   { id:"enemyLeech", type:"enemy", x:1870, y:550, label:"Sanguessuga Gigante", hitRadius:24,
-    hp:80, maxHp:80, attack:16, defense:5, goldReward:85, xpReward:70, cooldownMs:150000, cooldownUntil:0 },
+    hp:80, maxHp:80, attack:16, defense:5, goldReward:85, xpReward:70, cooldownMs:150000, cooldownUntil:0,
+    dropItem:{id:"mushroom", qty:2} },
+  { id:"shopP", type:"shop", x:1930, y:650, label:"Mercador do Pântano", hitRadius:26,
+    sell:{ mushroom:4, iceCrystal:28, pearl:16, gem:20, goldOre:22 },
+    buy:{ healPotion:40, ration:8, arcaneElixir:70 }, market:{} },
 
   // ---- Picos Gélidos (exige Capa de Couro equipada) ----
   { id:"iceCrystal1", type:"ice", x:2320, y:250, label:"Veio de Cristal", hitRadius:24, item:"iceCrystal",
@@ -620,6 +638,9 @@ const OBJECTS = [
   { id:"enemyPolarBear", type:"enemy", x:2550, y:300, label:"Urso Polar", hitRadius:26,
     hp:120, maxHp:120, attack:19, defense:11, goldReward:140, xpReward:110, cooldownMs:190000, cooldownUntil:0,
     dropItem:{id:"hide", qty:2} },
+  { id:"shopG", type:"shop", x:2350, y:600, label:"Mercador dos Picos", hitRadius:26,
+    sell:{ iceCrystal:14, hide:6, mushroom:12, magicEssence:35, pearlNecklace:110 },
+    buy:{ healPotion:42, ration:9, arcaneElixir:75 }, market:{} },
 ];
 
 // ---------- CENÁRIO DECORATIVO ----------
@@ -662,7 +683,7 @@ const player = {
   equipment:{ weapon:null, armor:null },
   inventory:{ wood:0, ore:0, rareOre:0, goldOre:0, stone:0, meat:0, fish:0, herb:0, mushroom:0, hide:0,
     gem:0, pearl:0, magicEssence:0, iceCrystal:0, ration:0, cookedMeat:0, cookedFish:0, mealPack:0, vigorPotion:0,
-    arcaneElixir:0, healPotionSmall:0, healPotion:0, cutGem:0, pearlNecklace:0, iceSculpture:0, ironPick:0, ironAxe:0,
+    arcaneElixir:0, healPotionSmall:0, healPotion:0, cutGem:0, pearlNecklace:0, iceSculpture:0, tradeLicense:0, ironPick:0, ironAxe:0,
     fishingRod:0, leatherCloak:0, ironDagger:0, ironSword:0, leatherArmor:0, reinforcedArmor:0, frostBlade:0, boatTicket:0 },
   skills:{ lumberjack:{xp:0}, mining:{xp:0}, hunting:{xp:0}, fishing:{xp:0}, crafting:{xp:0}, trading:{xp:0} }
 };
@@ -719,6 +740,7 @@ function winBattle(){
   if(e.dropItem){ addItem(e.dropItem.id, e.dropItem.qty); msg += ` +${e.dropItem.qty}x ${ITEMS[e.dropItem.id].name}`; }
   e.cooldownUntil = performance.now() + e.cooldownMs;
   log(msg, true);
+  addFloatingText(player.pos.x, player.pos.y-24, `+${e.goldReward}g`, "#ffd464");
   closeBattle();
 }
 function fleeBattleSuccess(){
@@ -858,6 +880,27 @@ function log(msg, highlight){
   div.textContent = "» " + msg;
   el.prepend(div);
   while(el.children.length > 40) el.removeChild(el.lastChild);
+}
+
+// =====================================================================
+// TEXTO FLUTUANTE (feedback visual de ouro ganho/gasto no mapa)
+// =====================================================================
+let floatingTexts = [];
+function addFloatingText(x, y, text, color){
+  floatingTexts.push({ x, y, text, color: color||"#ffd464", start: performance.now() });
+}
+function drawFloatingTexts(){
+  if(floatingTexts.length === 0) return;
+  const now = performance.now();
+  floatingTexts = floatingTexts.filter(t => now - t.start < 900);
+  ctx.textAlign = "center"; ctx.font = "bold 13px monospace";
+  floatingTexts.forEach(t=>{
+    const p = (now - t.start) / 900;
+    ctx.globalAlpha = Math.max(0, 1 - p);
+    ctx.fillStyle = "#000000aa"; ctx.fillText(t.text, t.x+1, t.y - p*22 + 1);
+    ctx.fillStyle = t.color; ctx.fillText(t.text, t.x, t.y - p*22);
+  });
+  ctx.globalAlpha = 1;
 }
 
 // =====================================================================
@@ -1147,17 +1190,18 @@ function getMarketCount(shop, itemId){
 function bumpMarket(shop, itemId){
   shop.market[itemId] = { count: getMarketCount(shop, itemId) + 1, lastSale: performance.now() };
 }
+function hasTradeLicense(){ return (player.inventory.tradeLicense||0) >= 1; }
 function getEffectiveSellPrice(shop, itemId){
   const base = shop.sell ? shop.sell[itemId] : 0;
   if(!base) return 0;
   const marketAdj = Math.max(0.5, 1 - getMarketCount(shop, itemId)*0.05);
-  const skillBonus = 1 + (skillLevel("trading")-1)*0.03;
+  const skillBonus = 1 + (skillLevel("trading")-1)*0.03 + (hasTradeLicense()?0.10:0);
   return Math.max(1, Math.round(base * marketAdj * skillBonus));
 }
 function getEffectiveBuyPrice(shop, itemId){
   const base = shop.buy ? shop.buy[itemId] : 0;
   if(!base) return 0;
-  const skillDiscount = Math.max(0.7, 1 - (skillLevel("trading")-1)*0.02);
+  const skillDiscount = Math.max(0.65, 1 - (skillLevel("trading")-1)*0.02 - (hasTradeLicense()?0.08:0));
   return Math.max(1, Math.round(base * skillDiscount));
 }
 function trySell(shopObj, itemId){
@@ -1172,6 +1216,7 @@ function trySell(shopObj, itemId){
   bumpMarket(shopObj, itemId);
   gainXp("trading", Math.max(1, Math.round(price*0.4)));
   log(`Vendido: ${ITEMS[itemId].name} por ${price} ouro.`, true);
+  addFloatingText(player.pos.x, player.pos.y-24, `+${price}g`, "#ffd464");
   renderTab();
 }
 function trySellAll(shopObj, itemId){
@@ -1190,6 +1235,7 @@ function trySellAll(shopObj, itemId){
   if(sold > 0){
     gainXp("trading", xpTotal);
     log(`Vendido: ${sold}x ${ITEMS[itemId].name} por ${total} ouro no total.`, true);
+    addFloatingText(player.pos.x, player.pos.y-24, `+${total}g`, "#ffd464");
     renderTab();
   }
 }
@@ -1202,6 +1248,7 @@ function tryBuyItem(shopObj, itemId){
   player.gold -= price;
   gainXp("trading", Math.max(1, Math.round(price*0.3)));
   log(`Comprou: ${ITEMS[itemId].name} por ${price} ouro.`, true);
+  addFloatingText(player.pos.x, player.pos.y-24, `-${price}g`, "#ff6b4a");
   renderTab();
 }
 
@@ -1253,6 +1300,7 @@ function tryTurnInQuest(questId){
   if(q.rewardXp) rewardTxt += ` +${q.rewardXp.amount} XP ${SKILL_DEFS[q.rewardXp.skill].name}`;
   if(q.rewardItem) rewardTxt += ` +${q.rewardItem.qty}x ${ITEMS[q.rewardItem.id].name}`;
   log(`Missão concluída: ${q.title}! ${rewardTxt}`, true);
+  addFloatingText(player.pos.x, player.pos.y-24, `+${q.rewardGold}g`, "#ffd464");
   renderTab();
 }
 
@@ -1802,6 +1850,7 @@ function drawMap(){
     ctx.beginPath(); ctx.arc(move.ex, move.ey, 6, 0, Math.PI*2); ctx.stroke();
   }
   drawPlayer();
+  drawFloatingTexts();
   drawFogOverlay();
   ctx.restore();
 }
@@ -2025,6 +2074,9 @@ function renderStatusTab(){
     <div class="barOuter"><div class="barInner energy" style="width:${player.energy}%"></div></div></div>`;
   html += `<div class="hint" style="display:block;">Ataque ${getAttack()}${player.equipment.weapon?` (${ITEMS[player.equipment.weapon].name})`:' (desarmado)'} · Defesa ${getDefense()}${player.equipment.armor?` (${ITEMS[player.equipment.armor].name})`:' (sem armadura)'}</div>`;
   html += `<div class="hint" style="display:block;">Machado Nv.${player.tools.axe} · Picareta Nv.${player.tools.pickaxe} · Vara Nv.${player.tools.rod} · Capa ${player.tools.cloak>=2?"✔":"—"} · Capacidade ${player.maxWeight}</div>`;
+  if(hasTradeLicense()){
+    html += `<div class="hint" style="display:block;">🏅 <b>Licença de Comerciante</b> — vende ~10% mais caro e compra ~8% mais barato em qualquer mercador.</div>`;
+  }
   return html;
 }
 
