@@ -672,7 +672,7 @@ const INITIAL_OBJECT_STATES = OBJECTS.filter(o=> o.usesLeft!==undefined || o.typ
   .map(o=>({ id:o.id, usesLeft:o.usesLeft, cooldownUntil:o.cooldownUntil }));
 
 let move = null, task = null, confirmObj = null, travelTarget = null, nearBuilding = null, activeTab = "status";
-let bigMapSelected = null, repeatQty = 1, craftQty = {}, craftFilter = "all", invFilter = "all";
+let bigMapSelected = null, repeatQty = 1, craftQty = {}, craftFilter = "all", invFilter = "all", shopSubTab = "sell";
 let manualCamera = null;
 let battle = null, battleBusy = false;
 
@@ -1052,6 +1052,7 @@ function finishGather(meta){
       if(addItem(obj.bonusItem, 1)) log(`✨ Bônus! +1 ${ITEMS[obj.bonusItem].name}`, true);
     }
   }
+  renderTab(); // atualiza Inventário/Crafting na hora, mesmo se não for a aba Status
   obj.usesLeft -= 1;
   const stillHere = dist(player.pos, {x:obj.x,y:obj.y}) <= obj.hitRadius + 6;
 
@@ -1987,6 +1988,7 @@ document.getElementById("tabContent").addEventListener("click", (ev)=>{
   }
   else if(t.dataset.use) useConsumable(t.dataset.use);
   else if(t.dataset.invfilter){ invFilter = t.dataset.invfilter; renderTab(); }
+  else if(t.dataset.shopsub){ shopSubTab = t.dataset.shopsub; renderTab(); }
   else if(t.dataset.equip) equipTool(t.dataset.equip);
   else if(t.dataset.unequip) unequipTool(t.dataset.unequip);
   else if(t.dataset.equipslot){ const [slot,id]=t.dataset.equipslot.split(":"); equipSlot(slot,id); }
@@ -2106,28 +2108,31 @@ function renderLocalTab(){
   const b = nearBuilding;
   let html = `<div class="hint" style="display:block; margin-bottom:8px;">${b.label}</div>`;
   if(b.type === "shop"){
-    html += `<div class="hint" style="display:block; font-weight:bold; margin-bottom:4px;">Vender</div>`;
-    for(const id in b.sell){
-      const qty = player.inventory[id]||0;
-      const sellable = qty - (isReservedItem(id) ? 1 : 0);
-      const base = b.sell[id];
-      const eff = getEffectiveSellPrice(b, id);
-      const priceTxt = eff===base ? `${eff}g` : `${eff}g <span style="text-decoration:line-through; opacity:0.6;">${base}g</span> 📉`;
-      html += `<div class="itemRow"><span>${ITEMS[id].name} — ${priceTxt} cada${isReservedItem(id)?' <span class="equippedTag">equipado</span>':''}</span>
-        <span style="display:flex; gap:4px; flex-wrap:wrap;">
-        <button class="action small" data-sell="${id}" ${sellable<1?"disabled":""}>Vender 1</button>
-        ${sellable>1?`<button class="action small" data-sellall="${id}">Vender Tudo (${Math.max(0,sellable)})</button>`:""}
-        </span></div>`;
-    }
-    if(b.buy){
-      html += `<div class="hint" style="display:block; font-weight:bold; margin:10px 0 4px 0;">Comprar</div>`;
+    html += `<div class="filterRow">
+      <button class="filterChip ${shopSubTab==='sell'?'active':''}" data-shopsub="sell">Vender</button>
+      <button class="filterChip ${shopSubTab==='buy'?'active':''}" data-shopsub="buy">Comprar</button>
+    </div>`;
+    if(shopSubTab === "sell"){
+      for(const id in b.sell){
+        const qty = player.inventory[id]||0;
+        const sellable = qty - (isReservedItem(id) ? 1 : 0);
+        const base = b.sell[id];
+        const eff = getEffectiveSellPrice(b, id);
+        const priceTxt = eff===base ? `${eff}g` : `${eff}g <span style="text-decoration:line-through; opacity:0.6;">${base}g</span> 📉`;
+        html += `<div class="itemRow"><span>${ITEMS[id].name} — ${priceTxt} cada${isReservedItem(id)?' <span class="equippedTag">equipado</span>':''}</span>
+          <span style="display:flex; gap:4px; flex-wrap:wrap;">
+          <button class="action small" data-sell="${id}" ${sellable<1?"disabled":""}>Vender 1</button>
+          ${sellable>1?`<button class="action small" data-sellall="${id}">Vender Tudo (${Math.max(0,sellable)})</button>`:""}
+          </span></div>`;
+      }
+      html += `<div class="hint" style="display:block; margin-top:8px;">Vender muito do mesmo item derruba o preço aqui por um tempo — vale a pena diversificar ou viajar até outro mercador. Nível de Comércio melhora os dois lados.</div>`;
+    } else if(b.buy){
       for(const id in b.buy){
         const price = getEffectiveBuyPrice(b, id);
         html += `<div class="itemRow"><span>${ITEMS[id].name} — ${price}g cada</span>
           <button class="action small" data-buyitem="${id}" ${player.gold<price?"disabled":""}>Comprar</button></div>`;
       }
     }
-    html += `<div class="hint" style="display:block; margin-top:8px;">Vender muito do mesmo item derruba o preço aqui por um tempo — vale a pena diversificar ou viajar até outro mercador. Nível de Comércio melhora os dois lados.</div>`;
   } else if(b.type === "blacksmith"){
     b.sells.forEach(s=>{
       const owned = (player.inventory[TOOL_ITEMS[s.tool]]||0) >= 1;
