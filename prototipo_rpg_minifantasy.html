@@ -88,12 +88,17 @@ button.action:hover:not(:disabled){ background:var(--forest-dark); }
 button.action.danger{ background:var(--ember); border-color:#7a2e14; }
 button.action.danger:hover:not(:disabled){ background:#8f3a1e; }
 button.action.small{ padding:4px 8px; font-size:11px; min-height:auto; }
-.recipeCard{ border:2px solid var(--bark); padding:8px; margin-bottom:10px; background:var(--parchment-dk); }
+.recipeCard{ border:2px solid var(--bark); padding:6px 8px; margin-bottom:8px; background:var(--parchment-dk); }
 .recipeCard.ready{ border-color:var(--forest-dark); background:#dcd2a0; }
-.recipeCard h4{ margin:0 0 4px 0; font-size:14px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:4px; }
+.recipeCard h4{ margin:0 0 3px 0; font-size:13px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:4px; }
 .recipeCard .tag{ font-size:10px; background:var(--forest-mid); color:#fff; padding:2px 6px; }
-.recipeCard .need{ font-size:12px; margin-bottom:4px; }
+.recipeCard .need{ font-size:11px; margin-bottom:2px; }
+.recipeCard .desc{ font-size:10px; color:#5a4a30; margin:0 0 4px 0; line-height:1.3; }
 .need.bad{ color:var(--ember); }
+.filterRow{ display:flex; gap:5px; flex-wrap:wrap; margin-bottom:10px; }
+.filterChip{ font-family:inherit; font-size:11px; padding:5px 9px; background:var(--parchment-dk);
+  color:var(--ink); border:2px solid var(--bark); cursor:pointer; }
+.filterChip.active{ background:var(--forest-mid); color:#fff; border-color:var(--forest-dark); font-weight:bold; }
 
 /* ---------- PROGRESSO / LOG ---------- */
 #progressWrap{ margin-top:10px; background:var(--forest-dark); border:3px solid #0c1a12;
@@ -343,43 +348,51 @@ const ARMOR_ITEMS = { leatherArmor:{def:5}, reinforcedArmor:{def:12} };
 const OUTPUT_TO_SLOT = { ironDagger:"weapon", ironSword:"weapon", leatherArmor:"armor", reinforcedArmor:"armor" };
 
 // ---------- RECEITAS ----------
+// category: usada pelos filtros da aba Crafting (tool | combat | food | trade)
 const RECIPES = [
-  { id:"ironPick", name:"Picareta de Ferro", inputs:{wood:2,ore:3}, output:"ironPick", outQty:1,
+  { id:"ironPick", name:"Picareta de Ferro", category:"tool", inputs:{wood:2,ore:3}, output:"ironPick", outQty:1,
     skill:"crafting", minLevel:1, xp:25, time:4000, desc:"Aumenta a velocidade de mineração. Equipe no Inventário." },
-  { id:"cookedMeat", name:"Carne Assada", inputs:{meat:1}, output:"cookedMeat", outQty:1,
+  { id:"cookedMeat", name:"Carne Assada", category:"food", inputs:{meat:1}, output:"cookedMeat", outQty:1,
     skill:"crafting", minLevel:1, xp:8, time:2000, desc:"Restaura energia e um pouco de vida." },
-  { id:"cookedFish", name:"Peixe Grelhado", inputs:{fish:1}, output:"cookedFish", outQty:1,
+  { id:"cookedFish", name:"Peixe Grelhado", category:"food", inputs:{fish:1}, output:"cookedFish", outQty:1,
     skill:"crafting", minLevel:1, xp:10, time:2200, desc:"Suprimento leve, nutritivo." },
-  { id:"healPotionSmall", name:"Poção de Vida Pequena", inputs:{herb:2}, output:"healPotionSmall", outQty:1,
+  { id:"healPotionSmall", name:"Poção de Vida Pequena", category:"food", inputs:{herb:2}, output:"healPotionSmall", outQty:1,
     skill:"crafting", minLevel:1, xp:10, time:2000, desc:"Cura 30 de vida (não dá energia)." },
-  { id:"ironDagger", name:"Adaga de Ferro", inputs:{wood:1,ore:2}, output:"ironDagger", outQty:1,
+  { id:"ironDagger", name:"Adaga de Ferro", category:"combat", inputs:{wood:1,ore:2}, output:"ironDagger", outQty:1,
     skill:"crafting", minLevel:1, xp:20, time:3500, desc:"Arma básica: Ataque +5. Equipe no Inventário." },
-  { id:"leatherArmor", name:"Armadura de Couro", inputs:{hide:3}, output:"leatherArmor", outQty:1,
+  { id:"leatherArmor", name:"Armadura de Couro", category:"combat", inputs:{hide:3}, output:"leatherArmor", outQty:1,
     skill:"crafting", minLevel:1, xp:20, time:3500, desc:"Defesa básica +5. Equipe no Inventário." },
-  { id:"ironAxe", name:"Machado de Ferro", inputs:{wood:3,ore:2}, output:"ironAxe", outQty:1,
+  { id:"ironAxe", name:"Machado de Ferro", category:"tool", inputs:{wood:3,ore:2}, output:"ironAxe", outQty:1,
     skill:"crafting", minLevel:2, xp:30, time:4500, desc:"Aumenta a velocidade de corte de madeira. Equipe no Inventário." },
-  { id:"travelMeal", name:"Refeição Reforçada", inputs:{ration:1,meat:1}, output:"mealPack", outQty:1,
+  { id:"travelMeal", name:"Refeição Reforçada", category:"food", inputs:{ration:1,meat:1}, output:"mealPack", outQty:1,
     skill:"crafting", minLevel:2, xp:15, time:2500, desc:"Suprimento potente para expedições longas." },
-  { id:"vigorPotion", name:"Poção de Vigor", inputs:{herb:2,ration:1}, output:"vigorPotion", outQty:1,
+  { id:"vigorPotion", name:"Poção de Vigor", category:"food", inputs:{herb:2,ration:1}, output:"vigorPotion", outQty:1,
     skill:"crafting", minLevel:2, xp:18, time:3000, desc:"Restaura bastante energia com ervas medicinais." },
-  { id:"fishingRod", name:"Vara de Pesca Reforçada", inputs:{stone:2,wood:2}, output:"fishingRod", outQty:1,
+  { id:"fishingRod", name:"Vara de Pesca Reforçada", category:"tool", inputs:{stone:2,wood:2}, output:"fishingRod", outQty:1,
     skill:"crafting", minLevel:2, xp:22, time:4000, desc:"Aumenta a velocidade de pesca. Equipe no Inventário." },
-  { id:"bigBag", name:"Alforje Reforçado", inputs:{wood:4,rareOre:2}, special:"bag",
+  { id:"bigBag", name:"Alforje Reforçado", category:"tool", inputs:{wood:4,rareOre:2}, special:"bag",
     skill:"crafting", minLevel:3, xp:35, time:5000, desc:"Aumenta permanentemente a capacidade de carga em +20." },
-  { id:"leatherCloak", name:"Capa de Couro", inputs:{hide:3,wood:1}, output:"leatherCloak", outQty:1,
+  { id:"leatherCloak", name:"Capa de Couro", category:"tool", inputs:{hide:3,wood:1}, output:"leatherCloak", outQty:1,
     skill:"crafting", minLevel:3, xp:30, time:4500, desc:"Reduz 20% do gasto de energia ao caminhar. Equipe no Inventário." },
-  { id:"healPotion", name:"Poção de Vida", inputs:{herb:3,mushroom:1}, output:"healPotion", outQty:1,
+  { id:"healPotion", name:"Poção de Vida", category:"food", inputs:{herb:3,mushroom:1}, output:"healPotion", outQty:1,
     skill:"crafting", minLevel:3, xp:22, time:3200, desc:"Cura 60 de vida (não dá energia)." },
-  { id:"ironSword", name:"Espada de Ferro", inputs:{ore:4,rareOre:1}, output:"ironSword", outQty:1,
+  { id:"ironSword", name:"Espada de Ferro", category:"combat", inputs:{ore:4,rareOre:1}, output:"ironSword", outQty:1,
     skill:"crafting", minLevel:3, xp:40, time:5500, desc:"Arma avançada: Ataque +12. Equipe no Inventário." },
-  { id:"reinforcedArmor", name:"Armadura Reforçada", inputs:{hide:4,stone:3}, output:"reinforcedArmor", outQty:1,
+  { id:"reinforcedArmor", name:"Armadura Reforçada", category:"combat", inputs:{hide:4,stone:3}, output:"reinforcedArmor", outQty:1,
     skill:"crafting", minLevel:3, xp:40, time:5500, desc:"Defesa avançada +12. Equipe no Inventário." },
-  { id:"cutGem", name:"Joia Lapidada", inputs:{gem:2}, output:"cutGem", outQty:1,
+  { id:"cutGem", name:"Joia Lapidada", category:"trade", inputs:{gem:2}, output:"cutGem", outQty:1,
     skill:"crafting", minLevel:3, xp:25, time:3500, desc:"Mercadoria de valor — só para vender." },
-  { id:"pearlNecklace", name:"Colar de Pérolas", inputs:{pearl:2,goldOre:1}, output:"pearlNecklace", outQty:1,
+  { id:"pearlNecklace", name:"Colar de Pérolas", category:"trade", inputs:{pearl:2,goldOre:1}, output:"pearlNecklace", outQty:1,
     skill:"crafting", minLevel:4, xp:45, time:6000, desc:"Item de luxo raríssimo — alto valor de venda." },
-  { id:"arcaneElixir", name:"Elixir Arcano", inputs:{mushroom:3,magicEssence:1}, output:"arcaneElixir", outQty:1,
+  { id:"arcaneElixir", name:"Elixir Arcano", category:"food", inputs:{mushroom:3,magicEssence:1}, output:"arcaneElixir", outQty:1,
     skill:"crafting", minLevel:5, xp:60, time:5000, desc:"O suprimento mais potente do jogo." },
+];
+const CRAFT_CATS = [
+  {id:"all", label:"Todos"},
+  {id:"tool", label:"🛠️ Ferramentas"},
+  {id:"combat", label:"⚔️ Combate"},
+  {id:"food", label:"🍖 Comida/Poções"},
+  {id:"trade", label:"💎 Valor"},
 ];
 
 // ---------- HABILIDADES ----------
@@ -561,7 +574,7 @@ const INITIAL_OBJECT_STATES = OBJECTS.filter(o=> o.usesLeft!==undefined || o.typ
   .map(o=>({ id:o.id, usesLeft:o.usesLeft, cooldownUntil:o.cooldownUntil }));
 
 let move = null, task = null, confirmObj = null, travelTarget = null, nearBuilding = null, activeTab = "status";
-let bigMapSelected = null, repeatQty = 1, craftQty = {};
+let bigMapSelected = null, repeatQty = 1, craftQty = {}, craftFilter = "all";
 let manualCamera = null;
 let battle = null, battleBusy = false;
 
@@ -1484,7 +1497,15 @@ function drawMap(){
   ctx.save();
   ctx.translate(-cam.x, -cam.y);
   ctx.drawImage(bgCanvas, 0, 0);
-  OBJECTS.forEach(drawObject);
+  // Culling: só desenha objetos perto da câmera. Antes TODOS os ~40 objetos
+  // do mundo (sprites em vários fillRect + texto/emoji) eram desenhados a
+  // cada frame mesmo fora da tela — isso, multiplicado por 60fps, era o
+  // verdadeiro peso por trás do delay ao trocar de aba no celular.
+  const margin = 80;
+  OBJECTS.forEach(o=>{
+    if(o.x < cam.x-margin || o.x > cam.x+VIEW_W+margin || o.y < cam.y-margin || o.y > cam.y+VIEW_H+margin) return;
+    drawObject(o);
+  });
   if(move){
     ctx.strokeStyle="#d4af37"; ctx.lineWidth=2;
     ctx.beginPath(); ctx.arc(move.ex, move.ey, 6, 0, Math.PI*2); ctx.stroke();
@@ -1663,6 +1684,7 @@ function setTab(tab){
 document.getElementById("tabContent").addEventListener("click", (ev)=>{
   const t = ev.target;
   if(t.dataset.craft) tryCraft(t.dataset.craft);
+  else if(t.dataset.craftfilter){ craftFilter = t.dataset.craftfilter; renderTab(); }
   else if(t.dataset.craftqtyminus){
     const id = t.dataset.craftqtyminus;
     craftQty[id] = Math.max(1, (craftQty[id]||1)-1);
@@ -1742,25 +1764,32 @@ function renderInvTab(){
 }
 
 function renderCraftTab(){
-  const withStatus = RECIPES.map(rec=>{
+  const list = craftFilter === "all" ? RECIPES : RECIPES.filter(r => r.category === craftFilter);
+  const withStatus = list.map(rec=>{
     const maxQ = maxCraftable(rec);
     const lvlOk = skillLevel(rec.skill) >= rec.minLevel;
     return { rec, maxQ, lvlOk, ok: maxQ>=1 && lvlOk };
   });
   withStatus.sort((a,b)=> (b.ok?1:0) - (a.ok?1:0));
 
-  let html = "";
+  let html = `<div class="filterRow">` + CRAFT_CATS.map(c=>
+    `<button class="filterChip ${craftFilter===c.id?'active':''}" data-craftfilter="${c.id}">${c.label}</button>`
+  ).join("") + `</div>`;
+
+  if(withStatus.length === 0){
+    html += `<div class="hint" style="display:block;">Nenhuma receita nessa categoria.</div>`;
+  }
   withStatus.forEach(({rec, maxQ, lvlOk, ok})=>{
     const needTxt = Object.keys(rec.inputs).map(id=>`${rec.inputs[id]}x ${ITEMS[id].name} (${player.inventory[id]||0})`).join(" + ");
     const lvlNote = !lvlOk ? ` — requer ${SKILL_DEFS[rec.skill].name} Nv.${rec.minLevel}` : "";
-    const haveTxt = rec.output ? `<span style="font-weight:normal; font-size:11px; color:#5a4a30;"> (você tem: ${player.inventory[rec.output]||0})</span>` : "";
+    const haveTxt = rec.output ? `<span style="font-weight:normal; font-size:10px; color:#5a4a30;"> (tem: ${player.inventory[rec.output]||0})</span>` : "";
     const qty = ok ? Math.min(craftQty[rec.id]||1, maxQ) : 1;
     const qtyRow = (ok && maxQ>1) ? `<div class="qtyRow">Fazer: <button class="action small" data-craftqtyminus="${rec.id}">−</button> <b>${qty}</b>
-      <button class="action small" data-craftqtyplus="${rec.id}">+</button> <span style="font-size:11px; color:#5a4a30;">(máx. ${maxQ})</span></div>` : "";
+      <button class="action small" data-craftqtyplus="${rec.id}">+</button> <span style="font-size:10px; color:#5a4a30;">(máx. ${maxQ})</span></div>` : "";
     html += `<div class="recipeCard ${ok?'ready':''}">
       <h4>${rec.name}${haveTxt} ${ok?'<span class="tag">Pronto</span>':''}</h4>
       <div class="need ${ok?'':'bad'}">${needTxt}${lvlNote}</div>
-      <div class="hint" style="display:block; margin:0 0 6px 0;">${rec.desc}</div>
+      <div class="desc">${rec.desc}</div>
       ${qtyRow}
       <button class="action small" data-craft="${rec.id}" ${(!ok||move||task)?"disabled":""}>Produzir${(ok&&maxQ>1)?` (${qty}x)`:""}</button>
     </div>`;
