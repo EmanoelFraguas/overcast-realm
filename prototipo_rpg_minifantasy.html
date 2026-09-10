@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-<title>Trilhas de Aldeceira — Protótipo v22</title>
+<title>Trilhas de Aldeceira — Protótipo v24</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
@@ -21,6 +21,14 @@ html,body{ margin:0; padding:0; height:100%; overflow:hidden; background:#10120d
   height:100dvh; height:100vh; box-sizing:border-box;
   display:flex; flex-direction:column; gap:8px; overflow:hidden; min-height:0; }
 #app:fullscreen, #app:-webkit-full-screen{ max-width:none; width:100vw; height:100vh; margin:0; }
+#achievementToast{ position:fixed; top:14px; left:50%; transform:translate(-50%,-30px); z-index:9999;
+  display:flex; align-items:center; gap:10px; background:var(--bark); color:var(--parchment);
+  border:3px solid var(--gold); box-shadow:4px 4px 0 #000; padding:10px 16px; max-width:90vw;
+  opacity:0; pointer-events:none; transition:opacity 0.35s ease, transform 0.35s ease; }
+#achievementToast.show{ opacity:1; transform:translate(-50%,0); }
+#achToastIcon{ font-size:28px; flex:0 0 auto; }
+#achToastTitle{ font-weight:bold; color:var(--gold); font-size:13px; }
+#achToastDesc{ font-size:12px; opacity:0.9; }
 h1{ margin:0; flex:0 0 auto; font-family:'Press Start 2P', monospace; font-size:13px; letter-spacing:1px;
   color:var(--gold); text-shadow:2px 2px 0 #000; display:flex; justify-content:space-between;
   align-items:center; gap:10px; border-bottom:3px solid var(--gold); padding-bottom:10px; flex-wrap:wrap; }
@@ -97,6 +105,9 @@ button.action.small{ padding:4px 8px; font-size:11px; min-height:auto; }
 .recipeCard .need{ font-size:11px; margin-bottom:2px; }
 .recipeCard .desc{ font-size:10px; color:#5a4a30; margin:0 0 4px 0; line-height:1.3; }
 .need.bad{ color:var(--ember); }
+.needOk{ color:#2f7a3a; font-weight:bold; }
+.needPartial{ color:#b8860b; font-weight:bold; }
+.needBad{ color:var(--ember); font-weight:bold; }
 .filterRow{ display:flex; gap:5px; flex-wrap:wrap; margin-bottom:10px; }
 .filterChip{ font-family:inherit; font-size:11px; padding:5px 9px; background:var(--parchment-dk);
   color:var(--ink); border:2px solid var(--bark); cursor:pointer; }
@@ -166,16 +177,20 @@ button.action.small{ padding:4px 8px; font-size:11px; min-height:auto; }
 </head>
 <body>
 <div id="app">
-  <h1><span class="titleText">Trilhas de Aldeceira</span> <span class="sub">protótipo v22 — economia expandida</span>
+  <div id="achievementToast"><div id="achToastIcon">🏆</div><div><div id="achToastTitle">Conquista!</div><div id="achToastDesc"></div></div></div>
+  <h1><span class="titleText">Trilhas de Aldeceira</span> <span class="sub">protótipo v24 — dia/noite &amp; conquistas</span>
+    <button class="action small" id="soundBtn" title="Som">🔊</button>
     <button class="action small" id="fullscreenBtn"><span class="btnIcon">⛶</span><span class="btnLabel"> Tela cheia</span></button>
   </h1>
   <div id="topbar">
     <div class="stat">🗺️ <b id="regionLbl">-</b></div>
+    <div class="stat"><b id="dayLbl">☀️ Dia</b></div>
     <div class="stat">❤️ <b id="hpLbl">100/100</b></div>
     <div class="stat">⚡ <b id="energyLbl">0/100</b></div>
     <div class="stat">🎒 <b id="weightLbl">0/0</b></div>
     <div class="stat">🪙 <b id="goldLbl">0</b></div>
     <button class="action small" id="saveMenuBtn" title="Salvar / Carregar">💾</button>
+    <button class="action small" id="achievementsBtn" title="Conquistas">🏆</button>
     <button class="action small" id="helpBtn" title="Ajuda / Tutorial">❓</button>
   </div>
 
@@ -214,6 +229,7 @@ button.action.small{ padding:4px 8px; font-size:11px; min-height:auto; }
         <button class="tabBtn" data-tab="inv">Inventário</button>
         <button class="tabBtn" data-tab="craft">Crafting</button>
         <button class="tabBtn" data-tab="local">Local</button>
+        <button class="tabBtn" data-tab="quests">Missões<span id="questBadge"></span></button>
       </div>
       <div id="tabContent"></div>
     </div>
@@ -257,6 +273,13 @@ button.action.small{ padding:4px 8px; font-size:11px; min-height:auto; }
       <span id="tutDots" style="font-size:11px; color:#5a4a30;"></span>
       <button class="action small" id="tutNextBtn">Próximo ▶</button>
     </div>
+  </div>
+</div>
+
+<div id="achievementsModal" class="modalOverlay">
+  <div class="modalBox" style="max-width:440px;">
+    <div class="modalHeader"><span>🏆 Conquistas</span><button class="action small" id="closeAchBtn">Fechar ✕</button></div>
+    <div id="achievementsList"></div>
   </div>
 </div>
 
@@ -309,6 +332,54 @@ const STONE_GATE_X = 1500;
 const SWAMP_GATE_X = 1830;
 const SNOW_GATE_X = 2200;
 const WALK_ENERGY_PER_SQM = 0.4;
+const LOW_ENERGY_THRESHOLD = 20;
+
+// ---------- CICLO DE DIA E NOITE ----------
+const DAY_CYCLE_MS = 8*60*1000; // 8 minutos reais = 1 dia completo
+let dayStartOffset = 0; // ms já decorridos no ciclo ao carregar/iniciar
+let dayStartTime = performance.now();
+function getDayProgress(){ // 0 = meia-noite, 0.5 = meio-dia
+  return (((performance.now()-dayStartTime)+dayStartOffset) % DAY_CYCLE_MS) / DAY_CYCLE_MS;
+}
+function getDarkness(){ // 1 = noite fechada, 0 = sol a pino
+  return (Math.cos(getDayProgress()*2*Math.PI)+1)/2;
+}
+function getGoldenAmount(){ // pico no amanhecer/entardecer
+  const p = getDayProgress();
+  const d = Math.min(Math.abs(p-0.25), Math.abs(p-0.75), Math.abs(p+0.75-1), Math.abs(p-0.25-1));
+  return Math.max(0, 1 - d*8);
+}
+function getDayLabel(){
+  const p = getDayProgress();
+  if(p<0.05 || p>=0.95) return "🌙 Madrugada";
+  if(p<0.22) return "🌅 Amanhecer";
+  if(p<0.45) return "☀️ Manhã";
+  if(p<0.55) return "☀️ Meio-dia";
+  if(p<0.78) return "🌇 Tarde";
+  if(p<0.92) return "🌆 Anoitecer";
+  return "🌙 Madrugada";
+}
+function drawDayNightOverlay(){
+  const dark = getDarkness(), golden = getGoldenAmount();
+  if(dark > 0.02){ ctx.fillStyle = `rgba(10,16,54,${(dark*0.55).toFixed(3)})`; ctx.fillRect(0,0,canvas.width,canvas.height); }
+  if(golden > 0.02){ ctx.fillStyle = `rgba(255,140,60,${(golden*0.22).toFixed(3)})`; ctx.fillRect(0,0,canvas.width,canvas.height); }
+}
+function getEnergySpeedMultiplier(){
+  if(player.energy <= 0) return 0.35;
+  if(player.energy < LOW_ENERGY_THRESHOLD) return 0.65;
+  return 1;
+}
+let lowEnergyWarned = false;
+function checkLowEnergyWarning(){
+  if(player.energy <= 0){
+    if(!lowEnergyWarned){
+      log("Você está exausto(a)! Sem energia, tudo fica bem mais lento até comer algo ou descansar.", true);
+      lowEnergyWarned = true;
+    }
+  } else if(player.energy >= LOW_ENERGY_THRESHOLD){
+    lowEnergyWarned = false;
+  }
+}
 
 // ---------- FOG OF WAR ----------
 const FOG_CELL = 40;
@@ -346,6 +417,7 @@ const ITEMS = {
   cutGem:    { name:"Joia Lapidada",        weight:1 },
   pearlNecklace:{ name:"Colar de Pérolas",  weight:1 },
   tradeLicense:{ name:"Licença de Comerciante", weight:0 },
+  relic:      { name:"Relíquia Antiga",         weight:1 },
   ironPick:  { name:"Picareta de Ferro",    weight:3 },
   ironAxe:   { name:"Machado de Ferro",     weight:3 },
   fishingRod:{ name:"Vara de Pesca Reforçada", weight:3 },
@@ -375,7 +447,7 @@ const ITEM_CATEGORY = {
   ironPick:"equipment", ironAxe:"equipment", fishingRod:"equipment", leatherCloak:"equipment",
   ironDagger:"equipment", ironSword:"equipment", leatherArmor:"equipment", reinforcedArmor:"equipment",
   frostBlade:"equipment",
-  cutGem:"other", pearlNecklace:"other", iceSculpture:"other", boatTicket:"other", tradeLicense:"other",
+  cutGem:"other", pearlNecklace:"other", iceSculpture:"other", boatTicket:"other", tradeLicense:"other", relic:"other",
 };
 const INV_CATS = [
   {id:"all", label:"Todos"},
@@ -476,10 +548,69 @@ const QUESTS = [
   { id:"q6b", title:"Rota Comercial", desc:"Prove que consegue negociar bens de verdadeiro valor.", requires:"q6a",
     need:{gem:2, pearl:2}, rewardGold:50, rewardXp:{skill:"trading", amount:40}, rewardItem:{id:"tradeLicense", qty:1}, done:false },
 ];
+QUESTS.forEach(q => { q.known = false; }); // só entra na aba Missões depois de falar com o NPC
 function isQuestDone(id){ const q = QUESTS.find(x=>x.id===id); return q ? q.done : false; }
 function getNpcQuestChain(npc){ return (npc.questIds||[]).map(id=>QUESTS.find(q=>q.id===id)).filter(Boolean); }
+function getQuestNpc(questId){ return OBJECTS.find(o => o.type==="npc" && (o.questIds||[]).includes(questId)); }
 function getActiveQuest(npc){
   return getNpcQuestChain(npc).find(q => !q.done && (!q.requires || isQuestDone(q.requires)));
+}
+
+// ---------- CONQUISTAS ----------
+let craftedEver = {}, shopsVisited = {}, everDefeatedEnemies = {};
+function mapExploredPct(){
+  let total=0, cnt=0;
+  for(let gy=0; gy<FOG_ROWS; gy++) for(let gx=0; gx<FOG_COLS; gx++){ total++; if(revealed[gy][gx]) cnt++; }
+  return total>0 ? (cnt/total*100) : 0;
+}
+const ACHIEVEMENTS = [
+  { id:"allEnemies", icon:"⚔️", title:"Caçador Completo", desc:"Derrote todos os inimigos do mundo pelo menos uma vez.", unlocked:false,
+    check: ()=> OBJECTS.filter(o=>o.type==="enemy").every(o=> everDefeatedEnemies[o.id]),
+    progress: ()=>{ const list=OBJECTS.filter(o=>o.type==="enemy"); return `${list.filter(o=>everDefeatedEnemies[o.id]).length}/${list.length}`; } },
+  { id:"allQuests", icon:"📜", title:"Herói da Região", desc:"Complete todas as missões disponíveis.", unlocked:false,
+    check: ()=> QUESTS.every(q=>q.done),
+    progress: ()=> `${QUESTS.filter(q=>q.done).length}/${QUESTS.length}` },
+  { id:"fullMap", icon:"🗺️", title:"Cartógrafo", desc:"Revele o mapa inteiro no fog of war.", unlocked:false,
+    check: ()=> mapExploredPct() >= 99.5,
+    progress: ()=> `${mapExploredPct().toFixed(0)}%` },
+  { id:"masterCrafter", icon:"🛠️", title:"Mestre Artesão", desc:"Crafte a Lâmina Glacial, o Elixir Arcano, o Colar de Pérolas e a Escultura de Gelo.", unlocked:false,
+    check: ()=> ["frostBlade","arcaneElixir","pearlNecklace","iceSculpture"].every(id=>craftedEver[id]),
+    progress: ()=>{ const ids=["frostBlade","arcaneElixir","pearlNecklace","iceSculpture"]; return `${ids.filter(id=>craftedEver[id]).length}/${ids.length}`; } },
+  { id:"allSkills5", icon:"⭐", title:"Mestre de Tudo", desc:"Alcance o nível 5 em todas as habilidades.", unlocked:false,
+    check: ()=> Object.keys(SKILL_DEFS).every(k=>skillLevel(k)>=5),
+    progress: ()=>{ const ks=Object.keys(SKILL_DEFS); return `${ks.filter(k=>skillLevel(k)>=5).length}/${ks.length}`; } },
+  { id:"tradeLicenseAch", icon:"🏅", title:"Comerciante Licenciado", desc:"Conquiste a Licença de Comerciante.", unlocked:false,
+    check: ()=> hasTradeLicense(), progress: ()=> hasTradeLicense() ? "1/1" : "0/1" },
+  { id:"rich500", icon:"🪙", title:"Bolso Cheio", desc:"Acumule 500 de ouro ao mesmo tempo.", unlocked:false,
+    check: ()=> player.gold >= 500, progress: ()=> `${Math.min(player.gold,500)}/500` },
+  { id:"reachSnow", icon:"❄️", title:"Nas Alturas Geladas", desc:"Alcance os Picos Gélidos.", unlocked:false,
+    check: ()=> player.pos.x >= SNOW_GATE_X, progress: ()=> player.pos.x>=SNOW_GATE_X ? "1/1" : "0/1" },
+  { id:"allShops", icon:"🏪", title:"Rede de Comércio", desc:"Visite todos os mercadores do mapa.", unlocked:false,
+    check: ()=> OBJECTS.filter(o=>o.type==="shop").every(o=>shopsVisited[o.id]),
+    progress: ()=>{ const list=OBJECTS.filter(o=>o.type==="shop"); return `${list.filter(o=>shopsVisited[o.id]).length}/${list.length}`; } },
+];
+function checkAchievements(){
+  ACHIEVEMENTS.forEach(a=>{
+    if(a.unlocked) return;
+    if(a.check()){
+      a.unlocked = true;
+      log(`🏆 Conquista desbloqueada: ${a.title}!`, true);
+      addFloatingText(player.pos.x, player.pos.y-30, "🏆", "#ffd464");
+      showAchievementToast(a);
+      sfxAchievement();
+    }
+  });
+}
+let achToastTimer = null;
+function showAchievementToast(a){
+  const el = document.getElementById("achievementToast");
+  if(!el) return;
+  document.getElementById("achToastIcon").textContent = a.icon;
+  document.getElementById("achToastTitle").textContent = `Conquista: ${a.title}`;
+  document.getElementById("achToastDesc").textContent = a.desc;
+  el.classList.add("show");
+  clearTimeout(achToastTimer);
+  achToastTimer = setTimeout(()=> el.classList.remove("show"), 4200);
 }
 
 // ---------- DESCRIÇÕES CURTAS POR TIPO ----------
@@ -503,6 +634,7 @@ const TYPE_DESC = {
   inn:"Estalagem — pague para recuperar energia e vida na hora.",
   npc:"Personagem — pode ter uma missão para você.",
   enemy:"Inimigo perigoso — o combate começa automaticamente ao se aproximar.",
+  bounty:"Quadro de Encomendas — entregue a quantidade pedida e ganhe bem acima do preço de mercado.",
 };
 
 // ---------- OBJETOS DO MUNDO ----------
@@ -546,10 +678,10 @@ const OBJECTS = [
     xp:14, energyCost:10, time:3800, maxUses:3, usesLeft:3, cooldownMs:15000, cooldownUntil:0, bonusItem:"pearl", bonusChance:0.15 },
   { id:"berryV", type:"berry", x:760, y:540, label:"Arbusto de Frutas", hitRadius:22, item:"ration",
     skill:null, xp:0, energyCost:3, time:1500, maxUses:5, usesLeft:5, cooldownMs:8000, cooldownUntil:0 },
-  { id:"shopV", type:"shop", x:760, y:150, label:"Mercador da Vila", hitRadius:26,
+  { id:"shopV", type:"shop", x:760, y:150, label:"Mercador da Vila", hitRadius:26, reputation:0,
     sell:{ wood:5, ore:4, rareOre:10, meat:6, ration:2, goldOre:18, fish:4, hide:5, gem:20, cutGem:48,
              pearl:12, pearlNecklace:100, mushroom:6, magicEssence:30, ironPick:30, ironAxe:30, fishingRod:25, leatherCloak:35,
-             iceCrystal:22, iceSculpture:110 },
+             iceCrystal:22, iceSculpture:110, relic:120 },
     buy:{ ration:5, cookedMeat:10, cookedFish:12, mealPack:20, healPotionSmall:15, wood:8, ore:7, stone:3 }, market:{} },
   { id:"craftV", type:"craft", x:860, y:430, label:"Bancada de Crafting", hitRadius:26 },
   { id:"blacksmith", type:"blacksmith", x:700, y:650, label:"Ferreiro", hitRadius:26,
@@ -559,6 +691,7 @@ const OBJECTS = [
   { id:"dockV", type:"dock", x:1075, y:700, label:"Doca da Vila", hitRadius:28 },
   { id:"npcBruno", type:"npc", x:960, y:600, label:"Capitão Bruno", hitRadius:24, questIds:["q2a","q2b"] },
   { id:"npcGuild", type:"npc", x:820, y:520, label:"Guilda dos Mercadores", hitRadius:24, questIds:["q6a","q6b"] },
+  { id:"bountyBoard", type:"bounty", x:700, y:520, label:"Quadro de Encomendas", hitRadius:24 },
 
   { id:"fishI1", type:"fish", x:1125, y:600, label:"Ponto de Pesca", hitRadius:22, item:"fish", skill:"fishing",
     xp:14, energyCost:10, time:3800, maxUses:3, usesLeft:3, cooldownMs:15000, cooldownUntil:0, bonusItem:"pearl", bonusChance:0.15 },
@@ -579,7 +712,7 @@ const OBJECTS = [
   { id:"berryI", type:"berry", x:1160, y:720, label:"Arbusto de Frutas", hitRadius:22, item:"ration",
     skill:null, xp:0, energyCost:3, time:1500, maxUses:5, usesLeft:5, cooldownMs:8000, cooldownUntil:0 },
   { id:"npcCacador", type:"npc", x:1300, y:300, label:"Caçador Perdido", hitRadius:24, questIds:["q3a","q3b"] },
-  { id:"shopI", type:"shop", x:1280, y:500, label:"Mercador da Ilha", hitRadius:26,
+  { id:"shopI", type:"shop", x:1280, y:500, label:"Mercador da Ilha", hitRadius:26, reputation:0,
     sell:{ rareOre:6, meat:5, hide:4, fish:3, herb:2, pearl:8, goldOre:20, iceCrystal:26, mushroom:8 },
     buy:{ ration:5, healPotionSmall:16, mealPack:22, wood:9 }, market:{} },
   { id:"enemyWolf", type:"enemy", x:1350, y:280, label:"Lobo da Ilha", hitRadius:24,
@@ -603,7 +736,7 @@ const OBJECTS = [
   { id:"enemyGolem", type:"enemy", x:1500, y:600, label:"Golem de Pedra", hitRadius:26,
     hp:85, maxHp:85, attack:12, defense:10, goldReward:55, xpReward:55, cooldownMs:140000, cooldownUntil:0,
     dropItem:{id:"stone", qty:3} },
-  { id:"shopC", type:"shop", x:1400, y:450, label:"Mercador das Colinas", hitRadius:26,
+  { id:"shopC", type:"shop", x:1400, y:450, label:"Mercador das Colinas", hitRadius:26, reputation:0,
     sell:{ goldOre:12, stone:1, ore:3, gem:15, fish:8, mushroom:10, magicEssence:30, iceCrystal:25, pearl:14 },
     buy:{ ration:7, healPotionSmall:20, healPotion:38, ore:6 }, market:{} },
 
@@ -622,7 +755,7 @@ const OBJECTS = [
   { id:"enemyLeech", type:"enemy", x:1870, y:550, label:"Sanguessuga Gigante", hitRadius:24,
     hp:80, maxHp:80, attack:16, defense:5, goldReward:85, xpReward:70, cooldownMs:150000, cooldownUntil:0,
     dropItem:{id:"mushroom", qty:2} },
-  { id:"shopP", type:"shop", x:1930, y:650, label:"Mercador do Pântano", hitRadius:26,
+  { id:"shopP", type:"shop", x:1930, y:650, label:"Mercador do Pântano", hitRadius:26, reputation:0,
     sell:{ mushroom:4, iceCrystal:28, pearl:16, gem:20, goldOre:22 },
     buy:{ healPotion:40, ration:8, arcaneElixir:70 }, market:{} },
 
@@ -638,7 +771,7 @@ const OBJECTS = [
   { id:"enemyPolarBear", type:"enemy", x:2550, y:300, label:"Urso Polar", hitRadius:26,
     hp:120, maxHp:120, attack:19, defense:11, goldReward:140, xpReward:110, cooldownMs:190000, cooldownUntil:0,
     dropItem:{id:"hide", qty:2} },
-  { id:"shopG", type:"shop", x:2350, y:600, label:"Mercador dos Picos", hitRadius:26,
+  { id:"shopG", type:"shop", x:2350, y:600, label:"Mercador dos Picos", hitRadius:26, reputation:0,
     sell:{ iceCrystal:14, hide:6, mushroom:12, magicEssence:35, pearlNecklace:110 },
     buy:{ healPotion:42, ration:9, arcaneElixir:75 }, market:{} },
 ];
@@ -683,7 +816,7 @@ const player = {
   equipment:{ weapon:null, armor:null },
   inventory:{ wood:0, ore:0, rareOre:0, goldOre:0, stone:0, meat:0, fish:0, herb:0, mushroom:0, hide:0,
     gem:0, pearl:0, magicEssence:0, iceCrystal:0, ration:0, cookedMeat:0, cookedFish:0, mealPack:0, vigorPotion:0,
-    arcaneElixir:0, healPotionSmall:0, healPotion:0, cutGem:0, pearlNecklace:0, iceSculpture:0, tradeLicense:0, ironPick:0, ironAxe:0,
+    arcaneElixir:0, healPotionSmall:0, healPotion:0, cutGem:0, pearlNecklace:0, iceSculpture:0, tradeLicense:0, relic:0, ironPick:0, ironAxe:0,
     fishingRod:0, leatherCloak:0, ironDagger:0, ironSword:0, leatherArmor:0, reinforcedArmor:0, frostBlade:0, boatTicket:0 },
   skills:{ lumberjack:{xp:0}, mining:{xp:0}, hunting:{xp:0}, fishing:{xp:0}, crafting:{xp:0}, trading:{xp:0} }
 };
@@ -698,11 +831,58 @@ let manualCamera = null;
 let battle = null, battleBusy = false;
 
 // =====================================================================
+// SOM (sintetizado via Web Audio — sem arquivo externo nenhum)
+// =====================================================================
+let audioCtx = null;
+let soundEnabled = true;
+try{ soundEnabled = localStorage.getItem("trilhasAldeceira_sound") !== "0"; } catch(e){}
+function getAudioCtx(){
+  if(!soundEnabled) return null;
+  if(!audioCtx){ try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){ return null; } }
+  if(audioCtx.state === "suspended") audioCtx.resume().catch(()=>{});
+  return audioCtx;
+}
+function playTone(freq, duration, type, volume){
+  const ac = getAudioCtx(); if(!ac) return;
+  try{
+    const osc = ac.createOscillator(), gain = ac.createGain();
+    osc.type = type||"sine"; osc.frequency.value = freq;
+    const now = ac.currentTime;
+    gain.gain.setValueAtTime(volume||0.07, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now+duration);
+    osc.connect(gain); gain.connect(ac.destination);
+    osc.start(now); osc.stop(now+duration);
+  } catch(e){}
+}
+function sfxCoin(){ playTone(880,0.08,"square",0.06); setTimeout(()=>playTone(1320,0.07,"square",0.05),55); }
+function sfxSpend(){ playTone(300,0.1,"sawtooth",0.05); }
+function sfxPickup(){ playTone(520,0.09,"triangle",0.06); }
+function sfxCraft(){ playTone(260,0.1,"sawtooth",0.05); setTimeout(()=>playTone(340,0.1,"sawtooth",0.05),70); }
+function sfxLevelUp(){ [523,659,784,1046].forEach((f,i)=>setTimeout(()=>playTone(f,0.16,"square",0.06), i*90)); }
+function sfxVictory(){ [392,494,587,784].forEach((f,i)=>setTimeout(()=>playTone(f,0.18,"triangle",0.07), i*100)); }
+function sfxAchievement(){ [660,880,1100,1320].forEach((f,i)=>setTimeout(()=>playTone(f,0.2,"square",0.07), i*100)); }
+function sfxError(){ playTone(160,0.16,"sawtooth",0.05); }
+function sfxHit(){ playTone(140,0.08,"square",0.06); }
+function toggleSound(){
+  soundEnabled = !soundEnabled;
+  try{ localStorage.setItem("trilhasAldeceira_sound", soundEnabled?"1":"0"); } catch(e){}
+  const btn = document.getElementById("soundBtn");
+  if(btn) btn.textContent = soundEnabled ? "🔊" : "🔇";
+  if(soundEnabled) playTone(700,0.08,"sine",0.06);
+}
+
+// =====================================================================
 // XP / SKILLS
 // =====================================================================
 function levelFromXp(xp){ return Math.floor(xp/100)+1; }
 function xpIntoLevel(xp){ return xp % 100; }
-function gainXp(skillKey, amount){ if(skillKey) player.skills[skillKey].xp += amount; }
+function gainXp(skillKey, amount){
+  if(!skillKey) return;
+  const before = skillLevel(skillKey);
+  player.skills[skillKey].xp += amount;
+  const after = skillLevel(skillKey);
+  if(after > before){ log(`${SKILL_DEFS[skillKey].name} subiu para o nível ${after}!`, true); sfxLevelUp(); }
+}
 function skillLevel(skillKey){ return levelFromXp(player.skills[skillKey].xp); }
 
 // =====================================================================
@@ -739,8 +919,11 @@ function winBattle(){
   let msg = `Vitória contra ${e.label}! +${e.goldReward}g +${e.xpReward} XP Caça/Combate`;
   if(e.dropItem){ addItem(e.dropItem.id, e.dropItem.qty); msg += ` +${e.dropItem.qty}x ${ITEMS[e.dropItem.id].name}`; }
   e.cooldownUntil = performance.now() + e.cooldownMs;
+  everDefeatedEnemies[e.id] = true;
   log(msg, true);
   addFloatingText(player.pos.x, player.pos.y-24, `+${e.goldReward}g`, "#ffd464");
+  sfxVictory();
+  checkAchievements();
   closeBattle();
 }
 function fleeBattleSuccess(){
@@ -764,14 +947,17 @@ function battleRound(action, itemId){
     const dmg = calcDamage(atk, battle.enemy.defense);
     battle.enemyHp = Math.max(0, battle.enemyHp - dmg);
     lines.push(`Você atacou e causou ${dmg} de dano.`);
+    sfxHit();
     if(battle.enemyHp <= 0){ battle.log = lines; renderBattleUI(); winBattle(); return; }
     const edmg = calcDamage(battle.enemy.attack, def);
     player.hp = Math.max(0, player.hp - edmg);
     lines.push(`${battle.enemy.label} revidou causando ${edmg} de dano.`);
+    setTimeout(sfxHit, 180);
   } else if(action === "defend"){
     const edmg = Math.ceil(calcDamage(battle.enemy.attack, def)*0.5);
     player.hp = Math.max(0, player.hp - edmg);
     lines.push(`Você se defendeu — dano reduzido para ${edmg}.`);
+    sfxHit();
   } else if(action === "item"){
     const item = ITEMS[itemId];
     removeItem(itemId, 1);
@@ -834,6 +1020,15 @@ function addItem(id, qty){
 }
 function removeItem(id, qty){ player.inventory[id] = Math.max(0, (player.inventory[id]||0) - qty); }
 function hasItems(map){ for(const id in map){ if((player.inventory[id]||0) < map[id]) return false; } return true; }
+// lista de ingredientes/requisitos com cor por item: verde (tem o suficiente),
+// amarelo (tem uma parte), vermelho (não tem nada ainda)
+function needListHtml(needObj){
+  return Object.keys(needObj).map(id=>{
+    const need = needObj[id], have = player.inventory[id]||0;
+    const cls = have>=need ? "needOk" : have>0 ? "needPartial" : "needBad";
+    return `<span class="${cls}">${need}x ${ITEMS[id].name} (${have})</span>`;
+  }).join(" + ");
+}
 function maxCraftable(rec){
   let max = Infinity;
   for(const id in rec.inputs){ max = Math.min(max, Math.floor((player.inventory[id]||0)/rec.inputs[id])); }
@@ -952,12 +1147,13 @@ function startMoveTo(targetX, targetY, targetObj){
   if(battle) return;
   const gateX = targetObj ? targetObj.x : targetX;
   const blocked = checkGate(gateX);
-  if(blocked){ log(blocked, true); return; }
+  if(blocked){ log(blocked, true); sfxError(); return; }
 
   const { ex, ey, already, distance } = computeMoveTarget(targetX, targetY, targetObj);
   if(already){ onArrive(targetObj); return; }
 
-  const duration = Math.max(150, (distance/SPEED_PX_PER_SEC)*1000);
+  const speedMul = getEnergySpeedMultiplier();
+  const duration = Math.max(150, (distance/(SPEED_PX_PER_SEC*speedMul))*1000);
   const dx = ex - player.pos.x, dy = ey - player.pos.y;
   if(Math.abs(dx) > Math.abs(dy)) playerFacing = dx > 0 ? "right" : "left";
   else if(Math.abs(dy) > 0) playerFacing = dy > 0 ? "down" : "up";
@@ -997,8 +1193,9 @@ function onArrive(obj){
       return;
     }
     showConfirmPanel(obj);
-  } else if(["shop","dock","blacksmith","inn","npc"].includes(obj.type)){
+  } else if(["shop","dock","blacksmith","inn","npc","bounty"].includes(obj.type)){
     nearBuilding = obj; setTab("local");
+    if(obj.type === "shop" && !shopsVisited[obj.id]){ shopsVisited[obj.id] = true; checkAchievements(); }
   } else if(obj.type === "craft"){
     nearBuilding = obj; setTab("craft");
   }
@@ -1015,7 +1212,7 @@ function showTravelPanel(obj){
   if(already){
     costLine = "Você já está bem perto — nenhum deslocamento necessário.";
   } else {
-    const duration = Math.max(150, (distance/SPEED_PX_PER_SEC)*1000);
+    const duration = Math.max(150, (distance/(SPEED_PX_PER_SEC*getEnergySpeedMultiplier()))*1000);
     const energyCost = (distance/TILE_PX)*WALK_ENERGY_PER_SQM*(player.tools.cloak>=2?0.8:1);
     costLine = `Custo da viagem: ~${energyCost.toFixed(0)}⚡ · ${(duration/1000).toFixed(1)}s`;
   }
@@ -1060,29 +1257,54 @@ document.getElementById("confirmYes").addEventListener("click", ()=>{
   if(confirmObj) startGatherTask(confirmObj, repeatQty);
 });
 document.getElementById("confirmNo").addEventListener("click", hideConfirmPanel);
-document.getElementById("cancelMoveBtn").addEventListener("click", cancelMove);
+function cancelTask(){
+  if(!task) return;
+  if(task.type === "craft"){
+    const rec = task.meta.rec;
+    for(const id in rec.inputs) addItem(id, rec.inputs[id]);
+    log(`Produção de ${rec.name} cancelada — materiais devolvidos.`, true);
+  } else if(task.type === "gather"){
+    const obj = task.meta.obj;
+    player.energy = Math.min(player.maxEnergy, player.energy + obj.energyCost);
+    log(`Coleta de ${obj.label} cancelada.`, true);
+  }
+  task = null;
+  renderTab();
+}
+document.getElementById("cancelMoveBtn").addEventListener("click", ()=>{
+  if(move) cancelMove();
+  else if(task) cancelTask();
+});
 
 // =====================================================================
 // COLETA
 // =====================================================================
 function startGatherTask(obj, remainingRepeats){
   if(obj.usesLeft <= 0){ hideConfirmPanel(); return; }
-  if(player.energy < obj.energyCost){
-    log("Energia insuficiente! Use um Suprimento de Viagem ou descanse na Estalagem.", true);
-    hideConfirmPanel();
-    return;
-  }
   let time = obj.time - (obj.skill ? (skillLevel(obj.skill)-1)*150 : 0);
   if(obj.type === "tree" && player.tools.axe >= 2) time *= 0.7;
   if(["ore","rareOre","goldOre","stone","ice"].includes(obj.type) && player.tools.pickaxe >= 2) time *= 0.7;
   if(obj.type === "fish" && player.tools.rod >= 2) time *= 0.7;
   time = Math.max(1000, time);
 
-  player.energy = Math.max(0, player.energy - obj.energyCost);
+  // Sem energia suficiente: não bloqueia mais a tarefa, só fica bem mais
+  // lenta (proporcional ao quanto falta) — assim dá pra chegar num
+  // suprimento mesmo exausto, só que demorando bem mais.
+  let tired = false;
+  if(player.energy < obj.energyCost){
+    const deficitRatio = obj.energyCost>0 ? (obj.energyCost-player.energy)/obj.energyCost : 0;
+    time *= (1 + deficitRatio*1.8);
+    player.energy = 0;
+    tired = true;
+  } else {
+    player.energy -= obj.energyCost;
+  }
+  checkLowEnergyWarning();
   hideConfirmPanel();
   task = { type:"gather", start:performance.now(), end:performance.now()+time, meta:{obj, remainingRepeats} };
   const repTxt = remainingRepeats > 1 ? ` (restam ${remainingRepeats-1} repetições)` : "";
-  log(`Coletando ${obj.label}...${repTxt} (${(time/1000).toFixed(1)}s)`);
+  const tiredTxt = tired ? " — exausto(a), bem mais devagar" : "";
+  log(`Coletando ${obj.label}...${repTxt}${tiredTxt} (${(time/1000).toFixed(1)}s)`);
 }
 function finishGather(meta){
   const obj = meta.obj;
@@ -1140,12 +1362,14 @@ function finishCraft(meta){
   } else {
     addItem(rec.output, rec.outQty);
     log(`Criado: ${ITEMS[rec.output].name}  (+${rec.xp} XP ${SKILL_DEFS[rec.skill].name})`, true);
+    craftedEver[rec.output] = true;
     const toolKey = OUTPUT_TO_TOOL[rec.output];
     const slot = OUTPUT_TO_SLOT[rec.output];
     if(toolKey) autoEquipIfNone(toolKey);
     else if(slot && !player.equipment[slot]) player.equipment[slot] = rec.output;
   }
   gainXp(rec.skill, rec.xp);
+  checkAchievements();
 
   const left = (meta.remainingRepeats||1) - 1;
   if(left > 0 && maxCraftable(rec) >= 1 && skillLevel(rec.skill) >= rec.minLevel){
@@ -1190,18 +1414,24 @@ function getMarketCount(shop, itemId){
 function bumpMarket(shop, itemId){
   shop.market[itemId] = { count: getMarketCount(shop, itemId) + 1, lastSale: performance.now() };
 }
+// ---------- REPUTAÇÃO POR MERCADOR ----------
+// cada transação nesse mercador específico soma reputação ali — separado
+// do bônus geral de Comércio/Licença, que vale em qualquer lugar.
+const SHOP_REP_PER_LEVEL = 8, SHOP_REP_MAX_LEVEL = 5;
+function getShopRepLevel(shop){ return Math.min(SHOP_REP_MAX_LEVEL, Math.floor((shop.reputation||0)/SHOP_REP_PER_LEVEL)); }
+function bumpShopReputation(shop){ shop.reputation = (shop.reputation||0) + 1; }
 function hasTradeLicense(){ return (player.inventory.tradeLicense||0) >= 1; }
 function getEffectiveSellPrice(shop, itemId){
   const base = shop.sell ? shop.sell[itemId] : 0;
   if(!base) return 0;
   const marketAdj = Math.max(0.5, 1 - getMarketCount(shop, itemId)*0.05);
-  const skillBonus = 1 + (skillLevel("trading")-1)*0.03 + (hasTradeLicense()?0.10:0);
+  const skillBonus = 1 + (skillLevel("trading")-1)*0.03 + (hasTradeLicense()?0.10:0) + getShopRepLevel(shop)*0.02;
   return Math.max(1, Math.round(base * marketAdj * skillBonus));
 }
 function getEffectiveBuyPrice(shop, itemId){
   const base = shop.buy ? shop.buy[itemId] : 0;
   if(!base) return 0;
-  const skillDiscount = Math.max(0.65, 1 - (skillLevel("trading")-1)*0.02 - (hasTradeLicense()?0.08:0));
+  const skillDiscount = Math.max(0.55, 1 - (skillLevel("trading")-1)*0.02 - (hasTradeLicense()?0.08:0) - getShopRepLevel(shop)*0.015);
   return Math.max(1, Math.round(base * skillDiscount));
 }
 function trySell(shopObj, itemId){
@@ -1214,9 +1444,11 @@ function trySell(shopObj, itemId){
   removeItem(itemId, 1);
   player.gold += price;
   bumpMarket(shopObj, itemId);
+  bumpShopReputation(shopObj);
   gainXp("trading", Math.max(1, Math.round(price*0.4)));
   log(`Vendido: ${ITEMS[itemId].name} por ${price} ouro.`, true);
   addFloatingText(player.pos.x, player.pos.y-24, `+${price}g`, "#ffd464");
+  sfxCoin();
   renderTab();
 }
 function trySellAll(shopObj, itemId){
@@ -1230,25 +1462,109 @@ function trySellAll(shopObj, itemId){
     removeItem(itemId, 1);
     player.gold += price;
     bumpMarket(shopObj, itemId);
+    bumpShopReputation(shopObj);
     total += price; xpTotal += Math.max(1, Math.round(price*0.4)); sold++;
   }
   if(sold > 0){
     gainXp("trading", xpTotal);
     log(`Vendido: ${sold}x ${ITEMS[itemId].name} por ${total} ouro no total.`, true);
     addFloatingText(player.pos.x, player.pos.y-24, `+${total}g`, "#ffd464");
+    sfxCoin();
     renderTab();
   }
 }
 function tryBuyItem(shopObj, itemId){
   const price = getEffectiveBuyPrice(shopObj, itemId);
   if(!price) return;
-  if(player.gold < price){ log("Ouro insuficiente.", true); return; }
-  if(!canCarry(itemId, 1)){ log("Inventário cheio! Venda ou use itens antes de comprar.", true); return; }
+  if(shopObj.stock && shopObj.stock[itemId]!==undefined && shopObj.stock[itemId]<=0){ log("Esgotado por aqui.", true); sfxError(); return; }
+  if(player.gold < price){ log("Ouro insuficiente.", true); sfxError(); return; }
+  if(!canCarry(itemId, 1)){ log("Inventário cheio! Venda ou use itens antes de comprar.", true); sfxError(); return; }
   addItem(itemId, 1);
   player.gold -= price;
+  if(shopObj.stock && shopObj.stock[itemId]!==undefined) shopObj.stock[itemId]--;
+  bumpShopReputation(shopObj);
   gainXp("trading", Math.max(1, Math.round(price*0.3)));
   log(`Comprou: ${ITEMS[itemId].name} por ${price} ouro.`, true);
   addFloatingText(player.pos.x, player.pos.y-24, `-${price}g`, "#ff6b4a");
+  sfxSpend();
+  renderTab();
+}
+
+// =====================================================================
+// COMERCIANTE VIAJANTE — aparece em ponto aleatório do mapa por tempo
+// limitado, vendendo uma Relíquia Antiga que não existe em loja fixa
+// nenhuma, e comprando alguns bens por um preço melhor que o normal.
+// =====================================================================
+const TRAVELING_SPAWN_POINTS = [
+  {x:300,y:500}, {x:900,y:250}, {x:1300,y:650}, {x:1550,y:550}, {x:1980,y:300}, {x:2400,y:700}
+];
+const TRAVELING_INTERVAL_MS = 4*60*1000; // tenta aparecer a cada 4 min
+const TRAVELING_DURATION_MS = 100*1000;  // fica 100s no local
+let travelingMerchant = null;
+let lastTravelingSpawnAt = performance.now(); // começa contando a partir do início da sessão
+function spawnTravelingMerchant(){
+  const p = TRAVELING_SPAWN_POINTS[Math.floor(Math.random()*TRAVELING_SPAWN_POINTS.length)];
+  travelingMerchant = {
+    id:"travelingMerchant", type:"shop", isTraveling:true, x:p.x, y:p.y,
+    label:"Comerciante Viajante", hitRadius:26, reputation:0,
+    sell:{ gem:26, pearl:17, iceCrystal:28, magicEssence:36 },
+    buy:{ relic:75 }, stock:{ relic:1 }, market:{},
+    expiresAt: performance.now()+TRAVELING_DURATION_MS
+  };
+  OBJECTS.push(travelingMerchant);
+  log(`✨ Um Comerciante Viajante apareceu perto de ${regionAt(p.x)}! Ele some em pouco tempo.`, true);
+  sfxAchievement();
+}
+function despawnTravelingMerchant(){
+  if(!travelingMerchant) return;
+  const idx = OBJECTS.indexOf(travelingMerchant);
+  if(idx>=0) OBJECTS.splice(idx,1);
+  if(nearBuilding === travelingMerchant){ nearBuilding=null; if(activeTab==="local") renderTab(); }
+  travelingMerchant = null;
+}
+function updateTravelingMerchant(){
+  const now = performance.now();
+  if(travelingMerchant){
+    if(now >= travelingMerchant.expiresAt){
+      log("O Comerciante Viajante foi embora.", true);
+      despawnTravelingMerchant();
+      lastTravelingSpawnAt = now;
+    }
+  } else if(now - lastTravelingSpawnAt >= TRAVELING_INTERVAL_MS){
+    spawnTravelingMerchant();
+    lastTravelingSpawnAt = now;
+  }
+}
+
+// =====================================================================
+// QUADRO DE ENCOMENDAS — task temporária: traga X de um item, ganhe um
+// pagamento bem acima do valor normal de venda. Reseta após um tempo.
+// =====================================================================
+const BOUNTY_ITEMS = ["wood","ore","rareOre","meat","fish","herb","hide","stone","mushroom","gem","pearl","goldOre","iceCrystal"];
+const BOUNTY_COOLDOWN_MS = 75000;
+let bounty = null, bountyCooldownUntil = 0;
+function generateBounty(){
+  const item = BOUNTY_ITEMS[Math.floor(Math.random()*BOUNTY_ITEMS.length)];
+  const baseValue = (OBJECTS.find(o=>o.id==="shopV").sell[item]) || 3;
+  const qty = 3 + Math.floor(Math.random()*6);
+  const reward = Math.round(baseValue*qty*1.8);
+  bounty = { item, qty, reward };
+}
+function ensureBounty(){
+  if(!bounty && performance.now() >= bountyCooldownUntil) generateBounty();
+}
+function tryDeliverBounty(){
+  if(!bounty) return;
+  if(!hasItems({[bounty.item]:bounty.qty})){ log("Você ainda não tem o suficiente pra essa encomenda.", true); sfxError(); return; }
+  removeItem(bounty.item, bounty.qty);
+  player.gold += bounty.reward;
+  gainXp("trading", Math.round(bounty.reward*0.2));
+  log(`Encomenda entregue: ${bounty.qty}x ${ITEMS[bounty.item].name} por ${bounty.reward} ouro!`, true);
+  addFloatingText(player.pos.x, player.pos.y-24, `+${bounty.reward}g`, "#ffd464");
+  sfxCoin();
+  bounty = null;
+  bountyCooldownUntil = performance.now() + BOUNTY_COOLDOWN_MS;
+  checkAchievements();
   renderTab();
 }
 
@@ -1301,6 +1617,7 @@ function tryTurnInQuest(questId){
   if(q.rewardItem) rewardTxt += ` +${q.rewardItem.qty}x ${ITEMS[q.rewardItem.id].name}`;
   log(`Missão concluída: ${q.title}! ${rewardTxt}`, true);
   addFloatingText(player.pos.x, player.pos.y-24, `+${q.rewardGold}g`, "#ffd464");
+  checkAchievements();
   renderTab();
 }
 
@@ -1323,8 +1640,14 @@ function serializeGame(){
       inventory:Object.assign({}, player.inventory),
       skills:Object.fromEntries(Object.entries(player.skills).map(([k,v])=>[k,{xp:v.xp}]))
     },
-    objectStates: OBJECTS.filter(o=> o.usesLeft!==undefined || o.type==="enemy").map(o=>({ id:o.id, usesLeft:o.usesLeft, cooldownUntil:o.cooldownUntil })),
-    quests: QUESTS.map(q=>({ id:q.id, done:q.done })),
+    objectStates: OBJECTS.filter(o=> o.usesLeft!==undefined || o.type==="enemy" || o.type==="shop").map(o=>({ id:o.id, usesLeft:o.usesLeft, cooldownUntil:o.cooldownUntil, reputation:o.reputation })),
+    quests: QUESTS.map(q=>({ id:q.id, done:q.done, known:q.known })),
+    achievements: ACHIEVEMENTS.map(a=>({ id:a.id, unlocked:a.unlocked })),
+    craftedEver: Object.assign({}, craftedEver),
+    shopsVisited: Object.assign({}, shopsVisited),
+    everDefeatedEnemies: Object.assign({}, everDefeatedEnemies),
+    dayElapsed: ((performance.now()-dayStartTime)+dayStartOffset) % DAY_CYCLE_MS,
+    bounty: bounty, bountyCooldownRemaining: Math.max(0, bountyCooldownUntil-performance.now()),
     revealed: revealed.map(row=>row.map(v=>v?1:0))
   };
 }
@@ -1340,8 +1663,15 @@ function applySave(data){
   for(const k in player.inventory) player.inventory[k] = (data.player.inventory && data.player.inventory[k]) || 0;
   for(const k in player.skills) player.skills[k] = { xp:(data.player.skills[k] && data.player.skills[k].xp) || 0 };
   const stateById = {}; (data.objectStates||[]).forEach(s=> stateById[s.id]=s);
-  OBJECTS.forEach(o=>{ const s=stateById[o.id]; if(s){ o.usesLeft=s.usesLeft; o.cooldownUntil=s.cooldownUntil; } });
-  if(data.quests){ const byId={}; data.quests.forEach(q=>byId[q.id]=q); QUESTS.forEach(q=>{ if(byId[q.id]) q.done=byId[q.id].done; }); }
+  OBJECTS.forEach(o=>{ const s=stateById[o.id]; if(s){ o.usesLeft=s.usesLeft; o.cooldownUntil=s.cooldownUntil; if(s.reputation!==undefined) o.reputation=s.reputation; } });
+  if(data.quests){ const byId={}; data.quests.forEach(q=>byId[q.id]=q); QUESTS.forEach(q=>{ if(byId[q.id]){ q.done=byId[q.id].done; q.known=!!byId[q.id].known; } }); }
+  if(data.achievements){ const byId={}; data.achievements.forEach(a=>byId[a.id]=a); ACHIEVEMENTS.forEach(a=>{ if(byId[a.id]) a.unlocked=!!byId[a.id].unlocked; }); }
+  craftedEver = Object.assign({}, data.craftedEver||{});
+  shopsVisited = Object.assign({}, data.shopsVisited||{});
+  everDefeatedEnemies = Object.assign({}, data.everDefeatedEnemies||{});
+  dayStartOffset = data.dayElapsed || 0; dayStartTime = performance.now();
+  bounty = data.bounty || null;
+  bountyCooldownUntil = performance.now() + (data.bountyCooldownRemaining || 0);
   if(data.revealed) revealed = data.revealed.map(row=>row.map(v=>!!v));
   move=null; task=null; manualCamera=null; nearBuilding=null; battle=null;
   hideConfirmPanel(); hideTravelPanel();
@@ -1376,9 +1706,14 @@ function resetProgress(){
   Object.assign(player.equipment, INITIAL_PLAYER.equipment);
   for(const k in player.inventory) player.inventory[k] = 0;
   for(const k in player.skills) player.skills[k] = { xp:0 };
-  QUESTS.forEach(q=> q.done=false);
+  QUESTS.forEach(q=>{ q.done=false; q.known=false; });
+  ACHIEVEMENTS.forEach(a=>{ a.unlocked=false; });
+  craftedEver = {}; shopsVisited = {}; everDefeatedEnemies = {};
+  dayStartOffset = 0; dayStartTime = performance.now();
+  bounty = null; bountyCooldownUntil = 0;
+  despawnTravelingMerchant();
   const stateById = {}; INITIAL_OBJECT_STATES.forEach(s=> stateById[s.id]=s);
-  OBJECTS.forEach(o=>{ const s=stateById[o.id]; if(s){ o.usesLeft=s.usesLeft; o.cooldownUntil=s.cooldownUntil; } });
+  OBJECTS.forEach(o=>{ const s=stateById[o.id]; if(s){ o.usesLeft=s.usesLeft; o.cooldownUntil=s.cooldownUntil; } if(o.type==="shop") o.reputation=0; });
   revealed = Array.from({length:FOG_ROWS}, ()=> new Array(FOG_COLS).fill(false));
   move=null; task=null; manualCamera=null; nearBuilding=null; battle=null;
   hideConfirmPanel(); hideTravelPanel();
@@ -1458,8 +1793,32 @@ document.getElementById("closeTutBtn").addEventListener("click", closeTutorial);
 document.getElementById("helpBtn").addEventListener("click", openTutorial);
 
 // =====================================================================
+// CONQUISTAS (modal)
+// =====================================================================
+const achievementsModal = document.getElementById("achievementsModal");
+function renderAchievementsModal(){
+  const el = document.getElementById("achievementsList");
+  el.innerHTML = ACHIEVEMENTS.map(a=>{
+    const prog = a.progress ? a.progress() : "";
+    return `<div class="recipeCard ${a.unlocked?'ready':''}" style="opacity:${a.unlocked?1:0.6};">
+      <h4>${a.icon} ${a.title} ${a.unlocked?'<span class="tag">Concluída</span>':''}</h4>
+      <div class="hint" style="display:block; margin:0 0 4px 0;">${a.desc}</div>
+      <div class="hint" style="display:block; margin:0; font-weight:bold;">${prog}</div>
+    </div>`;
+  }).join("");
+}
+document.getElementById("achievementsBtn").addEventListener("click", ()=>{
+  renderAchievementsModal();
+  achievementsModal.classList.add("open");
+});
+document.getElementById("closeAchBtn").addEventListener("click", ()=> achievementsModal.classList.remove("open"));
+achievementsModal.addEventListener("click", (ev)=>{ if(ev.target===achievementsModal) achievementsModal.classList.remove("open"); });
+
+// =====================================================================
 // TELA CHEIA
 // =====================================================================
+document.getElementById("soundBtn").addEventListener("click", toggleSound);
+document.getElementById("soundBtn").textContent = soundEnabled ? "🔊" : "🔇";
 document.getElementById("fullscreenBtn").addEventListener("click", ()=>{
   const el = document.getElementById("app");
   if(!document.fullscreenElement){
@@ -1622,6 +1981,7 @@ function drawObject(o){
   } else if(o.type === "shop"){
     if(mapsImg.complete && mapsImg.naturalWidth>0) drawProp2(mapsImg, 121,24,23,24, o.x,o.y, 3.4);
     else drawSprite(ctx, o.x, o.y, SPR_HOUSE, {R:"#caa24a", W:"#d8c39a", A:"#7a5a2a"}, 3.4);
+    if(o.isTraveling){ ctx.font="16px sans-serif"; ctx.textAlign="center"; ctx.fillText("✨", o.x+22, o.y-16); }
   } else if(o.type === "craft"){
     if(mapsImg.complete && mapsImg.naturalWidth>0) drawProp2(mapsImg, 56,24,32,24, o.x,o.y, 2.6);
     else drawSprite(ctx, o.x, o.y, SPR_HOUSE, {R:"#9a7148", W:"#c9b48a", A:"#d4af37"}, 3.4);
@@ -1649,6 +2009,11 @@ function drawObject(o){
     else if(allDone){ ctx.fillStyle="#9be36f"; ctx.fillText("✓", o.x, o.y-24); }
   } else if(o.type === "enemy"){
     drawSprite(ctx, o.x, o.y, SPR_ENEMY, {E:"#5a2a1e", x:"#ff3b2e"}, 3.6);
+  } else if(o.type === "bounty"){
+    ctx.font="26px sans-serif"; ctx.textAlign="center"; ctx.fillText("📋", o.x, o.y+9);
+    if(bounty && hasItems({[bounty.item]:bounty.qty})){
+      ctx.font="14px sans-serif"; ctx.fillStyle="#ffd464"; ctx.fillText("!", o.x, o.y-20);
+    }
   }
   ctx.restore();
 
@@ -1853,6 +2218,7 @@ function drawMap(){
   drawFloatingTexts();
   drawFogOverlay();
   ctx.restore();
+  drawDayNightOverlay();
 }
 
 const OBJECT_DOT_COLOR = {
@@ -2047,6 +2413,7 @@ document.getElementById("tabContent").addEventListener("click", (ev)=>{
   else if(t.dataset.buyitem) tryBuyItem(nearBuilding, t.dataset.buyitem);
   else if(t.dataset.buytool){ const [tool,price] = t.dataset.buytool.split(":"); tryBuyToolUpgrade(tool, parseInt(price)); }
   else if(t.dataset.turnin) tryTurnInQuest(t.dataset.turnin);
+  else if(t.dataset.deliverbounty) tryDeliverBounty();
   else if(t.id === "buyTicketBtn") tryBuyTicket();
   else if(t.id === "restBtn") tryRest(nearBuilding.price);
 });
@@ -2057,6 +2424,13 @@ function renderTab(){
   else if(activeTab==="inv") el.innerHTML = renderInvTab();
   else if(activeTab==="craft") el.innerHTML = renderCraftTab();
   else if(activeTab==="local") el.innerHTML = renderLocalTab();
+  else if(activeTab==="quests") el.innerHTML = renderQuestsTab();
+  updateQuestBadge();
+}
+function updateQuestBadge(){
+  const readyCount = QUESTS.filter(q => q.known && !q.done && hasItems(q.need)).length;
+  const el = document.getElementById("questBadge");
+  if(el) el.textContent = readyCount>0 ? ` (${readyCount})` : "";
 }
 
 function renderStatusTab(){
@@ -2138,7 +2512,7 @@ function renderCraftTab(){
     html += `<div class="hint" style="display:block;">Nenhuma receita nessa categoria.</div>`;
   }
   withStatus.forEach(({rec, maxQ, lvlOk, ok})=>{
-    const needTxt = Object.keys(rec.inputs).map(id=>`${rec.inputs[id]}x ${ITEMS[id].name} (${player.inventory[id]||0})`).join(" + ");
+    const needTxt = needListHtml(rec.inputs);
     const lvlNote = !lvlOk ? ` — requer ${SKILL_DEFS[rec.skill].name} Nv.${rec.minLevel}` : "";
     const haveTxt = rec.output ? `<span style="font-weight:normal; font-size:10px; color:#5a4a30;"> (tem: ${player.inventory[rec.output]||0})</span>` : "";
     const qty = ok ? Math.min(craftQty[rec.id]||1, maxQ) : 1;
@@ -2146,7 +2520,7 @@ function renderCraftTab(){
       <button class="action small" data-craftqtyplus="${rec.id}">+</button> <span style="font-size:10px; color:#5a4a30;">(máx. ${maxQ})</span></div>` : "";
     html += `<div class="recipeCard ${ok?'ready':''}">
       <h4>${rec.name}${haveTxt} ${ok?'<span class="tag">Pronto</span>':''}</h4>
-      <div class="need ${ok?'':'bad'}">${needTxt}${lvlNote}</div>
+      <div class="need">${needTxt}${lvlNote}</div>
       <div class="desc">${rec.desc}</div>
       ${qtyRow}
       <button class="action small" data-craft="${rec.id}" ${(!ok||move||task)?"disabled":""}>Produzir${(ok&&maxQ>1)?` (${qty}x)`:""}</button>
@@ -2160,6 +2534,13 @@ function renderLocalTab(){
   const b = nearBuilding;
   let html = `<div class="hint" style="display:block; margin-bottom:8px;">${b.label}</div>`;
   if(b.type === "shop"){
+    const repLevel = getShopRepLevel(b);
+    const stars = "⭐".repeat(repLevel) + "☆".repeat(SHOP_REP_MAX_LEVEL-repLevel);
+    html += `<div class="hint" style="display:block; margin-bottom:6px;">${stars} <b>Reputação Nv.${repLevel}</b> aqui — vende +${repLevel*2}% / compra −${(repLevel*1.5).toFixed(1)}% nesse mercador especificamente.</div>`;
+    if(b.isTraveling){
+      const secsLeft = Math.max(0, Math.round((b.expiresAt-performance.now())/1000));
+      html += `<div class="hint" style="display:block; margin-bottom:6px; color:var(--ember); font-weight:bold;">✨ Comerciante de passagem — vai embora em ~${secsLeft}s!</div>`;
+    }
     html += `<div class="filterRow">
       <button class="filterChip ${shopSubTab==='sell'?'active':''}" data-shopsub="sell">Vender</button>
       <button class="filterChip ${shopSubTab==='buy'?'active':''}" data-shopsub="buy">Comprar</button>
@@ -2177,12 +2558,14 @@ function renderLocalTab(){
           ${sellable>1?`<button class="action small" data-sellall="${id}">Vender Tudo (${Math.max(0,sellable)})</button>`:""}
           </span></div>`;
       }
-      html += `<div class="hint" style="display:block; margin-top:8px;">Vender muito do mesmo item derruba o preço aqui por um tempo — vale a pena diversificar ou viajar até outro mercador. Nível de Comércio melhora os dois lados.</div>`;
+      html += `<div class="hint" style="display:block; margin-top:8px;">Vender muito do mesmo item derruba o preço aqui por um tempo — vale a pena diversificar ou viajar até outro mercador. Nível de Comércio e reputação local melhoram os dois lados.</div>`;
     } else if(b.buy){
       for(const id in b.buy){
         const price = getEffectiveBuyPrice(b, id);
-        html += `<div class="itemRow"><span>${ITEMS[id].name} — ${price}g cada</span>
-          <button class="action small" data-buyitem="${id}" ${player.gold<price?"disabled":""}>Comprar</button></div>`;
+        const stockLeft = (b.stock && b.stock[id]!==undefined) ? b.stock[id] : null;
+        const disabled = player.gold<price || (stockLeft!==null && stockLeft<=0);
+        html += `<div class="itemRow"><span>${ITEMS[id].name} — ${price}g cada${stockLeft!==null?` <span style="opacity:0.7;">(restam ${stockLeft})</span>`:''}</span>
+          <button class="action small" data-buyitem="${id}" ${disabled?"disabled":""}>${stockLeft!==null&&stockLeft<=0?"Esgotado":"Comprar"}</button></div>`;
       }
     }
   } else if(b.type === "blacksmith"){
@@ -2208,18 +2591,63 @@ function renderLocalTab(){
       html += `<div class="hint" style="display:block;">${allDone ? "✔ Todas as missões concluídas. Obrigado pela ajuda!" : "Nada a dizer no momento."}</div>`;
     } else {
       const q = active;
-      const needTxt = Object.keys(q.need).map(id=>`${q.need[id]}x ${ITEMS[id].name} (${player.inventory[id]||0})`).join(" + ");
+      q.known = true; // agora aparece na aba Missões
+      const needTxt = needListHtml(q.need);
       const ok = hasItems(q.need);
       let rewardTxt = `${q.rewardGold}g`;
       if(q.rewardXp) rewardTxt += ` + XP ${SKILL_DEFS[q.rewardXp.skill].name}`;
       if(q.rewardItem) rewardTxt += ` + ${q.rewardItem.qty}x ${ITEMS[q.rewardItem.id].name}`;
       const stageTxt = chain.length>1 ? ` (${chain.indexOf(q)+1}/${chain.length})` : "";
       html += `<div class="hint" style="display:block; margin-bottom:6px;"><b>${q.title}${stageTxt}</b><br>${q.desc}</div>
-        <div class="need ${ok?'':'bad'}">${needTxt}</div>
+        <div class="need">${needTxt}</div>
         <div class="hint" style="display:block; margin:4px 0 8px 0;">Recompensa: ${rewardTxt}</div>
         <button class="action small" data-turnin="${q.id}" ${ok?"":"disabled"}>Entregar</button>`;
     }
+  } else if(b.type === "bounty"){
+    ensureBounty();
+    if(!bounty){
+      const secs = Math.max(0, Math.ceil((bountyCooldownUntil-performance.now())/1000));
+      html += `<div class="hint" style="display:block;">Sem encomenda no momento. Volta em ~${secs}s.</div>`;
+    } else {
+      const needTxt = needListHtml({[bounty.item]:bounty.qty});
+      const ok = hasItems({[bounty.item]:bounty.qty});
+      html += `<div class="hint" style="display:block; margin-bottom:6px;"><b>Encomenda: ${bounty.qty}x ${ITEMS[bounty.item].name}</b><br>Alguém está pagando bem acima do preço de mercado por essa entrega.</div>
+        <div class="need">${needTxt}</div>
+        <div class="hint" style="display:block; margin:4px 0 8px 0;">Recompensa: ${bounty.reward}g</div>
+        <button class="action small" data-deliverbounty="1" ${ok?"":"disabled"}>Entregar</button>`;
+    }
   }
+  return html;
+}
+
+function renderQuestsTab(){
+  const known = QUESTS.filter(q => q.known);
+  if(known.length === 0){
+    return `<div class="hint" style="display:block;">Nenhuma missão descoberta ainda. Converse com os NPCs (marcados com "!" no mapa) para conhecer o que eles precisam.</div>`;
+  }
+  const sorted = known.slice().sort((a,b)=> (a.done?1:0) - (b.done?1:0));
+  let html = "";
+  sorted.forEach(q=>{
+    const npc = getQuestNpc(q.id);
+    const npcTxt = npc ? `${npc.label} — ${regionAt(npc.x)}` : "?";
+    if(q.done){
+      html += `<div class="recipeCard"><h4>${q.title} <span class="tag">Concluída</span></h4>
+        <div class="hint" style="display:block; margin:0;">${npcTxt}</div></div>`;
+      return;
+    }
+    const needTxt = needListHtml(q.need);
+    const ok = hasItems(q.need);
+    let rewardTxt = `${q.rewardGold}g`;
+    if(q.rewardXp) rewardTxt += ` + XP ${SKILL_DEFS[q.rewardXp.skill].name}`;
+    if(q.rewardItem) rewardTxt += ` + ${q.rewardItem.qty}x ${ITEMS[q.rewardItem.id].name}`;
+    html += `<div class="recipeCard ${ok?'ready':''}">
+      <h4>${q.title} ${ok?'<span class="tag">Pronta pra entregar</span>':''}</h4>
+      <div class="hint" style="display:block; margin:0 0 4px 0;">📍 ${npcTxt}</div>
+      <div class="hint" style="display:block; margin:0 0 4px 0;">${q.desc}</div>
+      <div class="need">${needTxt}</div>
+      <div class="hint" style="display:block; margin:4px 0 0 0;">Recompensa: ${rewardTxt}</div>
+    </div>`;
+  });
   return html;
 }
 
@@ -2228,6 +2656,7 @@ function renderLocalTab(){
 // =====================================================================
 function renderTopbar(){
   document.getElementById("regionLbl").textContent = regionAt(player.pos.x);
+  document.getElementById("dayLbl").textContent = getDayLabel();
   document.getElementById("hpLbl").textContent = `${Math.round(player.hp)}/${player.maxHp}`;
   document.getElementById("goldLbl").textContent = player.gold;
   document.getElementById("weightLbl").textContent = `${currentWeight()}/${player.maxWeight}`;
@@ -2249,7 +2678,7 @@ function renderProgress(){
     const pct = Math.min(100, ((now-task.start)/(task.end-task.start))*100);
     lbl.textContent = task.type === "gather" ? "Coletando..." : "Produzindo...";
     bar.style.width = pct+"%";
-    cancelBtn.style.display = "none";
+    cancelBtn.style.display = "inline-block";
   } else {
     lbl.textContent = manualCamera ? "Mapa livre — toque 🎯 para recentralizar." : "Ocioso — toque num ponto do mapa.";
     bar.style.width = "0%";
@@ -2299,11 +2728,15 @@ function updateCooldowns(){
 
 let lastMinimapDraw = 0;
 const MINIMAP_REDRAW_MS = 200;
+let lastAchievementCheck = 0;
+const ACHIEVEMENT_CHECK_MS = 3000;
 
 function gameLoop(){
   if(!battle){ updateMove(); updateTask(); }
   updateCooldowns();
-  revealAround(player.pos.x, player.pos.y, FOG_REVEAL_RADIUS);
+  checkLowEnergyWarning();
+  updateTravelingMerchant();
+  revealAround(player.pos.x, player.pos.y, getDarkness()>0.6 ? Math.max(1,FOG_REVEAL_RADIUS-1) : FOG_REVEAL_RADIUS);
   const nowAnim = performance.now();
   if(nowAnim - lastAnimTime > ANIM_FRAME_MS){ animFrame++; lastAnimTime = nowAnim; }
   drawMap();
@@ -2312,6 +2745,10 @@ function gameLoop(){
     drawMinimapOn(mctx, minimap, MM_SCALE, false);
     if(minimapModal.classList.contains("open")) drawMinimapOn(bmctx, bigMinimap, BIG_MM_SCALE, true);
     lastMinimapDraw = now;
+  }
+  if(now - lastAchievementCheck > ACHIEVEMENT_CHECK_MS){
+    checkAchievements();
+    lastAchievementCheck = now;
   }
   renderProgress();
   renderTopbar();
