@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-<title>Trilhas de Aldeceira — Protótipo v24</title>
+<title>Trilhas de Aldeceira — Protótipo v27</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
@@ -29,6 +29,12 @@ html,body{ margin:0; padding:0; height:100%; overflow:hidden; background:#10120d
 #achToastIcon{ font-size:28px; flex:0 0 auto; }
 #achToastTitle{ font-weight:bold; color:var(--gold); font-size:13px; }
 #achToastDesc{ font-size:12px; opacity:0.9; }
+#contextActionBtn{ position:absolute; right:10px; bottom:10px; z-index:40;
+  display:flex; align-items:center; gap:6px; font-family:inherit; font-size:13px; font-weight:bold;
+  background:var(--gold); color:#2b2116; border:3px solid #7a5a1a; box-shadow:3px 3px 0 #000;
+  padding:9px 14px; cursor:pointer; animation:contextPop 0.18s ease; }
+#contextActionBtn:active{ transform:translateY(1px); box-shadow:2px 2px 0 #000; }
+@keyframes contextPop{ from{ transform:scale(0.7); opacity:0; } to{ transform:scale(1); opacity:1; } }
 h1{ margin:0; flex:0 0 auto; font-family:'Press Start 2P', monospace; font-size:13px; letter-spacing:1px;
   color:var(--gold); text-shadow:2px 2px 0 #000; display:flex; justify-content:space-between;
   align-items:center; gap:10px; border-bottom:3px solid var(--gold); padding-bottom:10px; flex-wrap:wrap; }
@@ -78,7 +84,9 @@ h1 span.sub{ font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Aria
   cursor:pointer; font-family:inherit; }
 .tabBtn:last-child{ border-right:none; }
 .tabBtn.active{ background:var(--parchment); border-bottom:3px solid var(--gold); font-weight:bold; }
-#tabContent{ padding:12px; font-size:14px; line-height:1.5; overflow-y:auto; flex:1 1 auto; min-height:0; }
+#tabContent{ padding:12px; font-size:14px; line-height:1.5; overflow-y:auto; flex:1 1 auto; min-height:0;
+  transition:opacity 0.12s ease; }
+#tabContent.fading{ opacity:0.35; }
 .skillRow{ margin-bottom:10px; }
 .skillRow .lbl{ display:flex; justify-content:space-between; font-size:13px; }
 .barOuter{ background:#00000022; border:1px solid var(--bark); height:9px; margin-top:3px; }
@@ -172,13 +180,24 @@ button.action.small{ padding:4px 8px; font-size:11px; min-height:auto; }
   button.action.small{ padding:6px 8px; min-height:34px; font-size:12px; }
   .modalBox{ padding:8px; }
 }
+/* Celular deitado: tela curta e larga — aproveita a largura, mapa e painel
+   lado a lado como no desktop, em vez de empilhar e sobrar pouca altura */
+@media (orientation:landscape) and (max-height:520px){
+  #layout{ flex-direction:row; }
+  #mapWrap{ flex:1.3 1 0; min-height:0; max-width:56%; }
+  #sidebar{ flex:1 1 0; min-width:180px; min-height:0; }
+  h1{ font-size:11px; padding-bottom:5px; }
+  #topbar{ font-size:10px; padding:4px 8px; }
+  .tabBtn{ padding:6px 2px; font-size:11px; }
+  #log{ height:28px; }
+}
 </style>
 
 </head>
 <body>
 <div id="app">
   <div id="achievementToast"><div id="achToastIcon">🏆</div><div><div id="achToastTitle">Conquista!</div><div id="achToastDesc"></div></div></div>
-  <h1><span class="titleText">Trilhas de Aldeceira</span> <span class="sub">protótipo v24 — dia/noite &amp; conquistas</span>
+  <h1><span class="titleText">Trilhas de Aldeceira</span> <span class="sub">protótipo v27 — gestos e layout inteligente pra mobile</span>
     <button class="action small" id="soundBtn" title="Som">🔊</button>
     <button class="action small" id="fullscreenBtn"><span class="btnIcon">⛶</span><span class="btnLabel"> Tela cheia</span></button>
   </h1>
@@ -191,6 +210,7 @@ button.action.small{ padding:4px 8px; font-size:11px; min-height:auto; }
     <div class="stat">🪙 <b id="goldLbl">0</b></div>
     <button class="action small" id="saveMenuBtn" title="Salvar / Carregar">💾</button>
     <button class="action small" id="achievementsBtn" title="Conquistas">🏆</button>
+    <button class="action small" id="statsBtn" title="Estatísticas">📊</button>
     <button class="action small" id="helpBtn" title="Ajuda / Tutorial">❓</button>
   </div>
 
@@ -198,6 +218,7 @@ button.action.small{ padding:4px 8px; font-size:11px; min-height:auto; }
     <div id="mapWrap">
       <div id="mapInner">
         <canvas id="mapCanvas"></canvas>
+        <button id="contextActionBtn" style="display:none;"></button>
         <div id="minimapBox">
           <canvas id="minimapCanvas"></canvas>
           <button class="action small" id="recenterBtn" title="Centralizar no jogador">🎯</button>
@@ -280,6 +301,13 @@ button.action.small{ padding:4px 8px; font-size:11px; min-height:auto; }
   <div class="modalBox" style="max-width:440px;">
     <div class="modalHeader"><span>🏆 Conquistas</span><button class="action small" id="closeAchBtn">Fechar ✕</button></div>
     <div id="achievementsList"></div>
+  </div>
+</div>
+
+<div id="statsModal" class="modalOverlay">
+  <div class="modalBox" style="max-width:400px;">
+    <div class="modalHeader"><span>📊 Estatísticas</span><button class="action small" id="closeStatsBtn">Fechar ✕</button></div>
+    <div id="statsList"></div>
   </div>
 </div>
 
@@ -558,42 +586,56 @@ function getActiveQuest(npc){
 
 // ---------- CONQUISTAS ----------
 let craftedEver = {}, shopsVisited = {}, everDefeatedEnemies = {};
+// ---------- ESTATÍSTICAS ----------
+let stats = { playtimeMs:0, goldEarned:0, goldSpent:0, distanceWalked:0, itemsSold:0, itemsCrafted:0, itemsGathered:0 };
 function mapExploredPct(){
   let total=0, cnt=0;
   for(let gy=0; gy<FOG_ROWS; gy++) for(let gx=0; gx<FOG_COLS; gx++){ total++; if(revealed[gy][gx]) cnt++; }
   return total>0 ? (cnt/total*100) : 0;
 }
 const ACHIEVEMENTS = [
-  { id:"allEnemies", icon:"⚔️", title:"Caçador Completo", desc:"Derrote todos os inimigos do mundo pelo menos uma vez.", unlocked:false,
+  { id:"allEnemies", icon:"⚔️", title:"Caçador Completo", desc:"Derrote todos os inimigos do mundo pelo menos uma vez.", reward:"+15 Vida máxima", unlocked:false,
     check: ()=> OBJECTS.filter(o=>o.type==="enemy").every(o=> everDefeatedEnemies[o.id]),
-    progress: ()=>{ const list=OBJECTS.filter(o=>o.type==="enemy"); return `${list.filter(o=>everDefeatedEnemies[o.id]).length}/${list.length}`; } },
-  { id:"allQuests", icon:"📜", title:"Herói da Região", desc:"Complete todas as missões disponíveis.", unlocked:false,
+    progress: ()=>{ const list=OBJECTS.filter(o=>o.type==="enemy"); return `${list.filter(o=>everDefeatedEnemies[o.id]).length}/${list.length}`; },
+    apply: ()=>{ player.maxHp+=15; player.hp+=15; } },
+  { id:"allQuests", icon:"📜", title:"Herói da Região", desc:"Complete todas as missões disponíveis.", reward:"+150 ouro", unlocked:false,
     check: ()=> QUESTS.every(q=>q.done),
-    progress: ()=> `${QUESTS.filter(q=>q.done).length}/${QUESTS.length}` },
-  { id:"fullMap", icon:"🗺️", title:"Cartógrafo", desc:"Revele o mapa inteiro no fog of war.", unlocked:false,
+    progress: ()=> `${QUESTS.filter(q=>q.done).length}/${QUESTS.length}`,
+    apply: ()=>{ player.gold+=150; } },
+  { id:"fullMap", icon:"🗺️", title:"Cartógrafo", desc:"Revele o mapa inteiro no fog of war.", reward:"+10% velocidade de movimento (permanente)", unlocked:false,
     check: ()=> mapExploredPct() >= 99.5,
     progress: ()=> `${mapExploredPct().toFixed(0)}%` },
-  { id:"masterCrafter", icon:"🛠️", title:"Mestre Artesão", desc:"Crafte a Lâmina Glacial, o Elixir Arcano, o Colar de Pérolas e a Escultura de Gelo.", unlocked:false,
+  { id:"masterCrafter", icon:"🛠️", title:"Mestre Artesão", desc:"Crafte a Lâmina Glacial, o Elixir Arcano, o Colar de Pérolas e a Escultura de Gelo.", reward:"-15% tempo de produção (permanente)", unlocked:false,
     check: ()=> ["frostBlade","arcaneElixir","pearlNecklace","iceSculpture"].every(id=>craftedEver[id]),
     progress: ()=>{ const ids=["frostBlade","arcaneElixir","pearlNecklace","iceSculpture"]; return `${ids.filter(id=>craftedEver[id]).length}/${ids.length}`; } },
-  { id:"allSkills5", icon:"⭐", title:"Mestre de Tudo", desc:"Alcance o nível 5 em todas as habilidades.", unlocked:false,
+  { id:"allSkills5", icon:"⭐", title:"Mestre de Tudo", desc:"Alcance o nível 5 em todas as habilidades.", reward:"+20 Energia máxima", unlocked:false,
     check: ()=> Object.keys(SKILL_DEFS).every(k=>skillLevel(k)>=5),
-    progress: ()=>{ const ks=Object.keys(SKILL_DEFS); return `${ks.filter(k=>skillLevel(k)>=5).length}/${ks.length}`; } },
-  { id:"tradeLicenseAch", icon:"🏅", title:"Comerciante Licenciado", desc:"Conquiste a Licença de Comerciante.", unlocked:false,
-    check: ()=> hasTradeLicense(), progress: ()=> hasTradeLicense() ? "1/1" : "0/1" },
-  { id:"rich500", icon:"🪙", title:"Bolso Cheio", desc:"Acumule 500 de ouro ao mesmo tempo.", unlocked:false,
-    check: ()=> player.gold >= 500, progress: ()=> `${Math.min(player.gold,500)}/500` },
-  { id:"reachSnow", icon:"❄️", title:"Nas Alturas Geladas", desc:"Alcance os Picos Gélidos.", unlocked:false,
+    progress: ()=>{ const ks=Object.keys(SKILL_DEFS); return `${ks.filter(k=>skillLevel(k)>=5).length}/${ks.length}`; },
+    apply: ()=>{ player.maxEnergy+=20; player.energy+=20; } },
+  { id:"tradeLicenseAch", icon:"🏅", title:"Comerciante Licenciado", desc:"Conquiste a Licença de Comerciante.", reward:"+50 ouro (bônus de boas-vindas da Guilda)", unlocked:false,
+    check: ()=> hasTradeLicense(), progress: ()=> hasTradeLicense() ? "1/1" : "0/1",
+    apply: ()=>{ player.gold+=50; } },
+  { id:"rich500", icon:"🪙", title:"Bolso Cheio", desc:"Acumule 500 de ouro ao mesmo tempo.", reward:"+10 capacidade de carga (permanente)", unlocked:false,
+    check: ()=> player.gold >= 500, progress: ()=> `${Math.min(player.gold,500)}/500`,
+    apply: ()=>{ player.maxWeight+=10; } },
+  { id:"reachSnow", icon:"❄️", title:"Nas Alturas Geladas", desc:"Alcance os Picos Gélidos.", reward:"-10% dano recebido em combate (permanente)", unlocked:false,
     check: ()=> player.pos.x >= SNOW_GATE_X, progress: ()=> player.pos.x>=SNOW_GATE_X ? "1/1" : "0/1" },
-  { id:"allShops", icon:"🏪", title:"Rede de Comércio", desc:"Visite todos os mercadores do mapa.", unlocked:false,
+  { id:"allShops", icon:"🏪", title:"Rede de Comércio", desc:"Visite todos os mercadores do mapa.", reward:"+5% ao vender em qualquer mercador (permanente)", unlocked:false,
     check: ()=> OBJECTS.filter(o=>o.type==="shop").every(o=>shopsVisited[o.id]),
     progress: ()=>{ const list=OBJECTS.filter(o=>o.type==="shop"); return `${list.filter(o=>shopsVisited[o.id]).length}/${list.length}`; } },
 ];
+// bônus passivos concedidos por conquistas já desbloqueadas (checados na hora, não precisam ser "reaplicados")
+function hasAchievement(id){ const a=ACHIEVEMENTS.find(x=>x.id===id); return !!(a && a.unlocked); }
+function getSpeedBonusMultiplier(){ return hasAchievement("fullMap") ? 1.1 : 1; }
+function getCraftTimeMultiplier(){ return hasAchievement("masterCrafter") ? 0.85 : 1; }
+function getDamageResistMultiplier(){ return hasAchievement("reachSnow") ? 0.9 : 1; }
+function getAchievementSellBonus(){ return hasAchievement("allShops") ? 0.05 : 0; }
 function checkAchievements(){
   ACHIEVEMENTS.forEach(a=>{
     if(a.unlocked) return;
     if(a.check()){
       a.unlocked = true;
+      if(a.apply) a.apply();
       log(`🏆 Conquista desbloqueada: ${a.title}!`, true);
       addFloatingText(player.pos.x, player.pos.y-30, "🏆", "#ffd464");
       showAchievementToast(a);
@@ -607,7 +649,7 @@ function showAchievementToast(a){
   if(!el) return;
   document.getElementById("achToastIcon").textContent = a.icon;
   document.getElementById("achToastTitle").textContent = `Conquista: ${a.title}`;
-  document.getElementById("achToastDesc").textContent = a.desc;
+  document.getElementById("achToastDesc").textContent = `🎁 ${a.reward}`;
   el.classList.add("show");
   clearTimeout(achToastTimer);
   achToastTimer = setTimeout(()=> el.classList.remove("show"), 4200);
@@ -914,7 +956,7 @@ function closeBattle(){
 }
 function winBattle(){
   const e = battle.enemy;
-  player.gold += e.goldReward;
+  player.gold += e.goldReward; stats.goldEarned += e.goldReward;
   gainXp("hunting", e.xpReward);
   let msg = `Vitória contra ${e.label}! +${e.goldReward}g +${e.xpReward} XP Caça/Combate`;
   if(e.dropItem){ addItem(e.dropItem.id, e.dropItem.qty); msg += ` +${e.dropItem.qty}x ${ITEMS[e.dropItem.id].name}`; }
@@ -949,12 +991,12 @@ function battleRound(action, itemId){
     lines.push(`Você atacou e causou ${dmg} de dano.`);
     sfxHit();
     if(battle.enemyHp <= 0){ battle.log = lines; renderBattleUI(); winBattle(); return; }
-    const edmg = calcDamage(battle.enemy.attack, def);
+    const edmg = Math.max(1, Math.round(calcDamage(battle.enemy.attack, def) * getDamageResistMultiplier()));
     player.hp = Math.max(0, player.hp - edmg);
     lines.push(`${battle.enemy.label} revidou causando ${edmg} de dano.`);
     setTimeout(sfxHit, 180);
   } else if(action === "defend"){
-    const edmg = Math.ceil(calcDamage(battle.enemy.attack, def)*0.5);
+    const edmg = Math.max(1, Math.round(Math.ceil(calcDamage(battle.enemy.attack, def)*0.5) * getDamageResistMultiplier()));
     player.hp = Math.max(0, player.hp - edmg);
     lines.push(`Você se defendeu — dano reduzido para ${edmg}.`);
     sfxHit();
@@ -964,7 +1006,7 @@ function battleRound(action, itemId){
     const healed = Math.min(player.maxHp - player.hp, item.restoreHp||0);
     player.hp += healed;
     lines.push(`Você usou ${item.name} e recuperou ${healed} de vida.`);
-    const edmg = calcDamage(battle.enemy.attack, def);
+    const edmg = Math.max(1, Math.round(calcDamage(battle.enemy.attack, def) * getDamageResistMultiplier()));
     player.hp = Math.max(0, player.hp - edmg);
     lines.push(`${battle.enemy.label} atacou enquanto você se tratava: ${edmg} de dano.`);
   } else if(action === "flee"){
@@ -974,7 +1016,7 @@ function battleRound(action, itemId){
       setTimeout(fleeBattleSuccess, 700);
       return;
     } else {
-      const edmg = calcDamage(battle.enemy.attack, def);
+      const edmg = Math.max(1, Math.round(calcDamage(battle.enemy.attack, def) * getDamageResistMultiplier()));
       player.hp = Math.max(0, player.hp - edmg);
       lines.push(`A fuga falhou! ${battle.enemy.label} causou ${edmg} de dano.`);
     }
@@ -1152,8 +1194,9 @@ function startMoveTo(targetX, targetY, targetObj){
   const { ex, ey, already, distance } = computeMoveTarget(targetX, targetY, targetObj);
   if(already){ onArrive(targetObj); return; }
 
-  const speedMul = getEnergySpeedMultiplier();
+  const speedMul = getEnergySpeedMultiplier() * getSpeedBonusMultiplier();
   const duration = Math.max(150, (distance/(SPEED_PX_PER_SEC*speedMul))*1000);
+  stats.distanceWalked += distance;
   const dx = ex - player.pos.x, dy = ey - player.pos.y;
   if(Math.abs(dx) > Math.abs(dy)) playerFacing = dx > 0 ? "right" : "left";
   else if(Math.abs(dy) > 0) playerFacing = dy > 0 ? "down" : "up";
@@ -1212,7 +1255,7 @@ function showTravelPanel(obj){
   if(already){
     costLine = "Você já está bem perto — nenhum deslocamento necessário.";
   } else {
-    const duration = Math.max(150, (distance/(SPEED_PX_PER_SEC*getEnergySpeedMultiplier()))*1000);
+    const duration = Math.max(150, (distance/(SPEED_PX_PER_SEC*getEnergySpeedMultiplier()*getSpeedBonusMultiplier()))*1000);
     const energyCost = (distance/TILE_PX)*WALK_ENERGY_PER_SQM*(player.tools.cloak>=2?0.8:1);
     costLine = `Custo da viagem: ~${energyCost.toFixed(0)}⚡ · ${(duration/1000).toFixed(1)}s`;
   }
@@ -1310,9 +1353,11 @@ function finishGather(meta){
   const obj = meta.obj;
   const ok = addItem(obj.item, 1);
   if(ok){
+    stats.itemsGathered += 1;
     gainXp(obj.skill, obj.xp);
     const xpTxt = obj.skill ? `  (+${obj.xp} XP ${SKILL_DEFS[obj.skill].name})` : "";
     log(`+1 ${ITEMS[obj.item].name}${xpTxt}`, true);
+    sfxPickup();
     if(obj.bonusItem && Math.random() < (obj.bonusChance||0)){
       if(addItem(obj.bonusItem, 1)) log(`✨ Bônus! +1 ${ITEMS[obj.bonusItem].name}`, true);
     }
@@ -1349,9 +1394,10 @@ function tryCraft(recipeId){
 }
 function startCraftTask(rec, remainingRepeats){
   for(const id in rec.inputs) removeItem(id, rec.inputs[id]);
-  task = { type:"craft", start:performance.now(), end:performance.now()+rec.time, meta:{rec, remainingRepeats} };
+  const time = rec.time * getCraftTimeMultiplier();
+  task = { type:"craft", start:performance.now(), end:performance.now()+time, meta:{rec, remainingRepeats} };
   const repTxt = remainingRepeats > 1 ? ` (restam ${remainingRepeats-1})` : "";
-  log(`Produzindo ${rec.name}...${repTxt} (${(rec.time/1000).toFixed(1)}s)`);
+  log(`Produzindo ${rec.name}...${repTxt} (${(time/1000).toFixed(1)}s)`);
   renderTab();
 }
 function finishCraft(meta){
@@ -1363,12 +1409,14 @@ function finishCraft(meta){
     addItem(rec.output, rec.outQty);
     log(`Criado: ${ITEMS[rec.output].name}  (+${rec.xp} XP ${SKILL_DEFS[rec.skill].name})`, true);
     craftedEver[rec.output] = true;
+    stats.itemsCrafted += rec.outQty;
     const toolKey = OUTPUT_TO_TOOL[rec.output];
     const slot = OUTPUT_TO_SLOT[rec.output];
     if(toolKey) autoEquipIfNone(toolKey);
     else if(slot && !player.equipment[slot]) player.equipment[slot] = rec.output;
   }
   gainXp(rec.skill, rec.xp);
+  sfxCraft();
   checkAchievements();
 
   const left = (meta.remainingRepeats||1) - 1;
@@ -1425,7 +1473,7 @@ function getEffectiveSellPrice(shop, itemId){
   const base = shop.sell ? shop.sell[itemId] : 0;
   if(!base) return 0;
   const marketAdj = Math.max(0.5, 1 - getMarketCount(shop, itemId)*0.05);
-  const skillBonus = 1 + (skillLevel("trading")-1)*0.03 + (hasTradeLicense()?0.10:0) + getShopRepLevel(shop)*0.02;
+  const skillBonus = 1 + (skillLevel("trading")-1)*0.03 + (hasTradeLicense()?0.10:0) + getShopRepLevel(shop)*0.02 + getAchievementSellBonus();
   return Math.max(1, Math.round(base * marketAdj * skillBonus));
 }
 function getEffectiveBuyPrice(shop, itemId){
@@ -1442,7 +1490,7 @@ function trySell(shopObj, itemId){
     return;
   }
   removeItem(itemId, 1);
-  player.gold += price;
+  player.gold += price; stats.goldEarned += price; stats.itemsSold += 1;
   bumpMarket(shopObj, itemId);
   bumpShopReputation(shopObj);
   gainXp("trading", Math.max(1, Math.round(price*0.4)));
@@ -1466,6 +1514,7 @@ function trySellAll(shopObj, itemId){
     total += price; xpTotal += Math.max(1, Math.round(price*0.4)); sold++;
   }
   if(sold > 0){
+    stats.goldEarned += total; stats.itemsSold += sold;
     gainXp("trading", xpTotal);
     log(`Vendido: ${sold}x ${ITEMS[itemId].name} por ${total} ouro no total.`, true);
     addFloatingText(player.pos.x, player.pos.y-24, `+${total}g`, "#ffd464");
@@ -1480,7 +1529,7 @@ function tryBuyItem(shopObj, itemId){
   if(player.gold < price){ log("Ouro insuficiente.", true); sfxError(); return; }
   if(!canCarry(itemId, 1)){ log("Inventário cheio! Venda ou use itens antes de comprar.", true); sfxError(); return; }
   addItem(itemId, 1);
-  player.gold -= price;
+  player.gold -= price; stats.goldSpent += price;
   if(shopObj.stock && shopObj.stock[itemId]!==undefined) shopObj.stock[itemId]--;
   bumpShopReputation(shopObj);
   gainXp("trading", Math.max(1, Math.round(price*0.3)));
@@ -1557,7 +1606,7 @@ function tryDeliverBounty(){
   if(!bounty) return;
   if(!hasItems({[bounty.item]:bounty.qty})){ log("Você ainda não tem o suficiente pra essa encomenda.", true); sfxError(); return; }
   removeItem(bounty.item, bounty.qty);
-  player.gold += bounty.reward;
+  player.gold += bounty.reward; stats.goldEarned += bounty.reward;
   gainXp("trading", Math.round(bounty.reward*0.2));
   log(`Encomenda entregue: ${bounty.qty}x ${ITEMS[bounty.item].name} por ${bounty.reward} ouro!`, true);
   addFloatingText(player.pos.x, player.pos.y-24, `+${bounty.reward}g`, "#ffd464");
@@ -1574,29 +1623,32 @@ function tryDeliverBounty(){
 function tryBuyToolUpgrade(toolKey, price){
   const itemId = TOOL_ITEMS[toolKey];
   if((player.inventory[itemId]||0) >= 1){ log("Você já possui essa ferramenta."); return; }
-  if(player.gold < price){ log("Ouro insuficiente.", true); return; }
-  player.gold -= price;
+  if(player.gold < price){ log("Ouro insuficiente.", true); sfxError(); return; }
+  player.gold -= price; stats.goldSpent += price;
   addItem(itemId, 1);
   autoEquipIfNone(toolKey);
   log(`Comprou: ${ITEMS[itemId].name}!`, true);
+  sfxSpend();
   renderTab();
 }
 function tryRest(price){
   if(player.energy >= player.maxEnergy && player.hp >= player.maxHp){ log("Você já está descansado(a)."); return; }
-  if(player.gold < price){ log("Ouro insuficiente.", true); return; }
-  player.gold -= price;
+  if(player.gold < price){ log("Ouro insuficiente.", true); sfxError(); return; }
+  player.gold -= price; stats.goldSpent += price;
   player.energy = player.maxEnergy;
   player.hp = player.maxHp;
   log("Descansou na Estalagem: energia e vida totalmente recuperadas!", true);
+  sfxPickup();
   renderTab();
 }
 const BOAT_PRICE = 100;
 function tryBuyTicket(){
   if(player.inventory.boatTicket >= 1){ log("Você já possui uma passagem."); return; }
-  if(player.gold < BOAT_PRICE){ log("Ouro insuficiente para a passagem.", true); return; }
-  player.gold -= BOAT_PRICE;
+  if(player.gold < BOAT_PRICE){ log("Ouro insuficiente para a passagem.", true); sfxError(); return; }
+  player.gold -= BOAT_PRICE; stats.goldSpent += BOAT_PRICE;
   addItem("boatTicket", 1);
   log("Passagem de Barco comprada! A Ilha Vizinha está liberada.", true);
+  sfxSpend();
   renderTab();
 }
 
@@ -1609,7 +1661,7 @@ function tryTurnInQuest(questId){
   if(!hasItems(q.need)){ log("Você ainda não tem os itens necessários.", true); return; }
   for(const id in q.need) removeItem(id, q.need[id]);
   q.done = true;
-  player.gold += q.rewardGold;
+  player.gold += q.rewardGold; stats.goldEarned += q.rewardGold;
   if(q.rewardXp) gainXp(q.rewardXp.skill, q.rewardXp.amount);
   if(q.rewardItem) addItem(q.rewardItem.id, q.rewardItem.qty);
   let rewardTxt = `+${q.rewardGold}g`;
@@ -1648,6 +1700,7 @@ function serializeGame(){
     everDefeatedEnemies: Object.assign({}, everDefeatedEnemies),
     dayElapsed: ((performance.now()-dayStartTime)+dayStartOffset) % DAY_CYCLE_MS,
     bounty: bounty, bountyCooldownRemaining: Math.max(0, bountyCooldownUntil-performance.now()),
+    stats: Object.assign({}, stats),
     revealed: revealed.map(row=>row.map(v=>v?1:0))
   };
 }
@@ -1672,6 +1725,7 @@ function applySave(data){
   dayStartOffset = data.dayElapsed || 0; dayStartTime = performance.now();
   bounty = data.bounty || null;
   bountyCooldownUntil = performance.now() + (data.bountyCooldownRemaining || 0);
+  stats = Object.assign({ playtimeMs:0, goldEarned:0, goldSpent:0, distanceWalked:0, itemsSold:0, itemsCrafted:0, itemsGathered:0 }, data.stats||{});
   if(data.revealed) revealed = data.revealed.map(row=>row.map(v=>!!v));
   move=null; task=null; manualCamera=null; nearBuilding=null; battle=null;
   hideConfirmPanel(); hideTravelPanel();
@@ -1711,6 +1765,7 @@ function resetProgress(){
   craftedEver = {}; shopsVisited = {}; everDefeatedEnemies = {};
   dayStartOffset = 0; dayStartTime = performance.now();
   bounty = null; bountyCooldownUntil = 0;
+  stats = { playtimeMs:0, goldEarned:0, goldSpent:0, distanceWalked:0, itemsSold:0, itemsCrafted:0, itemsGathered:0 };
   despawnTravelingMerchant();
   const stateById = {}; INITIAL_OBJECT_STATES.forEach(s=> stateById[s.id]=s);
   OBJECTS.forEach(o=>{ const s=stateById[o.id]; if(s){ o.usesLeft=s.usesLeft; o.cooldownUntil=s.cooldownUntil; } if(o.type==="shop") o.reputation=0; });
@@ -1803,6 +1858,7 @@ function renderAchievementsModal(){
     return `<div class="recipeCard ${a.unlocked?'ready':''}" style="opacity:${a.unlocked?1:0.6};">
       <h4>${a.icon} ${a.title} ${a.unlocked?'<span class="tag">Concluída</span>':''}</h4>
       <div class="hint" style="display:block; margin:0 0 4px 0;">${a.desc}</div>
+      <div class="hint" style="display:block; margin:0 0 4px 0; color:#7a5a2a;">🎁 Recompensa: ${a.reward}</div>
       <div class="hint" style="display:block; margin:0; font-weight:bold;">${prog}</div>
     </div>`;
   }).join("");
@@ -1813,6 +1869,41 @@ document.getElementById("achievementsBtn").addEventListener("click", ()=>{
 });
 document.getElementById("closeAchBtn").addEventListener("click", ()=> achievementsModal.classList.remove("open"));
 achievementsModal.addEventListener("click", (ev)=>{ if(ev.target===achievementsModal) achievementsModal.classList.remove("open"); });
+
+// =====================================================================
+// ESTATÍSTICAS (modal)
+// =====================================================================
+const statsModal = document.getElementById("statsModal");
+function formatPlaytime(ms){
+  const totalMin = Math.floor(ms/60000);
+  const h = Math.floor(totalMin/60), m = totalMin%60;
+  return h>0 ? `${h}h ${m}min` : `${m}min`;
+}
+function renderStatsModal(){
+  const el = document.getElementById("statsList");
+  const rows = [
+    ["⏱️ Tempo jogado", formatPlaytime(stats.playtimeMs)],
+    ["🪙 Ouro total ganho", `${stats.goldEarned}g`],
+    ["💸 Ouro total gasto", `${stats.goldSpent}g`],
+    ["👣 Distância percorrida", `${Math.round(stats.distanceWalked/TILE_PX)} m`],
+    ["📦 Itens vendidos", stats.itemsSold],
+    ["🛠️ Itens craftados", stats.itemsCrafted],
+    ["🌾 Recursos coletados", stats.itemsGathered],
+    ["⚔️ Inimigos únicos derrotados", `${Object.keys(everDefeatedEnemies).length}/${OBJECTS.filter(o=>o.type==="enemy").length}`],
+    ["📜 Missões concluídas", `${QUESTS.filter(q=>q.done).length}/${QUESTS.length}`],
+    ["🗺️ Mapa revelado", `${mapExploredPct().toFixed(0)}%`],
+    ["🏆 Conquistas", `${ACHIEVEMENTS.filter(a=>a.unlocked).length}/${ACHIEVEMENTS.length}`],
+  ];
+  el.innerHTML = rows.map(([label,val])=>
+    `<div class="itemRow"><span>${label}</span><b>${val}</b></div>`
+  ).join("");
+}
+document.getElementById("statsBtn").addEventListener("click", ()=>{
+  renderStatsModal();
+  statsModal.classList.add("open");
+});
+document.getElementById("closeStatsBtn").addEventListener("click", ()=> statsModal.classList.remove("open"));
+statsModal.addEventListener("click", (ev)=>{ if(ev.target===statsModal) statsModal.classList.remove("open"); });
 
 // =====================================================================
 // TELA CHEIA
@@ -2277,18 +2368,38 @@ function handleMapTap(ev){
 }
 
 let dragState = null;
+let longPressTimer = null, longPressFired = false;
+const LONG_PRESS_MS = 520;
+function tryLongPressGather(wx, wy){
+  if(task || move || battle) return;
+  const obj = findObjectNear(wx, wy);
+  if(!obj || !GATHER_TYPES.includes(obj.type) || obj.usesLeft <= 0) return;
+  const { already } = computeMoveTarget(obj.x, obj.y, obj);
+  if(!already) return; // não está perto o bastante — deixa o toque normal levar até lá
+  longPressFired = true;
+  hideTravelPanel(); hideConfirmPanel();
+  if(navigator.vibrate) try{ navigator.vibrate(25); }catch(e){}
+  startGatherTask(obj, 1);
+}
 canvas.addEventListener("pointerdown", (ev)=>{
   hideHoverTip();
   dragState = { startX:ev.clientX, startY:ev.clientY, camStart:getCamera(), moved:false };
   try{ canvas.setPointerCapture(ev.pointerId); }catch(e){}
   canvas.style.cursor = "grabbing";
+  longPressFired = false;
+  clearTimeout(longPressTimer);
+  longPressTimer = setTimeout(()=>{
+    if(!dragState || dragState.moved) return;
+    const { wx, wy } = toWorld(ev);
+    tryLongPressGather(wx, wy);
+  }, LONG_PRESS_MS);
 });
 canvas.addEventListener("pointermove", (ev)=>{
   if(!dragState) return;
   const rect = canvas.getBoundingClientRect();
   const scaleX = canvas.width/rect.width, scaleY = canvas.height/rect.height;
   const dx = (ev.clientX-dragState.startX)*scaleX, dy = (ev.clientY-dragState.startY)*scaleY;
-  if(Math.hypot(dx,dy) > 5) dragState.moved = true;
+  if(Math.hypot(dx,dy) > 5){ dragState.moved = true; clearTimeout(longPressTimer); }
   if(dragState.moved){
     let nx = dragState.camStart.x - dx, ny = dragState.camStart.y - dy;
     nx = Math.min(Math.max(nx,0), WORLD_W-VIEW_W);
@@ -2298,12 +2409,13 @@ canvas.addEventListener("pointermove", (ev)=>{
 });
 function endDrag(ev){
   canvas.style.cursor = "grab";
+  clearTimeout(longPressTimer);
   if(!dragState) return;
-  if(!dragState.moved) handleMapTap(ev);
+  if(!dragState.moved && !longPressFired) handleMapTap(ev);
   dragState = null;
 }
 canvas.addEventListener("pointerup", endDrag);
-canvas.addEventListener("pointercancel", ()=>{ dragState=null; canvas.style.cursor="grab"; });
+canvas.addEventListener("pointercancel", ()=>{ dragState=null; clearTimeout(longPressTimer); canvas.style.cursor="grab"; });
 
 document.getElementById("recenterBtn").addEventListener("click", ()=>{ manualCamera = null; });
 
@@ -2381,11 +2493,68 @@ document.getElementById("bigMinimapInfo").addEventListener("click", (ev)=>{
 document.querySelectorAll(".tabBtn").forEach(btn=>{
   btn.addEventListener("click", ()=> setTab(btn.dataset.tab));
 });
+// ---------- BOTÃO FLUTUANTE CONTEXTUAL ----------
+const BUILDING_BTN = { shop:"🏪 Mercador", craft:"🛠️ Crafting", blacksmith:"⚒️ Ferreiro",
+  inn:"🛌 Estalagem", dock:"⛵ Doca", npc:"💬 Conversar", bounty:"📋 Encomenda" };
+function updateContextButton(){
+  const btn = document.getElementById("contextActionBtn");
+  if(!btn) return;
+  if(battle){ btn.style.display="none"; return; }
+  if(confirmObj){
+    btn.style.display = "flex";
+    btn.textContent = "🌾 Coletar";
+    btn.onclick = ()=> document.getElementById("confirmYes").click();
+    return;
+  }
+  if(travelTarget){
+    btn.style.display = "flex";
+    btn.textContent = "🚶 Ir até lá";
+    btn.onclick = ()=> document.getElementById("travelYes").click();
+    return;
+  }
+  if(nearBuilding){
+    const wantTab = nearBuilding.type==="craft" ? "craft" : "local";
+    if(activeTab !== wantTab){
+      btn.style.display = "flex";
+      btn.textContent = BUILDING_BTN[nearBuilding.type] || "➡️ Ver";
+      btn.onclick = ()=> setTab(wantTab);
+      return;
+    }
+  }
+  btn.style.display = "none";
+}
+
 function setTab(tab){
   activeTab = tab;
   document.querySelectorAll(".tabBtn").forEach(b=> b.classList.toggle("active", b.dataset.tab===tab));
+  const el = document.getElementById("tabContent");
+  el.classList.add("fading");
   renderTab();
+  requestAnimationFrame(()=> el.classList.remove("fading"));
 }
+
+// ---------- DESLIZAR ENTRE ABAS (swipe esquerda/direita) ----------
+const TAB_ORDER = ["status","inv","craft","local","quests"];
+(function setupTabSwipe(){
+  const el = document.getElementById("tabContent");
+  let sx=0, sy=0, tracking=false;
+  el.addEventListener("touchstart", (ev)=>{
+    if(ev.touches.length!==1) return;
+    sx = ev.touches[0].clientX; sy = ev.touches[0].clientY; tracking = true;
+  }, {passive:true});
+  el.addEventListener("touchend", (ev)=>{
+    if(!tracking) return; tracking = false;
+    const t = ev.changedTouches[0];
+    const dx = t.clientX - sx, dy = t.clientY - sy;
+    if(Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy)*1.6){
+      const i = TAB_ORDER.indexOf(activeTab);
+      if(i < 0) return;
+      const next = dx < 0 ? TAB_ORDER[(i+1)%TAB_ORDER.length] : TAB_ORDER[(i-1+TAB_ORDER.length)%TAB_ORDER.length];
+      setTab(next);
+      if(navigator.vibrate) try{ navigator.vibrate(12); }catch(e){}
+    }
+  }, {passive:true});
+})();
 
 document.getElementById("tabContent").addEventListener("click", (ev)=>{
   const t = ev.target;
@@ -2730,8 +2899,12 @@ let lastMinimapDraw = 0;
 const MINIMAP_REDRAW_MS = 200;
 let lastAchievementCheck = 0;
 const ACHIEVEMENT_CHECK_MS = 3000;
+let lastStatsFrame = performance.now();
 
 function gameLoop(){
+  const nowFrame = performance.now();
+  stats.playtimeMs += Math.min(1000, nowFrame - lastStatsFrame); // trava em 1s pra não somar tempo de aba em segundo plano
+  lastStatsFrame = nowFrame;
   if(!battle){ updateMove(); updateTask(); }
   updateCooldowns();
   checkLowEnergyWarning();
@@ -2752,6 +2925,7 @@ function gameLoop(){
   }
   renderProgress();
   renderTopbar();
+  updateContextButton();
   requestAnimationFrame(gameLoop);
 }
 
