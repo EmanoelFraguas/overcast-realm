@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-<title>Trilhas de Aldeceira — Protótipo v28</title>
+<title>Trilhas de Aldeceira — Protótipo v29</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
@@ -29,6 +29,14 @@ html,body{ margin:0; padding:0; height:100%; overflow:hidden; background:#10120d
 #achToastIcon{ font-size:28px; flex:0 0 auto; }
 #achToastTitle{ font-weight:bold; color:var(--gold); font-size:13px; }
 #achToastDesc{ font-size:12px; opacity:0.9; }
+#contextTip{ position:fixed; left:50%; bottom:14px; transform:translate(-50%,20px); z-index:9999;
+  display:flex; align-items:center; gap:8px; background:var(--forest-dark); color:var(--parchment);
+  border:3px solid var(--gold); box-shadow:4px 4px 0 #000; padding:9px 12px; max-width:92vw; width:380px;
+  opacity:0; pointer-events:none; transition:opacity 0.3s ease, transform 0.3s ease; font-size:12px; line-height:1.4; }
+#contextTip.show{ opacity:1; transform:translate(-50%,0); pointer-events:auto; }
+#contextTipIcon{ font-size:18px; flex:0 0 auto; }
+#contextTipText{ flex:1 1 auto; }
+#contextTipClose{ flex:0 0 auto; background:none; border:none; color:var(--parchment); font-size:14px; cursor:pointer; padding:2px 4px; }
 #contextActionBtn{ position:absolute; right:10px; bottom:10px; z-index:40;
   display:flex; align-items:center; gap:6px; font-family:inherit; font-size:13px; font-weight:bold;
   background:var(--gold); color:#2b2116; border:3px solid #7a5a1a; box-shadow:3px 3px 0 #000;
@@ -205,7 +213,8 @@ button.action.small{ padding:4px 8px; font-size:11px; min-height:auto; }
 <body>
 <div id="app">
   <div id="achievementToast"><div id="achToastIcon">🏆</div><div><div id="achToastTitle">Conquista!</div><div id="achToastDesc"></div></div></div>
-  <h1><span class="titleText">Trilhas de Aldeceira</span> <span class="sub">protótipo v28 — ajustes de paisagem e botão de ação</span>
+  <div id="contextTip"><span id="contextTipIcon">💡</span><span id="contextTipText"></span><button id="contextTipClose">✕</button></div>
+  <h1><span class="titleText">Trilhas de Aldeceira</span> <span class="sub">protótipo v29 — guia de próximo passo, indicador de missão &amp; dicas contextuais</span>
     <button class="action small" id="soundBtn" title="Som">🔊</button>
     <button class="action small" id="fullscreenBtn"><span class="btnIcon">⛶</span><span class="btnLabel"> Tela cheia</span></button>
   </h1>
@@ -638,6 +647,21 @@ function getSpeedBonusMultiplier(){ return hasAchievement("fullMap") ? 1.1 : 1; 
 function getCraftTimeMultiplier(){ return hasAchievement("masterCrafter") ? 0.85 : 1; }
 function getDamageResistMultiplier(){ return hasAchievement("reachSnow") ? 0.9 : 1; }
 function getAchievementSellBonus(){ return hasAchievement("allShops") ? 0.05 : 0; }
+// ---------- PRÓXIMO PASSO SUGERIDO (guia progressivo, não é conquista) ----------
+const GUIDED_TASKS = [
+  { text:"Colete um recurso qualquer (madeira, pedra ou minério) tocando nele no mapa.", check: ()=> stats.itemsGathered >= 1 },
+  { text:"Colete um alimento (Carne de Praga, Peixe, Ervas ou Suprimento de arbusto) — sua energia depende disso.", check: ()=> (player.inventory.meat||0)+(player.inventory.fish||0)+(player.inventory.ration||0)+(player.inventory.herb||0) >= 1 },
+  { text:"Vá até a Bancada de Crafting da Vila e produza seu primeiro item.", check: ()=> Object.keys(craftedEver).length >= 1 },
+  { text:"Venda um item num mercador — qualquer um serve pra começar.", check: ()=> stats.itemsSold >= 1 },
+  { text:"Compre um upgrade de ferramenta com o Ferreiro (deixa a coleta mais rápida).", check: ()=> player.tools.axe>=2||player.tools.pickaxe>=2||player.tools.rod>=2||player.tools.cloak>=2 },
+  { text:"Enfrente e vença um inimigo em combate.", check: ()=> Object.keys(everDefeatedEnemies).length >= 1 },
+  { text:"Complete sua primeira missão conversando com um NPC.", check: ()=> QUESTS.some(q=>q.done) },
+  { text:"Compre uma Passagem de Barco na Doca e explore a Ilha Vizinha.", check: ()=> (player.inventory.boatTicket||0) >= 1 },
+  { text:"Avance até as Colinas de Pedra (precisa de Mineração Nv.3).", check: ()=> player.pos.x >= STONE_GATE_X },
+  { text:"Conquiste a Licença de Comerciante com a Guilda dos Mercadores da Vila.", check: ()=> hasTradeLicense() },
+];
+function getNextGuidedTask(){ return GUIDED_TASKS.find(t => !t.check()); }
+
 function checkAchievements(){
   ACHIEVEMENTS.forEach(a=>{
     if(a.unlocked) return;
@@ -662,6 +686,32 @@ function showAchievementToast(a){
   clearTimeout(achToastTimer);
   achToastTimer = setTimeout(()=> el.classList.remove("show"), 4200);
 }
+
+// =====================================================================
+// ONBOARDING PROGRESSIVO — dicas curtas na primeira vez de cada coisa,
+// em vez de jogar o tutorial inteiro em cima do jogador de cara.
+// =====================================================================
+let seenTips = {};
+try{ seenTips = JSON.parse(localStorage.getItem("trilhasAldeceira_seenTips") || "{}"); } catch(e){}
+let contextTipTimer = null;
+function showContextTip(text, icon){
+  const el = document.getElementById("contextTip");
+  if(!el) return;
+  document.getElementById("contextTipIcon").textContent = icon || "💡";
+  document.getElementById("contextTipText").textContent = text;
+  el.classList.add("show");
+  clearTimeout(contextTipTimer);
+  contextTipTimer = setTimeout(()=> el.classList.remove("show"), 7000);
+}
+function showTipOnce(id, text, icon){
+  if(seenTips[id]) return;
+  seenTips[id] = true;
+  try{ localStorage.setItem("trilhasAldeceira_seenTips", JSON.stringify(seenTips)); } catch(e){}
+  showContextTip(text, icon);
+}
+document.getElementById("contextTipClose").addEventListener("click", ()=>{
+  document.getElementById("contextTip").classList.remove("show");
+});
 
 // ---------- DESCRIÇÕES CURTAS POR TIPO ----------
 const TYPE_DESC = {
@@ -956,6 +1006,7 @@ function startBattle(enemy){
   document.getElementById("battleEnemyName").textContent = enemy.label;
   renderBattleUI();
   document.getElementById("battleModal").classList.add("open");
+  showTipOnce("battle", "Atacar causa dano mas te deixa exposto. Defender reduz o dano recebido pela metade. Fugir tem ~55% de chance e sempre te afasta do inimigo se der certo — nunca deixa passar direto.", "⚔️");
 }
 function closeBattle(){
   document.getElementById("battleModal").classList.remove("open");
@@ -1369,6 +1420,7 @@ function finishGather(meta){
     if(obj.bonusItem && Math.random() < (obj.bonusChance||0)){
       if(addItem(obj.bonusItem, 1)) log(`✨ Bônus! +1 ${ITEMS[obj.bonusItem].name}`, true);
     }
+    if(stats.itemsGathered === 1) showTipOnce("gather", "Recursos têm um número limitado de usos antes de esgotar e entrar em cooldown. Coletar também gasta energia — fique de olho nela no topo da tela.", "🌾");
   }
   renderTab(); // atualiza Inventário/Crafting na hora, mesmo se não for a aba Status
   obj.usesLeft -= 1;
@@ -2354,6 +2406,18 @@ function drawMinimapOn(c, canvasEl, scale, big){
     c.strokeStyle="#fff"; c.lineWidth=2;
     c.beginPath(); c.moveTo(px-7,py); c.lineTo(px+7,py); c.moveTo(px,py-7); c.lineTo(px,py+7); c.stroke();
   }
+  // Indicador de missão ativa — sempre visível (mesmo fora da área revelada),
+  // pra sempre dar pra achar quem está esperando uma entrega.
+  OBJECTS.forEach(o=>{
+    if(o.type !== "npc" || !getActiveQuest(o)) return;
+    const px = o.x/FOG_CELL*scale, py = o.y/FOG_CELL*scale;
+    const r = big ? 5 : 3.5;
+    c.beginPath(); c.arc(px, py, r, 0, Math.PI*2);
+    c.fillStyle = "#ffd464"; c.fill();
+    c.lineWidth = 1; c.strokeStyle = "#000"; c.stroke();
+    c.font = (big?"10px":"8px")+" sans-serif"; c.textAlign = "center";
+    c.fillStyle = "#000"; c.fillText("!", px, py+(big?3.5:2.8));
+  });
   const cam = getCamera();
   c.strokeStyle = "#ffffff88"; c.lineWidth = 1;
   c.strokeRect(cam.x/FOG_CELL*scale, cam.y/FOG_CELL*scale, VIEW_W/FOG_CELL*scale, VIEW_H/FOG_CELL*scale);
@@ -2529,6 +2593,9 @@ function setTab(tab){
   el.classList.add("fading");
   renderTab();
   requestAnimationFrame(()=> el.classList.remove("fading"));
+  if(tab === "craft") showTipOnce("craft", "Cada receita mostra os ingredientes em verde (tem o suficiente), amarelo (falta um pouco) ou vermelho (não tem nada). O item craftado vira ferramenta/equipamento automaticamente se for o primeiro que você faz.", "🛠️");
+  else if(tab === "quests") showTipOnce("quests", "Aqui ficam as missões que você já conheceu conversando com NPCs. Um marcador dourado com '!' aparece no minimapa mostrando onde entregar cada uma.", "📜");
+  else if(tab === "local" && nearBuilding && nearBuilding.type === "shop") showTipOnce("shop", "Vender muito do mesmo item derruba o preço ali por um tempo — vale diversificar ou visitar outro mercador. Cada loja também guarda sua própria reputação, que melhora o preço só naquele lugar.", "🏪");
 }
 
 // ---------- DESLIZAR ENTRE ABAS (swipe esquerda/direita) ----------
@@ -2602,6 +2669,12 @@ function updateQuestBadge(){
 
 function renderStatusTab(){
   let html = "";
+  const nextTask = getNextGuidedTask();
+  if(nextTask){
+    html += `<div class="hint" style="display:block; background:#fff3c4; border:2px solid var(--gold); padding:8px 10px; margin-bottom:10px;">🧭 <b>Próximo passo sugerido:</b><br>${nextTask.text}</div>`;
+  } else {
+    html += `<div class="hint" style="display:block; background:#e3f0e0; border:2px solid #3f8a4a; padding:8px 10px; margin-bottom:10px;">✅ Você já experimentou todos os sistemas principais do jogo — a partir daqui é com você!</div>`;
+  }
   for(const key in SKILL_DEFS){
     const xp = player.skills[key].xp, lvl = levelFromXp(xp), pct = xpIntoLevel(xp);
     html += `<div class="skillRow">
@@ -2937,7 +3010,10 @@ function startGame(){
   setTab("status");
   gameLoop();
   try{
-    if(!localStorage.getItem("trilhasAldeceira_tutorialSeen")) openTutorial();
+    if(!localStorage.getItem("trilhasAldeceira_tutorialSeen")){
+      localStorage.setItem("trilhasAldeceira_tutorialSeen", "1");
+      setTimeout(()=> showContextTip("Toque num recurso no mapa pra coletar, ou em um prédio pra interagir. Dicas rápidas vão aparecer aqui conforme forem úteis — o botão ❓ tem o tutorial completo quando quiser."), 900);
+    }
   } catch(e){}
 }
 tileImg.onload = ()=>{ tileImgReady = true; buildTilePatterns(); assetLoaded(); };
