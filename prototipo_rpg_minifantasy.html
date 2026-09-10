@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-<title>Trilhas de Aldeceira — Protótipo v29</title>
+<title>Trilhas de Aldeceira — Protótipo v30</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
@@ -214,7 +214,7 @@ button.action.small{ padding:4px 8px; font-size:11px; min-height:auto; }
 <div id="app">
   <div id="achievementToast"><div id="achToastIcon">🏆</div><div><div id="achToastTitle">Conquista!</div><div id="achToastDesc"></div></div></div>
   <div id="contextTip"><span id="contextTipIcon">💡</span><span id="contextTipText"></span><button id="contextTipClose">✕</button></div>
-  <h1><span class="titleText">Trilhas de Aldeceira</span> <span class="sub">protótipo v29 — guia de próximo passo, indicador de missão &amp; dicas contextuais</span>
+  <h1><span class="titleText">Trilhas de Aldeceira</span> <span class="sub">protótipo v30 — menu de debug</span>
     <button class="action small" id="soundBtn" title="Som">🔊</button>
     <button class="action small" id="fullscreenBtn"><span class="btnIcon">⛶</span><span class="btnLabel"> Tela cheia</span></button>
   </h1>
@@ -228,6 +228,7 @@ button.action.small{ padding:4px 8px; font-size:11px; min-height:auto; }
     <button class="action small" id="saveMenuBtn" title="Salvar / Carregar">💾</button>
     <button class="action small" id="achievementsBtn" title="Conquistas">🏆</button>
     <button class="action small" id="statsBtn" title="Estatísticas">📊</button>
+    <button class="action small" id="debugBtn" title="Menu de Debug (testes)">🐞</button>
     <button class="action small" id="helpBtn" title="Ajuda / Tutorial">❓</button>
   </div>
 
@@ -325,6 +326,14 @@ button.action.small{ padding:4px 8px; font-size:11px; min-height:auto; }
   <div class="modalBox" style="max-width:400px;">
     <div class="modalHeader"><span>📊 Estatísticas</span><button class="action small" id="closeStatsBtn">Fechar ✕</button></div>
     <div id="statsList"></div>
+  </div>
+</div>
+
+<div id="debugModal" class="modalOverlay">
+  <div class="modalBox" style="max-width:420px;">
+    <div class="modalHeader"><span>🐞 Menu de Debug</span><button class="action small" id="closeDebugBtn">Fechar ✕</button></div>
+    <div class="hint" style="display:block; margin-bottom:10px;">Só pra teste — nada aqui conta pra Estatísticas (📊) nem afeta o que já foi registrado.</div>
+    <div id="debugList"></div>
   </div>
 </div>
 
@@ -605,6 +614,9 @@ function getActiveQuest(npc){
 let craftedEver = {}, shopsVisited = {}, everDefeatedEnemies = {};
 // ---------- ESTATÍSTICAS ----------
 let stats = { playtimeMs:0, goldEarned:0, goldSpent:0, distanceWalked:0, itemsSold:0, itemsCrafted:0, itemsGathered:0 };
+
+// ---------- MENU DE DEBUG (só pra teste — nunca mexe nas estatísticas reais) ----------
+let debugMode = { fogDisabled:false, speedMul:1, energyDisabled:false, cooldownsDisabled:false };
 function mapExploredPct(){
   let total=0, cnt=0;
   for(let gy=0; gy<FOG_ROWS; gy++) for(let gx=0; gx<FOG_COLS; gx++){ total++; if(revealed[gy][gx]) cnt++; }
@@ -1019,7 +1031,7 @@ function winBattle(){
   gainXp("hunting", e.xpReward);
   let msg = `Vitória contra ${e.label}! +${e.goldReward}g +${e.xpReward} XP Caça/Combate`;
   if(e.dropItem){ addItem(e.dropItem.id, e.dropItem.qty); msg += ` +${e.dropItem.qty}x ${ITEMS[e.dropItem.id].name}`; }
-  e.cooldownUntil = performance.now() + e.cooldownMs;
+  e.cooldownUntil = debugMode.cooldownsDisabled ? 0 : performance.now() + e.cooldownMs;
   everDefeatedEnemies[e.id] = true;
   log(msg, true);
   addFloatingText(player.pos.x, player.pos.y-24, `+${e.goldReward}g`, "#ffd464");
@@ -1253,7 +1265,7 @@ function startMoveTo(targetX, targetY, targetObj){
   const { ex, ey, already, distance } = computeMoveTarget(targetX, targetY, targetObj);
   if(already){ onArrive(targetObj); return; }
 
-  const speedMul = getEnergySpeedMultiplier() * getSpeedBonusMultiplier();
+  const speedMul = getEnergySpeedMultiplier() * getSpeedBonusMultiplier() * debugMode.speedMul;
   const duration = Math.max(150, (distance/(SPEED_PX_PER_SEC*speedMul))*1000);
   stats.distanceWalked += distance;
   const dx = ex - player.pos.x, dy = ey - player.pos.y;
@@ -1314,7 +1326,7 @@ function showTravelPanel(obj){
   if(already){
     costLine = "Você já está bem perto — nenhum deslocamento necessário.";
   } else {
-    const duration = Math.max(150, (distance/(SPEED_PX_PER_SEC*getEnergySpeedMultiplier()*getSpeedBonusMultiplier()))*1000);
+    const duration = Math.max(150, (distance/(SPEED_PX_PER_SEC*getEnergySpeedMultiplier()*getSpeedBonusMultiplier()*debugMode.speedMul))*1000);
     const energyCost = (distance/TILE_PX)*WALK_ENERGY_PER_SQM*(player.tools.cloak>=2?0.8:1);
     costLine = `Custo da viagem: ~${energyCost.toFixed(0)}⚡ · ${(duration/1000).toFixed(1)}s`;
   }
@@ -1393,7 +1405,9 @@ function startGatherTask(obj, remainingRepeats){
   // lenta (proporcional ao quanto falta) — assim dá pra chegar num
   // suprimento mesmo exausto, só que demorando bem mais.
   let tired = false;
-  if(player.energy < obj.energyCost){
+  if(debugMode.energyDisabled){
+    // debug: gasto de energia desligado
+  } else if(player.energy < obj.energyCost){
     const deficitRatio = obj.energyCost>0 ? (obj.energyCost-player.energy)/obj.energyCost : 0;
     time *= (1 + deficitRatio*1.8);
     player.energy = 0;
@@ -1427,9 +1441,13 @@ function finishGather(meta){
   const stillHere = dist(player.pos, {x:obj.x,y:obj.y}) <= obj.hitRadius + 6;
 
   if(obj.usesLeft <= 0){
-    obj.cooldownUntil = performance.now() + obj.cooldownMs;
-    log(`${obj.label} ficou esgotado(a) e entrou em descanso.`, true);
-    return;
+    if(debugMode.cooldownsDisabled){
+      obj.usesLeft = obj.maxUses; // debug: recarrega na hora, sem cooldown
+    } else {
+      obj.cooldownUntil = performance.now() + obj.cooldownMs;
+      log(`${obj.label} ficou esgotado(a) e entrou em descanso.`, true);
+      return;
+    }
   }
   const left = (meta.remainingRepeats || 1) - 1;
   if(left > 0 && stillHere && player.energy >= obj.energyCost){
@@ -1966,6 +1984,71 @@ document.getElementById("closeStatsBtn").addEventListener("click", ()=> statsMod
 statsModal.addEventListener("click", (ev)=>{ if(ev.target===statsModal) statsModal.classList.remove("open"); });
 
 // =====================================================================
+// MENU DE DEBUG — ferramentas de teste; nunca toca em `stats` (as
+// estatísticas reais) nem chama trySell/tryBuyItem/etc., só mexe direto
+// no estado do jogo.
+// =====================================================================
+const debugModal = document.getElementById("debugModal");
+function debugAddGold(amount){
+  player.gold = Math.max(0, player.gold + amount);
+  renderTab(); renderDebugModal();
+}
+function setDebugSpeed(mul){ debugMode.speedMul = mul; renderDebugModal(); }
+function toggleDebugFlag(key){ debugMode[key] = !debugMode[key]; renderDebugModal(); }
+function renderDebugModal(){
+  const el = document.getElementById("debugList");
+  el.innerHTML = `
+    <div class="recipeCard">
+      <h4>🌫️ Fog of War</h4>
+      <div class="row" style="gap:6px;">
+        <button class="action small" data-dbg="fogDisabled">${debugMode.fogDisabled ? "Ligar fog (padrão)" : "Desligar fog (revelar tudo)"}</button>
+      </div>
+    </div>
+    <div class="recipeCard">
+      <h4>🪙 Ouro — ${player.gold}g</h4>
+      <div class="row" style="gap:6px; flex-wrap:wrap;">
+        <button class="action small" data-dbggold="100">+100</button>
+        <button class="action small" data-dbggold="1000">+1000</button>
+        <button class="action small" data-dbggold="-100">−100</button>
+        <button class="action small" data-dbggold="-1000">−1000</button>
+      </div>
+    </div>
+    <div class="recipeCard">
+      <h4>🏃 Velocidade de movimento — ${debugMode.speedMul}x</h4>
+      <div class="row" style="gap:6px;">
+        <button class="action small" data-dbgspeed="1">1x (normal)</button>
+        <button class="action small" data-dbgspeed="3">3x</button>
+        <button class="action small" data-dbgspeed="8">8x</button>
+      </div>
+    </div>
+    <div class="recipeCard">
+      <h4>⚡ Gasto de Energia</h4>
+      <div class="row" style="gap:6px;">
+        <button class="action small" data-dbg="energyDisabled">${debugMode.energyDisabled ? "Ligar gasto de energia (padrão)" : "Desligar gasto de energia"}</button>
+      </div>
+    </div>
+    <div class="recipeCard">
+      <h4>⏳ Cooldowns de recursos/inimigos</h4>
+      <div class="row" style="gap:6px;">
+        <button class="action small" data-dbg="cooldownsDisabled">${debugMode.cooldownsDisabled ? "Ligar cooldowns (padrão)" : "Desligar cooldowns (recarrega na hora)"}</button>
+      </div>
+    </div>
+  `;
+}
+document.getElementById("debugBtn").addEventListener("click", ()=>{
+  renderDebugModal();
+  debugModal.classList.add("open");
+});
+document.getElementById("closeDebugBtn").addEventListener("click", ()=> debugModal.classList.remove("open"));
+debugModal.addEventListener("click", (ev)=>{ if(ev.target===debugModal) debugModal.classList.remove("open"); });
+document.getElementById("debugList").addEventListener("click", (ev)=>{
+  const t = ev.target;
+  if(t.dataset.dbg) toggleDebugFlag(t.dataset.dbg);
+  else if(t.dataset.dbggold) debugAddGold(parseInt(t.dataset.dbggold));
+  else if(t.dataset.dbgspeed) setDebugSpeed(parseInt(t.dataset.dbgspeed));
+});
+
+// =====================================================================
 // TELA CHEIA
 // =====================================================================
 document.getElementById("soundBtn").addEventListener("click", toggleSound);
@@ -2329,6 +2412,7 @@ function revealAround(x,y,radiusCells){
   }
 }
 function drawFogOverlay(){
+  if(debugMode.fogDisabled) return;
   const cam = getCamera();
   const startGX = Math.max(0, Math.floor(cam.x/FOG_CELL));
   const endGX = Math.min(FOG_COLS-1, Math.ceil((cam.x+VIEW_W)/FOG_CELL));
@@ -2383,14 +2467,14 @@ function drawMinimapOn(c, canvasEl, scale, big){
   c.fillStyle = "#000"; c.fillRect(0,0,canvasEl.width,canvasEl.height);
   for(let gy=0; gy<FOG_ROWS; gy++){
     for(let gx=0; gx<FOG_COLS; gx++){
-      if(!revealed[gy][gx]) continue;
+      if(!revealed[gy][gx] && !debugMode.fogDisabled) continue;
       c.fillStyle = regionColorAt(gx*FOG_CELL);
       c.fillRect(gx*scale, gy*scale, scale, scale);
     }
   }
   OBJECTS.forEach(o=>{
     const gx = Math.floor(o.x/FOG_CELL), gy = Math.floor(o.y/FOG_CELL);
-    if(gx<0||gy<0||gx>=FOG_COLS||gy>=FOG_ROWS || !revealed[gy][gx]) return;
+    if(gx<0||gy<0||gx>=FOG_COLS||gy>=FOG_ROWS || (!revealed[gy][gx] && !debugMode.fogDisabled)) return;
     const r = big ? 3.2 : 2;
     const px = o.x/FOG_CELL*scale, py = o.y/FOG_CELL*scale;
     c.beginPath(); c.arc(px, py, r, 0, Math.PI*2);
@@ -2531,7 +2615,7 @@ bigMinimap.addEventListener("click", (ev)=>{
   let best=null, bestD=Infinity;
   OBJECTS.forEach(o=>{
     const gx=Math.floor(o.x/FOG_CELL), gy=Math.floor(o.y/FOG_CELL);
-    if(gx<0||gy<0||gx>=FOG_COLS||gy>=FOG_ROWS||!revealed[gy][gx]) return;
+    if(gx<0||gy<0||gx>=FOG_COLS||gy>=FOG_ROWS||(!revealed[gy][gx] && !debugMode.fogDisabled)) return;
     const ox=o.x/FOG_CELL*BIG_MM_SCALE, oy=o.y/FOG_CELL*BIG_MM_SCALE;
     const d=Math.hypot(mx-ox,my-oy);
     if(d<16 && d<bestD){ best=o; bestD=d; }
@@ -2938,8 +3022,10 @@ function updateMove(){
   player.pos.y = move.sy + (move.ey-move.sy)*t;
 
   const stepDist = dist(before, player.pos);
-  const cloakMul = player.tools.cloak >= 2 ? 0.8 : 1;
-  player.energy = Math.max(0, player.energy - (stepDist/TILE_PX)*WALK_ENERGY_PER_SQM*cloakMul);
+  if(!debugMode.energyDisabled){
+    const cloakMul = player.tools.cloak >= 2 ? 0.8 : 1;
+    player.energy = Math.max(0, player.energy - (stepDist/TILE_PX)*WALK_ENERGY_PER_SQM*cloakMul);
+  }
 
   if(t >= 1){
     const arrivedObj = move.targetObj;
