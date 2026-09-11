@@ -61,6 +61,12 @@
   }
   .album-tab-btn.active{ background:var(--yellow); border-color:var(--yellow); color:#241c3d; }
 
+  .tag-pill{
+    font-family:'Baloo 2', sans-serif; font-weight:800; font-size:12px; color:var(--ink-soft);
+    background:var(--bg-card); border:2px solid var(--border); border-radius:999px; padding:8px 14px; cursor:pointer;
+  }
+  .tag-pill.active{ background:var(--cyan); border-color:var(--cyan); color:#241c3d; }
+
   /* --- capa do álbum --- */
   .album-header{ text-align:center; margin-bottom:18px; }
   .album-header h2{ font-size:14px; color:var(--yellow); margin:0 0 4px; }
@@ -143,6 +149,7 @@
 
   <div id="album-conteudo" style="display:none;">
     <div class="album-tabs" id="album-tabs"></div>
+    <div class="album-tabs" id="tag-filter-bar"></div>
 
     <div class="panel">
       <div class="album-header">
@@ -192,6 +199,8 @@ const IDENTITY_KEY = 'overcast_course_identity'; // mesma chave do course-gate/l
 let meuAluno = null;   // {codigo, nome}
 let turmaAlunos = [];  // todos os alunos da turma vinculada
 let donoAtualId = null;
+let todasFigurinhasTurma = []; // cache com as figurinhas de TODOS os alunos da turma
+let tagAtiva = null;
 
 function urlPublica(path){ return sb.storage.from('submissoes').getPublicUrl(path).data.publicUrl; }
 
@@ -223,11 +232,20 @@ async function carregarAlbum(turmaCodigo){
   const { data: alunos } = await sb.from('alunos').select('*').eq('turma_id', turma.id).order('nome');
   turmaAlunos = alunos || [];
 
+  const idsAlunos = turmaAlunos.map(a => a.id);
+  if(idsAlunos.length){
+    const { data: figurinhas } = await sb.from('figurinhas').select('*').in('aluno_id', idsAlunos).order('criado_em');
+    todasFigurinhasTurma = figurinhas || [];
+  } else {
+    todasFigurinhasTurma = [];
+  }
+
   const euMesmo = turmaAlunos.find(a => a.codigo === meuAluno.codigo);
   donoAtualId = euMesmo ? euMesmo.id : (turmaAlunos[0] && turmaAlunos[0].id);
 
   montarTabs();
-  await mostrarAlbumDe(donoAtualId);
+  montarTagFilterBar();
+  mostrarAlbumDe(donoAtualId);
 }
 
 function montarTabs(){
@@ -239,15 +257,32 @@ function montarTabs(){
   `).join('');
 }
 
-async function mostrarAlbumDe(alunoId){
+function montarTagFilterBar(){
+  const todasTags = new Set();
+  todasFigurinhasTurma.forEach(fig => (fig.tags||[]).forEach(tag => todasTags.add(tag)));
+  const bar = document.getElementById('tag-filter-bar');
+  if(!todasTags.size){ bar.innerHTML = ''; return; }
+  const tagsOrdenadas = [...todasTags].sort();
+  bar.innerHTML = `<button class="tag-pill ${tagAtiva===null?'active':''}" onclick="filtrarTag(null)">🗂️ Todas as tags</button>`
+    + tagsOrdenadas.map(tag => `<button class="tag-pill ${tagAtiva===tag?'active':''}" onclick="filtrarTag('${tag}')">#${tag}</button>`).join('');
+}
+
+function filtrarTag(tag){
+  tagAtiva = tag;
+  montarTagFilterBar();
+  mostrarAlbumDe(donoAtualId);
+}
+
+function mostrarAlbumDe(alunoId){
   donoAtualId = alunoId;
   montarTabs();
 
   const aluno = turmaAlunos.find(a => a.id === alunoId);
-  const { data: figurinhas } = await sb.from('figurinhas').select('*').eq('aluno_id', alunoId).order('criado_em');
+  let figurinhas = todasFigurinhasTurma.filter(f => f.aluno_id === alunoId);
+  if(tagAtiva) figurinhas = figurinhas.filter(f => (f.tags||[]).includes(tagAtiva));
 
   document.getElementById('album-dono-nome').textContent = aluno ? `📖 Álbum de ${aluno.nome}` : '📖 Álbum';
-  const qtd = (figurinhas || []).length;
+  const qtd = figurinhas.length;
   document.getElementById('album-contagem').textContent = qtd === 0 ? 'Nenhuma figurinha ainda' : `${qtd} figurinha${qtd>1?'s':''} coletada${qtd>1?'s':''}`;
 
   const meta = 12; // barra de progresso visual, meta "de referência" pra encher a página
@@ -256,11 +291,12 @@ async function mostrarAlbumDe(alunoId){
 
   const grid = document.getElementById('sticker-grid');
   if(!qtd){
-    grid.innerHTML = `<p class="empty-album-msg">📭 Ainda não tem nenhuma figurinha aqui.<br>Continue fazendo arte digital!</p>`;
+    grid.innerHTML = `<p class="empty-album-msg">📭 ${tagAtiva ? 'Nenhuma figurinha com essa tag.' : 'Ainda não tem nenhuma figurinha aqui.<br>Continue fazendo arte digital!'}</p>`;
     return;
   }
 
-  const totalSlots = Math.max(meta, qtd);
+  // com filtro de tag ativo, mostra só o que existe (sem preencher slots vazios)
+  const totalSlots = tagAtiva ? qtd : Math.max(meta, qtd);
   let html = '';
   for(let i=0; i<totalSlots; i++){
     const fig = figurinhas[i];
