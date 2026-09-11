@@ -410,6 +410,7 @@
         <a href="./aula_arte_digital_2.html" class="nav-tab">🔦 Arte Digital 2</a>
         <a href="./aula_arte_digital_3.html" class="nav-tab">🖤 Arte Digital 3</a>
         <a href="./tutoriais-pixel-art.html" class="nav-tab">🖼️ Tutoriais Pixel Art</a>
+        <a href="./album-figurinhas.html" class="nav-tab">🏷️ Álbum de Figurinhas</a>
       </div>
     </div>
     <div class="sidebar-group collapsed" id="grp-ferramentas" style="padding-bottom:14px;">
@@ -559,6 +560,12 @@
         <h3 class="font-pixel text-[11px] text-white mb-2" data-i18n="tituloTutPixel">Tutoriais de Pixel Art</h3>
         <p class="text-xs text-gray-400 leading-relaxed mb-3 flex-1" data-i18n="descTutPixel">Galeria de imagens de referência, organizadas por tag (parado, andando, ciclo, etc).</p>
         <span class="btn-primary text-center" data-i18n="btnAbrirGaleria">Ver galeria</span>
+      </a>
+      <a href="./album-figurinhas.html" class="card p-5 flex flex-col hover:no-underline">
+        <span class="text-3xl mb-2">🏷️</span>
+        <h3 class="font-pixel text-[11px] text-white mb-2" data-i18n="tituloAlbum">Álbum de Figurinhas</h3>
+        <p class="text-xs text-gray-400 leading-relaxed mb-3 flex-1" data-i18n="descAlbum">Suas artes de Arte Digital viram figurinhas colecionáveis — veja seu álbum e o dos colegas.</p>
+        <span class="btn-primary text-center" data-i18n="btnVerAlbum">Ver álbum</span>
       </a>
       <div class="card p-5 flex flex-col">
         <p class="font-pixel text-[9px] text-indigo-400 mb-2">04</p>
@@ -749,6 +756,7 @@ const UI_STRINGS = {
     tituloAula3:'Aula 3: Contorno e Silhueta',
     descAula3:'O que torna um personagem fácil de reconhecer, mesmo virando uma sombra sólida sem cor nenhuma.',
     tituloTutPixel:'Tutoriais de Pixel Art', descTutPixel:'Galeria de imagens de referência, organizadas por tag (parado, andando, ciclo, etc).', btnAbrirGaleria:'Ver galeria',
+    tituloAlbum:'Álbum de Figurinhas', descAlbum:'Suas artes de Arte Digital viram figurinhas colecionáveis — veja seu álbum e o dos colegas.', btnVerAlbum:'Ver álbum',
     tagFerramentaGame:'// FERRAMENTA · GAME_DESIGN', tituloTileset:'Editor de Tileset',
     descTileset:'Desenhe peças pequenas (grama, parede, moeda...) e depois carimbe elas num mapa maior — o mesmo jeito que fases de jogo são montadas de verdade.',
     btnJogarAgora:'Jogar agora', btnAbrirEditor:'Abrir editor', btnAbrirAula:'Abrir aula',
@@ -815,6 +823,7 @@ const UI_STRINGS = {
     tituloAula3:'Lesson 3: Outline and Silhouette',
     descAula3:'What makes a character easy to recognize, even when turned into a solid shadow with no color at all.',
     tituloTutPixel:'Pixel Art Tutorials', descTutPixel:'Gallery of reference images, organized by tag (idle, walking, cycle, etc).', btnAbrirGaleria:'View gallery',
+    tituloAlbum:'Sticker Album', descAlbum:'Your Digital Art pieces become collectible stickers — see your album and your classmates\'.', btnVerAlbum:'View album',
     tagFerramentaGame:'// TOOL · GAME_DESIGN', tituloTileset:'Tileset Editor',
     descTileset:'Draw small pieces (grass, wall, coin...) and then stamp them onto a bigger map — the same way game levels are actually built.',
     btnJogarAgora:'Play now', btnAbrirEditor:'Open editor', btnAbrirAula:'Open lesson',
@@ -1411,12 +1420,30 @@ async function uploadProjetoFinal() {
   carregarTurmaAtiva();
 }
 
+async function checarTurmaViaLink() {
+  const params = new URLSearchParams(window.location.search);
+  const codigo = params.get('turma');
+  if (!codigo || !sb) return false;
+  const codigoLimpo = codigo.trim().toLowerCase();
+  const { data: turma } = await sb.from('turmas').select('*').eq('codigo_acesso', codigoLimpo).maybeSingle();
+  if (turma) {
+    salvarTurmaPersistida(codigoLimpo);
+    abrirTurma(turma);
+    switchTabByName('turma');
+    // limpa o parâmetro da URL depois de usar, pra não ficar reaparecendo/reenviável
+    window.history.replaceState({}, '', window.location.pathname);
+    return true;
+  }
+  return false;
+}
+
 async function init() {
   await loadData();
   renderTutoriais('Todos');
   renderLinks('');
   checkPersistedLogin();
-  checarAcessoTurmaPersistido();
+  const entrouViaLink = await checarTurmaViaLink();
+  if (!entrouViaLink) checarAcessoTurmaPersistido();
   applyLang();
 }
 
