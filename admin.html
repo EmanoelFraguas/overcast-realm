@@ -799,13 +799,17 @@ async function carregarTurmas() {
   const { data: arquivos, error: errAr } = await sb.from('arquivos').select('*').order('criado_em', { ascending: false });
   if (errAr) { setTurmasStatus('● ERRO: ' + errAr.message, '#ef4444'); return; }
 
+  const { data: figurinhas, error: errFig } = await sb.from('figurinhas').select('*').order('criado_em', { ascending: false });
+  if (errFig) { setTurmasStatus('● ERRO: ' + errFig.message, '#ef4444'); return; }
+
   atualizarUsoStorage(arquivos);
 
   turmasCache = turmas.map(t => ({
     ...t,
     alunos: alunos.filter(a => a.turma_id === t.id).map(a => ({
       ...a,
-      arquivos: arquivos.filter(f => f.aluno_id === a.id)
+      arquivos: arquivos.filter(f => f.aluno_id === a.id),
+      figurinhas: (figurinhas || []).filter(fig => fig.aluno_id === a.id)
     }))
   }));
 
@@ -892,6 +896,7 @@ function renderTurmaAtiva() {
           </label>
         </div>
         <div class="flex items-center gap-2">
+          <button class="btn-action" style="background:#2563eb;" onclick="copiarLinkAcesso('${turma.codigo_acesso}')">🔗 COPIAR_LINK</button>
           <button class="btn-action btn-edit" onclick="trocarCodigoTurma('${turma.id}', '${turma.codigo_acesso}')">TROCAR_CÓDIGO</button>
           <button class="btn-action btn-del" onclick="removerTurma('${turma.id}', '${turma.nome.replace(/'/g, "\\'")}')">DEL_TURMA</button>
         </div>
@@ -928,6 +933,24 @@ function renderTurmaAtiva() {
               <input type="file" id="upload-input-${aluno.id}" accept=".c3p,.txt,.png,.gif,.mp3,.ogg,.wav,.mblock" class="text-[9px] text-gray-500 flex-1 min-w-0" />
               <button class="btn-action btn-add text-[8px] py-0.5 px-1.5 shrink-0" onclick="uploadArquivoAdmin('${aluno.id}', '${aluno.codigo}')">UPLOAD_MANUAL</button>
             </div>
+            <div class="mt-2 pl-1 pt-2 border-t border-dashed border-[#d8d5e6]">
+              <p class="text-[9px] text-purple-500 font-bold mb-1">🏷️ ÁLBUM DE FIGURINHAS ${aluno.figurinhas.length ? `(${aluno.figurinhas.length})` : ''}</p>
+              ${aluno.figurinhas.length > 0 ? `
+                <div class="flex flex-wrap gap-2 mb-2">
+                  ${aluno.figurinhas.map(fig => `
+                    <div class="relative group" style="width:44px;">
+                      <img src="${urlPublicoArquivo(fig.storage_path)}" title="${fig.titulo}" style="width:44px;height:44px;image-rendering:pixelated;border:2px solid #d8d5e6;border-radius:6px;" />
+                      <button class="btn-action btn-del" style="position:absolute;top:-6px;right:-6px;padding:1px 4px;font-size:8px;" onclick="removerFigurinha('${fig.id}')">✕</button>
+                    </div>
+                  `).join('')}
+                </div>
+              ` : ''}
+              <div class="flex items-center gap-2">
+                <input type="text" id="fig-titulo-${aluno.id}" placeholder="título" class="input-field" style="width:90px;font-size:9px;padding:3px 6px;" />
+                <input type="file" id="fig-input-${aluno.id}" accept=".png,.jpg,.jpeg,.gif,.webp" class="text-[9px] text-gray-500 flex-1 min-w-0" />
+                <button class="btn-action btn-add text-[8px] py-0.5 px-1.5 shrink-0" onclick="uploadFigurinha('${aluno.id}')">ADICIONAR</button>
+              </div>
+            </div>
           </div>
         `).join('') || `<p class="p-3 text-[10px] text-gray-600 font-mono">nenhum aluno nesta turma ainda</p>`}
       </div>
@@ -938,6 +961,17 @@ function renderTurmaAtiva() {
 function urlPublicoArquivo(path) {
   if (!sb) return '#';
   return sb.storage.from('submissoes').getPublicUrl(path).data.publicUrl;
+}
+
+function copiarLinkAcesso(codigo) {
+  const url = `https://overcast-realm.netlify.app/?turma=${codigo}`;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url)
+      .then(() => alert('🔗 Link copiado!\n\n' + url + '\n\nCola no quadro, no chat da aula ou onde os alunos vão ver.'))
+      .catch(() => prompt('Copie o link abaixo:', url));
+  } else {
+    prompt('Copie o link abaixo:', url);
+  }
 }
 
 async function criarTurma() {
@@ -1040,6 +1074,37 @@ async function uploadArquivoAdmin(alunoId, alunoCodigo) {
   });
   if (rpcErr) { alert('Erro ao registrar: ' + rpcErr.message); return; }
 
+  carregarTurmas();
+}
+
+async function uploadFigurinha(alunoId) {
+  const tituloInput = document.getElementById(`fig-titulo-${alunoId}`);
+  const fileInput = document.getElementById(`fig-input-${alunoId}`);
+  const titulo = tituloInput.value.trim() || 'Sem título';
+  const file = fileInput.files[0];
+  if (!file) { alert('Escolha a imagem da figurinha (32x32) primeiro.'); return; }
+
+  const extensao = file.name.slice(file.name.lastIndexOf('.'));
+  const nomeArquivo = Date.now() + extensao;
+  const path = `figurinhas/${alunoId}/${nomeArquivo}`;
+
+  const { error: upErr } = await sb.storage.from('submissoes').upload(path, file, { upsert: true });
+  if (upErr) { alert('Erro no upload: ' + upErr.message); return; }
+
+  const { data, error: rpcErr } = await sb.rpc('admin_adicionar_figurinha', {
+    chave_admin: sbAdminKey, p_aluno_id: alunoId, p_titulo: titulo, p_storage_path: path
+  });
+  if (rpcErr || !data || !data.ok) { alert('Erro ao salvar: ' + (rpcErr ? rpcErr.message : data.erro)); return; }
+
+  tituloInput.value = '';
+  fileInput.value = '';
+  carregarTurmas();
+}
+
+async function removerFigurinha(id) {
+  if (!confirm('Remover essa figurinha do álbum do aluno?')) return;
+  const { data, error } = await sb.rpc('admin_remover_figurinha', { chave_admin: sbAdminKey, p_id: id });
+  if (error || !data || !data.ok) { alert('Erro ao remover: ' + (error ? error.message : data.erro)); return; }
   carregarTurmas();
 }
 
