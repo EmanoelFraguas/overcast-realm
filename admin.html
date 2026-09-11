@@ -511,6 +511,11 @@
             <label class="text-[10px] font-mono text-gray-500 block mb-1">TÍTULO DA FIGURINHA</label>
             <input type="text" id="fig-tab-titulo" placeholder="ex: Robô Explorador" class="input-field w-full" />
           </div>
+          <div class="flex-1 min-w-[160px]">
+            <label class="text-[10px] font-mono text-gray-500 block mb-1">TAGS (separadas por vírgula)</label>
+            <input type="text" id="fig-tab-tags" placeholder="ex: robô, ficção" class="input-field w-full" list="fig-tags-existentes" />
+            <datalist id="fig-tags-existentes"></datalist>
+          </div>
           <div class="flex-1 min-w-[200px]">
             <label class="text-[10px] font-mono text-gray-500 block mb-1">IMAGEM (32x32)</label>
             <input type="file" id="fig-tab-input" accept=".png,.jpg,.jpeg,.gif,.webp" class="text-xs text-gray-600 w-full" />
@@ -1115,6 +1120,14 @@ function popularSeletorTurmasFigurinhas() {
   sel.innerHTML = '<option value="">Selecione uma turma...</option>' +
     turmasCache.map(t => `<option value="${t.id}">${t.nome}</option>`).join('');
   if (atual) { sel.value = atual; onMudarTurmaFigurinhas(); }
+  atualizarTagsDatalist();
+}
+
+function atualizarTagsDatalist() {
+  const todasTags = new Set();
+  turmasCache.forEach(t => t.alunos.forEach(a => (a.figurinhas || []).forEach(fig => (fig.tags || []).forEach(tag => todasTags.add(tag)))));
+  document.getElementById('fig-tags-existentes').innerHTML =
+    [...todasTags].sort().map(tag => `<option value="${tag}">`).join('');
 }
 
 function onMudarTurmaFigurinhas() {
@@ -1161,6 +1174,7 @@ function renderFigurinhasTab() {
         <div class="relative border border-[#d8d5e6] rounded-lg p-2 text-center">
           <img src="${urlPublicoArquivo(fig.storage_path)}" style="width:64px;height:64px;image-rendering:pixelated;margin:0 auto 6px;border-radius:6px;background:#f4f2fa;" />
           <p class="text-[10px] text-gray-700 font-bold truncate">${fig.titulo}</p>
+          <p class="text-[9px] text-purple-500 truncate">${(fig.tags || []).map(t => '#' + t).join(' ')}</p>
           <button class="btn-action btn-del mt-1" style="font-size:8px;padding:2px 8px;" onclick="removerFigurinhaTab('${fig.id}')">EXCLUIR</button>
         </div>
       `).join('')
@@ -1170,9 +1184,11 @@ function renderFigurinhasTab() {
 async function uploadFigurinhaTab() {
   if (!figurinhasAlunoAtualId) return;
   const tituloInput = document.getElementById('fig-tab-titulo');
+  const tagsInput = document.getElementById('fig-tab-tags');
   const fileInput = document.getElementById('fig-tab-input');
   const statusEl = document.getElementById('fig-tab-status');
   const titulo = tituloInput.value.trim() || 'Sem título';
+  const tags = tagsInput.value.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
   const file = fileInput.files[0];
   if (!file) { statusEl.textContent = '👉 Escolha a imagem da figurinha primeiro.'; statusEl.className = 'block text-[10px] font-mono mb-4 text-red-600'; return; }
 
@@ -1186,15 +1202,17 @@ async function uploadFigurinhaTab() {
   if (upErr) { statusEl.textContent = '❌ Erro no upload: ' + upErr.message; statusEl.className = 'block text-[10px] font-mono mb-4 text-red-600'; return; }
 
   const { data, error: rpcErr } = await sb.rpc('admin_adicionar_figurinha', {
-    chave_admin: sbAdminKey, p_aluno_id: figurinhasAlunoAtualId, p_titulo: titulo, p_storage_path: path
+    chave_admin: sbAdminKey, p_aluno_id: figurinhasAlunoAtualId, p_titulo: titulo, p_storage_path: path, p_tags: tags
   });
   if (rpcErr || !data || !data.ok) { statusEl.textContent = '❌ Erro ao salvar: ' + (rpcErr ? rpcErr.message : data.erro); statusEl.className = 'block text-[10px] font-mono mb-4 text-red-600'; return; }
 
   statusEl.textContent = '✅ Figurinha adicionada!'; statusEl.className = 'block text-[10px] font-mono mb-4 text-green-600 font-bold';
   tituloInput.value = '';
+  tagsInput.value = '';
   fileInput.value = '';
   await carregarTurmas();
   renderFigurinhasTab();
+  atualizarTagsDatalist();
 }
 
 async function removerFigurinhaTab(id) {
