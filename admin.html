@@ -299,6 +299,7 @@
     </div>
     <button class="sidebar-nav-item active" id="nav-turmas" onclick="switchPanel('turmas')">🏫 TURMAS</button>
     <button class="sidebar-nav-item" id="nav-conteudo" onclick="switchPanel('conteudo')">🎮 CONTEÚDO</button>
+    <button class="sidebar-nav-item" id="nav-figurinhas" onclick="switchPanel('figurinhas')">🏷️ FIGURINHAS</button>
     <button class="sidebar-nav-item" id="nav-progresso" onclick="switchPanel('progresso')">📊 PROGRESSO</button>
     <div class="sidebar-bottom pb-5 space-y-2">
       <button class="btn-action bg-gray-800 text-white w-full" onclick="exportData()">EXPORTAR_JSON</button>
@@ -479,6 +480,46 @@
             <div id="tutoriais-lista" class="space-y-2 font-mono text-xs max-h-96 overflow-y-auto"></div>
           </div>
         </div>
+      </div>
+    </section>
+
+    <!-- ================= PAINEL: FIGURINHAS ================= -->
+    <section id="panel-figurinhas" class="hidden">
+      <header class="mb-6">
+        <h1 class="font-pixel text-sm text-gray-900">[🏷️ ÁLBUM_DE_FIGURINHAS]</h1>
+        <p class="text-xs font-mono mt-2 text-gray-500">Escolha a turma e o aluno, e adicione as figurinhas (arte 32x32) do álbum dele.</p>
+      </header>
+
+      <div class="card p-5 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="text-[10px] font-mono text-gray-500 block mb-1">TURMA</label>
+            <select id="fig-turma-select" class="select-field w-full" onchange="onMudarTurmaFigurinhas()"></select>
+          </div>
+          <div>
+            <label class="text-[10px] font-mono text-gray-500 block mb-1">ALUNO</label>
+            <select id="fig-aluno-select" class="select-field w-full" onchange="onMudarAlunoFigurinhas()"></select>
+          </div>
+        </div>
+      </div>
+
+      <div id="fig-painel-aluno" class="card p-5" style="display:none;">
+        <h2 class="font-pixel text-[11px] text-gray-900 mb-4" id="fig-aluno-titulo">—</h2>
+
+        <div class="flex flex-wrap items-end gap-3 mb-5 p-3 bg-[#f4f2fa] rounded-lg border border-[#d8d5e6]">
+          <div class="flex-1 min-w-[160px]">
+            <label class="text-[10px] font-mono text-gray-500 block mb-1">TÍTULO DA FIGURINHA</label>
+            <input type="text" id="fig-tab-titulo" placeholder="ex: Robô Explorador" class="input-field w-full" />
+          </div>
+          <div class="flex-1 min-w-[200px]">
+            <label class="text-[10px] font-mono text-gray-500 block mb-1">IMAGEM (32x32)</label>
+            <input type="file" id="fig-tab-input" accept=".png,.jpg,.jpeg,.gif,.webp" class="text-xs text-gray-600 w-full" />
+          </div>
+          <button class="btn-action btn-add" onclick="uploadFigurinhaTab()">➕ ADICIONAR</button>
+        </div>
+        <span id="fig-tab-status" class="block text-[10px] font-mono mb-4"></span>
+
+        <div id="fig-tab-grid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3"></div>
       </div>
     </section>
 
@@ -933,23 +974,9 @@ function renderTurmaAtiva() {
               <input type="file" id="upload-input-${aluno.id}" accept=".c3p,.txt,.png,.gif,.mp3,.ogg,.wav,.mblock" class="text-[9px] text-gray-500 flex-1 min-w-0" />
               <button class="btn-action btn-add text-[8px] py-0.5 px-1.5 shrink-0" onclick="uploadArquivoAdmin('${aluno.id}', '${aluno.codigo}')">UPLOAD_MANUAL</button>
             </div>
-            <div class="mt-2 pl-1 pt-2 border-t border-dashed border-[#d8d5e6]">
-              <p class="text-[9px] text-purple-500 font-bold mb-1">🏷️ ÁLBUM DE FIGURINHAS ${aluno.figurinhas.length ? `(${aluno.figurinhas.length})` : ''}</p>
-              ${aluno.figurinhas.length > 0 ? `
-                <div class="flex flex-wrap gap-2 mb-2">
-                  ${aluno.figurinhas.map(fig => `
-                    <div class="relative group" style="width:44px;">
-                      <img src="${urlPublicoArquivo(fig.storage_path)}" title="${fig.titulo}" style="width:44px;height:44px;image-rendering:pixelated;border:2px solid #d8d5e6;border-radius:6px;" />
-                      <button class="btn-action btn-del" style="position:absolute;top:-6px;right:-6px;padding:1px 4px;font-size:8px;" onclick="removerFigurinha('${fig.id}')">✕</button>
-                    </div>
-                  `).join('')}
-                </div>
-              ` : ''}
-              <div class="flex items-center gap-2">
-                <input type="text" id="fig-titulo-${aluno.id}" placeholder="título" class="input-field" style="width:90px;font-size:9px;padding:3px 6px;" />
-                <input type="file" id="fig-input-${aluno.id}" accept=".png,.jpg,.jpeg,.gif,.webp" class="text-[9px] text-gray-500 flex-1 min-w-0" />
-                <button class="btn-action btn-add text-[8px] py-0.5 px-1.5 shrink-0" onclick="uploadFigurinha('${aluno.id}')">ADICIONAR</button>
-              </div>
+            <div class="mt-2 pl-1 pt-2 border-t border-dashed border-[#d8d5e6] flex items-center justify-between">
+              <p class="text-[9px] text-purple-500 font-bold">🏷️ ${aluno.figurinhas.length} figurinha${aluno.figurinhas.length !== 1 ? 's' : ''}</p>
+              <button class="btn-action" style="background:#7c3aed;padding:2px 8px;font-size:8px;" onclick="irParaFigurinhasDoAluno('${turma.id}', '${aluno.id}')">🏷️ GERENCIAR_FIGURINHAS</button>
             </div>
           </div>
         `).join('') || `<p class="p-3 text-[10px] text-gray-600 font-mono">nenhum aluno nesta turma ainda</p>`}
@@ -1077,36 +1104,107 @@ async function uploadArquivoAdmin(alunoId, alunoCodigo) {
   carregarTurmas();
 }
 
-async function uploadFigurinha(alunoId) {
-  const tituloInput = document.getElementById(`fig-titulo-${alunoId}`);
-  const fileInput = document.getElementById(`fig-input-${alunoId}`);
+/* ======================================================
+   PAINEL FIGURINHAS — aba dedicada, mais fácil de usar
+====================================================== */
+let figurinhasAlunoAtualId = null;
+
+function popularSeletorTurmasFigurinhas() {
+  const sel = document.getElementById('fig-turma-select');
+  const atual = sel.value;
+  sel.innerHTML = '<option value="">Selecione uma turma...</option>' +
+    turmasCache.map(t => `<option value="${t.id}">${t.nome}</option>`).join('');
+  if (atual) { sel.value = atual; onMudarTurmaFigurinhas(); }
+}
+
+function onMudarTurmaFigurinhas() {
+  const turmaId = document.getElementById('fig-turma-select').value;
+  const selAluno = document.getElementById('fig-aluno-select');
+  document.getElementById('fig-painel-aluno').style.display = 'none';
+  figurinhasAlunoAtualId = null;
+
+  if (!turmaId) { selAluno.innerHTML = '<option value="">— escolha a turma primeiro —</option>'; return; }
+  const turma = turmasCache.find(t => t.id === turmaId);
+  selAluno.innerHTML = '<option value="">Selecione um aluno...</option>' +
+    (turma ? turma.alunos.map(a => `<option value="${a.id}">${a.nome}</option>`).join('') : '');
+}
+
+function onMudarAlunoFigurinhas() {
+  const alunoId = document.getElementById('fig-aluno-select').value;
+  if (!alunoId) { document.getElementById('fig-painel-aluno').style.display = 'none'; figurinhasAlunoAtualId = null; return; }
+  figurinhasAlunoAtualId = alunoId;
+  document.getElementById('fig-painel-aluno').style.display = 'block';
+  renderFigurinhasTab();
+}
+
+// atalho usado pelo botão "GERENCIAR_FIGURINHAS" dentro de cada aluno na aba Turmas
+function irParaFigurinhasDoAluno(turmaId, alunoId) {
+  switchPanel('figurinhas');
+  popularSeletorTurmasFigurinhas();
+  document.getElementById('fig-turma-select').value = turmaId;
+  onMudarTurmaFigurinhas();
+  document.getElementById('fig-aluno-select').value = alunoId;
+  onMudarAlunoFigurinhas();
+}
+
+function renderFigurinhasTab() {
+  const turmaId = document.getElementById('fig-turma-select').value;
+  const turma = turmasCache.find(t => t.id === turmaId);
+  const aluno = turma ? turma.alunos.find(a => a.id === figurinhasAlunoAtualId) : null;
+  if (!aluno) return;
+
+  document.getElementById('fig-aluno-titulo').textContent = `🏷️ Álbum de ${aluno.nome} (${aluno.figurinhas.length} figurinha${aluno.figurinhas.length !== 1 ? 's' : ''})`;
+
+  const grid = document.getElementById('fig-tab-grid');
+  grid.innerHTML = aluno.figurinhas.length
+    ? aluno.figurinhas.map(fig => `
+        <div class="relative border border-[#d8d5e6] rounded-lg p-2 text-center">
+          <img src="${urlPublicoArquivo(fig.storage_path)}" style="width:64px;height:64px;image-rendering:pixelated;margin:0 auto 6px;border-radius:6px;background:#f4f2fa;" />
+          <p class="text-[10px] text-gray-700 font-bold truncate">${fig.titulo}</p>
+          <button class="btn-action btn-del mt-1" style="font-size:8px;padding:2px 8px;" onclick="removerFigurinhaTab('${fig.id}')">EXCLUIR</button>
+        </div>
+      `).join('')
+    : `<p class="text-[11px] text-gray-500 font-mono col-span-full">Nenhuma figurinha ainda — adicione a primeira acima.</p>`;
+}
+
+async function uploadFigurinhaTab() {
+  if (!figurinhasAlunoAtualId) return;
+  const tituloInput = document.getElementById('fig-tab-titulo');
+  const fileInput = document.getElementById('fig-tab-input');
+  const statusEl = document.getElementById('fig-tab-status');
   const titulo = tituloInput.value.trim() || 'Sem título';
   const file = fileInput.files[0];
-  if (!file) { alert('Escolha a imagem da figurinha (32x32) primeiro.'); return; }
+  if (!file) { statusEl.textContent = '👉 Escolha a imagem da figurinha primeiro.'; statusEl.className = 'block text-[10px] font-mono mb-4 text-red-600'; return; }
+
+  statusEl.textContent = '⏳ Enviando...'; statusEl.className = 'block text-[10px] font-mono mb-4 text-yellow-600';
 
   const extensao = file.name.slice(file.name.lastIndexOf('.'));
   const nomeArquivo = Date.now() + extensao;
-  const path = `figurinhas/${alunoId}/${nomeArquivo}`;
+  const path = `figurinhas/${figurinhasAlunoAtualId}/${nomeArquivo}`;
 
   const { error: upErr } = await sb.storage.from('submissoes').upload(path, file, { upsert: true });
-  if (upErr) { alert('Erro no upload: ' + upErr.message); return; }
+  if (upErr) { statusEl.textContent = '❌ Erro no upload: ' + upErr.message; statusEl.className = 'block text-[10px] font-mono mb-4 text-red-600'; return; }
 
   const { data, error: rpcErr } = await sb.rpc('admin_adicionar_figurinha', {
-    chave_admin: sbAdminKey, p_aluno_id: alunoId, p_titulo: titulo, p_storage_path: path
+    chave_admin: sbAdminKey, p_aluno_id: figurinhasAlunoAtualId, p_titulo: titulo, p_storage_path: path
   });
-  if (rpcErr || !data || !data.ok) { alert('Erro ao salvar: ' + (rpcErr ? rpcErr.message : data.erro)); return; }
+  if (rpcErr || !data || !data.ok) { statusEl.textContent = '❌ Erro ao salvar: ' + (rpcErr ? rpcErr.message : data.erro); statusEl.className = 'block text-[10px] font-mono mb-4 text-red-600'; return; }
 
+  statusEl.textContent = '✅ Figurinha adicionada!'; statusEl.className = 'block text-[10px] font-mono mb-4 text-green-600 font-bold';
   tituloInput.value = '';
   fileInput.value = '';
-  carregarTurmas();
+  await carregarTurmas();
+  renderFigurinhasTab();
 }
 
-async function removerFigurinha(id) {
-  if (!confirm('Remover essa figurinha do álbum do aluno?')) return;
+async function removerFigurinhaTab(id) {
+  if (!confirm('Remover essa figurinha do álbum?')) return;
   const { data, error } = await sb.rpc('admin_remover_figurinha', { chave_admin: sbAdminKey, p_id: id });
   if (error || !data || !data.ok) { alert('Erro ao remover: ' + (error ? error.message : data.erro)); return; }
-  carregarTurmas();
+  await carregarTurmas();
+  renderFigurinhasTab();
 }
+
 
 async function removerArquivoAdmin(arquivoId, storagePath, nomeArquivo) {
   if (!confirm(`Excluir o arquivo "${nomeArquivo}"? Essa ação não pode ser desfeita.`)) return;
@@ -1222,11 +1320,14 @@ let activeSubForm = 'video';
 function switchPanel(panelName) {
   document.getElementById('panel-turmas').classList.toggle('hidden', panelName !== 'turmas');
   document.getElementById('panel-conteudo').classList.toggle('hidden', panelName !== 'conteudo');
+  document.getElementById('panel-figurinhas').classList.toggle('hidden', panelName !== 'figurinhas');
   document.getElementById('panel-progresso').classList.toggle('hidden', panelName !== 'progresso');
   document.getElementById('nav-turmas').classList.toggle('active', panelName === 'turmas');
   document.getElementById('nav-conteudo').classList.toggle('active', panelName === 'conteudo');
+  document.getElementById('nav-figurinhas').classList.toggle('active', panelName === 'figurinhas');
   document.getElementById('nav-progresso').classList.toggle('active', panelName === 'progresso');
   if(panelName === 'progresso') popularSeletorTurmasProgresso();
+  if(panelName === 'figurinhas') popularSeletorTurmasFigurinhas();
 }
 
 function switchFormTab(formName) {
