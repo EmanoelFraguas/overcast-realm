@@ -1352,14 +1352,20 @@ async function carregarTurmaAtiva() {
   ).join('');
 
   grid.innerHTML = (alunos || []).map(aluno => {
-    const arquivosDoAluno = (arquivos || []).filter(f => f.aluno_id === aluno.id).slice(0, 5);
+    const arquivosCompletosDoAluno = (arquivos || []).filter(f => f.aluno_id === aluno.id);
+    const arquivosDoAluno = arquivosCompletosDoAluno.slice(0, 5);
+    const maisRecenteC3p = arquivosCompletosDoAluno.find(f => f.nome_arquivo.toLowerCase().endsWith('.c3p'));
     const listaArquivos = arquivosDoAluno.length
-      ? `<div class="space-y-1 mt-1">${arquivosDoAluno.map(f => `
-          <div class="flex items-center justify-between gap-2 bg-[#150f24] border border-[#241c3d] rounded px-2 py-1">
-            <a href="${urlPublicoArquivo(f.storage_path)}" target="_blank" class="text-[9px] text-blue-400 hover:underline truncate flex-1">${f.nome_arquivo}</a>
+      ? `<div class="space-y-1 mt-1">${arquivosDoAluno.map(f => {
+          const ehUltimaVersao = maisRecenteC3p && f.id === maisRecenteC3p.id;
+          return `
+          <div class="flex items-center justify-between gap-2 ${ehUltimaVersao ? 'bg-yellow-900/30 border border-yellow-500' : 'bg-[#150f24] border border-[#241c3d]'} rounded px-2 py-1">
+            ${ehUltimaVersao ? `<span class="text-[8px] text-yellow-400 font-bold shrink-0">⭐</span>` : ''}
+            <a href="${urlPublicoArquivo(f.storage_path)}" target="_blank" class="text-[9px] ${ehUltimaVersao ? 'text-yellow-300 font-bold' : 'text-blue-400'} hover:underline truncate flex-1">${f.nome_arquivo}</a>
             <span class="text-[8px] text-gray-500 font-mono shrink-0">${formatarDataHora(f.criado_em)}</span>
           </div>
-        `).join('')}</div>`
+        `;
+        }).join('')}</div>`
       : `<span class="text-[10px] text-gray-700 font-mono">${UI_STRINGS[currentLang].projetoAindaNaoEnviado}</span>`;
     return `
       <div class="card p-4 flex gap-3 items-start">
