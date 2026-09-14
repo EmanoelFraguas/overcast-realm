@@ -967,12 +967,15 @@ function renderTurmaAtiva() {
             ${aluno.arquivos.length > 0 ? `
               <div class="mt-2 pl-1 space-y-1">
                 ${(() => {
-                  const maisRecenteC3p = aluno.arquivos.find(f => f.nome_arquivo.toLowerCase().endsWith('.c3p'));
+                  // já vem ordenado do mais recente pro mais antigo — pega o primeiro
+                  // .c3p dessa lista, ou seja, o mais recente enviado de fato (por data),
+                  // não por número de versão no nome
+                  const ultimoUpado = aluno.arquivos.find(f => f.nome_arquivo.toLowerCase().endsWith('.c3p'));
                   return aluno.arquivos.map(f => {
-                    const ehUltimaVersao = maisRecenteC3p && f.id === maisRecenteC3p.id;
+                    const ehUltimaVersao = ultimoUpado && f.id === ultimoUpado.id;
                     return `
                       <div class="text-[10px] font-mono flex items-center gap-2 ${ehUltimaVersao ? 'bg-yellow-50 border border-yellow-400 rounded px-2 py-1' : ''}">
-                        <span class="${ehUltimaVersao ? 'text-yellow-700 font-bold shrink-0' : 'text-gray-600 shrink-0'}">${ehUltimaVersao ? '⭐ ÚLTIMA VERSÃO' : `[${f.tipo === 'projeto_final' ? 'FINAL' : 'ENVIO'}]`}</span>
+                        <span class="${ehUltimaVersao ? 'text-yellow-700 font-bold shrink-0' : 'text-gray-600 shrink-0'}">${ehUltimaVersao ? '⭐ ÚLTIMO ENVIO' : `[${f.tipo === 'projeto_final' ? 'FINAL' : 'ENVIO'}]`}</span>
                         <a href="${urlPublicoArquivo(f.storage_path)}" target="_blank" class="${ehUltimaVersao ? 'text-blue-700 font-bold' : 'text-blue-400'} hover:underline flex-1 truncate">${f.nome_arquivo}</a>
                         <button class="btn-action btn-del text-[8px] py-0.5 px-1.5" onclick="removerArquivoAdmin('${f.id}', '${f.storage_path.replace(/'/g, "\\'")}', '${f.nome_arquivo.replace(/'/g, "\\'")}')">EXCLUIR</button>
                       </div>
