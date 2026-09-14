@@ -1354,10 +1354,10 @@ async function carregarTurmaAtiva() {
   grid.innerHTML = (alunos || []).map(aluno => {
     const arquivosCompletosDoAluno = (arquivos || []).filter(f => f.aluno_id === aluno.id);
     const arquivosDoAluno = arquivosCompletosDoAluno.slice(0, 5);
-    const maisRecenteC3p = arquivosCompletosDoAluno.find(f => f.nome_arquivo.toLowerCase().endsWith('.c3p'));
+    const ultimoUpado = arquivosCompletosDoAluno[0]; // já vem ordenado do mais recente pro mais antigo
     const listaArquivos = arquivosDoAluno.length
       ? `<div class="space-y-1 mt-1">${arquivosDoAluno.map(f => {
-          const ehUltimaVersao = maisRecenteC3p && f.id === maisRecenteC3p.id;
+          const ehUltimaVersao = ultimoUpado && f.id === ultimoUpado.id;
           return `
           <div class="flex items-center justify-between gap-2 ${ehUltimaVersao ? 'bg-yellow-900/30 border border-yellow-500' : 'bg-[#150f24] border border-[#241c3d]'} rounded px-2 py-1">
             ${ehUltimaVersao ? `<span class="text-[8px] text-yellow-400 font-bold shrink-0">⭐</span>` : ''}
