@@ -1354,7 +1354,9 @@ async function carregarTurmaAtiva() {
   grid.innerHTML = (alunos || []).map(aluno => {
     const arquivosCompletosDoAluno = (arquivos || []).filter(f => f.aluno_id === aluno.id);
     const arquivosDoAluno = arquivosCompletosDoAluno.slice(0, 5);
-    const ultimoUpado = arquivosCompletosDoAluno[0]; // já vem ordenado do mais recente pro mais antigo
+    // já vem ordenado do mais recente pro mais antigo — pega o primeiro .c3p da lista,
+    // ou seja, o mais recente enviado de fato (por data), não por versão no nome
+    const ultimoUpado = arquivosCompletosDoAluno.find(f => f.nome_arquivo.toLowerCase().endsWith('.c3p'));
     const listaArquivos = arquivosDoAluno.length
       ? `<div class="space-y-1 mt-1">${arquivosDoAluno.map(f => {
           const ehUltimaVersao = ultimoUpado && f.id === ultimoUpado.id;
