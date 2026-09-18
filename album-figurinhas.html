@@ -302,7 +302,11 @@ async function carregarAlbum(turmaCodigo){
 
 function montarTabs(){
   const tabs = document.getElementById('album-tabs');
-  tabs.innerHTML = turmaAlunos.map(a => `
+  const tabTodos = `
+    <button class="album-tab-btn ${donoAtualId==='TODOS' && !tagAtiva ?'active':''}" onclick="selecionarAluno('TODOS')">
+      🌐 Todos os alunos
+    </button>`;
+  tabs.innerHTML = tabTodos + turmaAlunos.map(a => `
     <button class="album-tab-btn ${a.id===donoAtualId && !tagAtiva ?'active':''}" onclick="selecionarAluno('${a.id}')">
       ${meuAluno && a.codigo === meuAluno.codigo ? '⭐ ' : ''}${a.nome}
     </button>
@@ -311,8 +315,9 @@ function montarTabs(){
 
 function selecionarAluno(alunoId){
   tagAtiva = null;
+  donoAtualId = alunoId;
   montarTagFilterBar();
-  mostrarAlbumDe(alunoId);
+  renderAlbum();
 }
 
 function montarTagFilterBar(){
@@ -333,8 +338,9 @@ function filtrarTag(tag){
 }
 
 function renderAlbum(){
-  if(tagAtiva){
-    renderGaleriaTurmaPorTag();
+  montarTabs();
+  if(tagAtiva || donoAtualId === 'TODOS'){
+    renderGaleriaTurma();
   } else {
     mostrarAlbumDe(donoAtualId);
   }
@@ -367,12 +373,7 @@ function mostrarAlbumDe(alunoId){
   for(let i=0; i<totalSlots; i++){
     const fig = figurinhas[i];
     if(fig){
-      html += `
-        <div class="sticker-slot filled" onclick="abrirLightbox('${fig.titulo.replace(/'/g,"\\'")}', '${urlPublica(fig.storage_path)}')">
-          <div class="sticker-shine"></div>
-          <img src="${urlPublica(fig.storage_path)}" alt="${fig.titulo}">
-          <div class="sticker-title">${fig.titulo}</div>
-        </div>`;
+      html += renderStickerCard(fig, false);
     } else {
       html += `<div class="sticker-slot empty"><span>?</span></div>`;
     }
@@ -380,35 +381,42 @@ function mostrarAlbumDe(alunoId){
   grid.innerHTML = html;
 }
 
-// filtro de tag vale pra turma inteira: mostra as figurinhas de TODOS os alunos que têm aquela tag
-function renderGaleriaTurmaPorTag(){
-  const figurinhas = todasFigurinhasTurma.filter(f => (f.tags||[]).includes(tagAtiva));
+// vista da turma toda: usada tanto pela aba "Todos os alunos" quanto por um filtro de tag ativo.
+// em ambos os casos mostra as figurinhas de vários alunos juntas, então cada uma exibe o nome dela + o autor.
+function renderGaleriaTurma(){
+  let figurinhas = todasFigurinhasTurma;
+  if(tagAtiva) figurinhas = figurinhas.filter(f => (f.tags||[]).includes(tagAtiva));
 
-  document.getElementById('album-dono-nome').textContent = `🏷️ Galeria da turma — #${tagAtiva}`;
+  const tituloTag = tagAtiva ? ` — #${tagAtiva}` : '';
+  document.getElementById('album-dono-nome').textContent = `🌐 Galeria da turma${tituloTag}`;
   const qtd = figurinhas.length;
-  document.getElementById('album-contagem').textContent = qtd === 0 ? 'Nenhuma figurinha com essa tag' : `${qtd} figurinha${qtd>1?'s':''} na turma toda`;
+  document.getElementById('album-contagem').textContent = qtd === 0
+    ? (tagAtiva ? 'Nenhuma figurinha com essa tag' : 'Nenhuma figurinha ainda')
+    : `${qtd} figurinha${qtd>1?'s':''} na turma toda`;
   document.getElementById('album-progress-outer').style.display = 'none';
 
   const grid = document.getElementById('sticker-grid');
   if(!qtd){
-    grid.innerHTML = `<p class="empty-album-msg">📭 Nenhuma figurinha com essa tag ainda.</p>`;
+    grid.innerHTML = `<p class="empty-album-msg">📭 ${tagAtiva ? 'Nenhuma figurinha com essa tag ainda.' : 'Ainda não tem nenhuma figurinha na turma.'}</p>`;
     return;
   }
 
-  grid.innerHTML = figurinhas.map(fig => {
-    const dono = turmaAlunos.find(a => a.id === fig.aluno_id);
-    return `
-      <div class="sticker-slot filled" onclick="abrirLightbox('${fig.titulo.replace(/'/g,"\\'")}', '${urlPublica(fig.storage_path)}')">
-        <div class="sticker-shine"></div>
-        ${dono ? `<div class="sticker-aluno">${dono.nome}</div>` : ''}
-        <img src="${urlPublica(fig.storage_path)}" alt="${fig.titulo}">
-        <div class="sticker-title">${fig.titulo}</div>
-      </div>`;
-  }).join('');
+  grid.innerHTML = figurinhas.map(fig => renderStickerCard(fig, true)).join('');
 }
 
-function abrirLightbox(titulo, url){
-  document.getElementById('lightbox-title').textContent = titulo;
+function renderStickerCard(fig, mostrarAutor){
+  const dono = mostrarAutor ? turmaAlunos.find(a => a.id === fig.aluno_id) : null;
+  return `
+    <div class="sticker-slot filled" onclick="abrirLightbox('${fig.titulo.replace(/'/g,"\\'")}', '${urlPublica(fig.storage_path)}', ${dono ? `'${dono.nome.replace(/'/g,"\\'")}'` : 'null'})">
+      <div class="sticker-shine"></div>
+      ${dono ? `<div class="sticker-aluno">${dono.nome}</div>` : ''}
+      <img src="${urlPublica(fig.storage_path)}" alt="${fig.titulo}">
+      <div class="sticker-title">${fig.titulo}</div>
+    </div>`;
+}
+
+function abrirLightbox(titulo, url, autor){
+  document.getElementById('lightbox-title').textContent = autor ? `${titulo} — ${autor}` : titulo;
   document.getElementById('lightbox-img').src = url;
   document.getElementById('lightbox').classList.add('show');
 }
