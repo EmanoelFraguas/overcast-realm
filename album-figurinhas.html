@@ -115,6 +115,27 @@
 
   .empty-album-msg{ text-align:center; color:var(--ink-soft); font-weight:700; padding:40px 20px; grid-column:1/-1; }
 
+  /* --- lista aberta de turmas (sem código) --- */
+  .turma-list{ display:flex; flex-direction:column; gap:10px; max-width:420px; margin:18px auto 0; }
+  .turma-list-btn{
+    font-family:'Baloo 2', sans-serif; font-weight:800; font-size:14px; color:#fff;
+    background:var(--bg-card); border:2px solid var(--border); border-radius:14px;
+    padding:14px 18px; cursor:pointer; text-align:left; display:flex; align-items:center; justify-content:space-between;
+    box-shadow:0 3px 0 rgba(0,0,0,.3);
+  }
+  .turma-list-btn:hover{ border-color:var(--cyan); }
+  .turma-list-btn small{ color:var(--ink-soft); font-weight:700; font-size:11px; }
+
+  .link-opcional{
+    font-weight:800; font-size:11px; color:var(--ink-soft); background:transparent;
+    border:2px dashed var(--border); border-radius:999px; padding:6px 12px; cursor:pointer;
+  }
+  .sticker-slot .sticker-aluno{
+    position:absolute; top:2px; left:0; right:0; text-align:center;
+    font-size:8px; font-weight:800; color:#241c3d; background:var(--cyan);
+    padding:2px 4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+
   .lightbox{
     position:fixed; inset:0; background:rgba(10,6,20,.9); z-index:999;
     display:none; align-items:center; justify-content:center; padding:20px; flex-direction:column; gap:14px;
@@ -143,11 +164,17 @@
 
   <div id="sem-vinculo" class="panel">
     <div style="font-size:44px;">📖</div>
-    <p style="font-weight:800; margin:10px 0;">Vincule seu nome pra ver o seu álbum e o dos seus colegas</p>
-    <button class="btn purple" onclick="abrirModalVincular()">🔗 Vincular meu nome</button>
+    <p style="font-weight:800; margin:10px 0;">Escolha sua turma pra ver o álbum de figurinhas</p>
+    <div class="turma-list" id="turma-list">
+      <p style="color:var(--ink-soft); font-weight:700; font-size:12px;">⏳ Carregando turmas...</p>
+    </div>
   </div>
 
   <div id="album-conteudo" style="display:none;">
+    <div class="back-row" style="justify-content:space-between;">
+      <button class="btn gray" style="font-size:10px;" onclick="voltarParaTurmas()">← Trocar turma</button>
+      <button class="link-opcional" id="btn-vincular-opcional" onclick="abrirModalVincular()">🔗 Sou eu! Marcar meu nome</button>
+    </div>
     <div class="album-tabs" id="album-tabs"></div>
     <div class="album-tabs" id="tag-filter-bar"></div>
 
@@ -155,7 +182,7 @@
       <div class="album-header">
         <h2 id="album-dono-nome">—</h2>
         <p id="album-contagem">0 figurinhas</p>
-        <div class="progress-bar-outer"><div class="progress-bar-inner" id="album-progress" style="width:0%;"></div></div>
+        <div class="progress-bar-outer" id="album-progress-outer"><div class="progress-bar-inner" id="album-progress" style="width:0%;"></div></div>
       </div>
       <div class="sticker-grid" id="sticker-grid"></div>
     </div>
@@ -163,21 +190,12 @@
 
 </div>
 
-<!-- ============== MODAL: vincular nome ============== -->
+<!-- ============== MODAL: vincular meu nome (dentro da turma já aberta) ============== -->
 <div class="zoom-overlay" id="link-modal">
   <div class="zoom-box">
-    <h3 style="color:var(--yellow); font-size:13px; margin:0 0 14px;">🔗 Vincular meu nome</h3>
-    <div id="link-step-turma">
-      <input type="text" id="link-turma-code" placeholder="Código da turma">
-      <button class="btn purple" style="width:100%; justify-content:center;" onclick="buscarTurma()">🔎 Buscar Turma</button>
-      <div id="link-turma-error" style="font-weight:800;color:var(--pink);font-size:12px;margin-top:8px;"></div>
-    </div>
-    <div id="link-step-aluno" style="display:none;">
-      <p style="font-weight:800;color:var(--yellow);font-size:14px;">Turma: <span id="link-turma-name"></span></p>
-      <p style="font-weight:700;color:var(--ink-soft);font-size:12px;">Clique no seu nome:</p>
-      <div id="link-aluno-list"></div>
-      <button class="btn gray" style="width:100%; justify-content:center;" onclick="voltarStepTurma()">← Trocar turma</button>
-    </div>
+    <h3 style="color:var(--yellow); font-size:13px; margin:0 0 14px;">🔗 Qual é o seu nome?</h3>
+    <p style="font-weight:700;color:var(--ink-soft);font-size:12px;">Clique no seu nome pra marcar com ⭐ nas abas:</p>
+    <div id="link-aluno-list"></div>
     <button class="btn gray" style="width:100%; justify-content:center; margin-top:8px;" onclick="fecharModalVincular()">✕ Fechar</button>
   </div>
 </div>
@@ -196,8 +214,9 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 const IDENTITY_KEY = 'overcast_course_identity'; // mesma chave do course-gate/loja, reaproveita o vínculo
 
-let meuAluno = null;   // {codigo, nome}
-let turmaAlunos = [];  // todos os alunos da turma vinculada
+let meuAluno = null;   // {codigo, nome} — opcional, só pra marcar ⭐
+let turmaAlunos = [];  // todos os alunos da turma aberta
+let turmaAtual = null; // {id, nome, codigo_acesso}
 let donoAtualId = null;
 let todasFigurinhasTurma = []; // cache com as figurinhas de TODOS os alunos da turma
 let tagAtiva = null;
@@ -214,12 +233,41 @@ function getIdentitySalva(){
 
 async function init(){
   const identity = getIdentitySalva();
-  if(identity && identity.codigo){
+  if(identity && identity.codigo && identity.turmaCodigo){
     meuAluno = { codigo: identity.codigo, nome: identity.nome };
     await carregarAlbum(identity.turmaCodigo);
   } else {
-    document.getElementById('sem-vinculo').style.display = 'block';
+    await carregarListaTurmas();
   }
+}
+
+async function carregarListaTurmas(){
+  document.getElementById('sem-vinculo').style.display = 'block';
+  document.getElementById('album-conteudo').style.display = 'none';
+  const lista = document.getElementById('turma-list');
+  if(!sb){ lista.innerHTML = '<p style="color:var(--pink);font-weight:800;">❌ Não consegui conectar.</p>'; return; }
+  const { data: turmas, error } = await sb.from('turmas').select('id,nome,codigo_acesso,tipo_curso').order('nome');
+  if(error || !turmas || !turmas.length){
+    lista.innerHTML = '<p style="color:var(--pink);font-weight:800;">❌ Nenhuma turma encontrada.</p>';
+    return;
+  }
+  lista.innerHTML = turmas.map(t => `
+    <button class="turma-list-btn" onclick="entrarNaTurma('${t.codigo_acesso}')">
+      <span>📚 ${t.nome}</span>
+      <small>${t.tipo_curso === 'arte' ? '🎨 Arte Digital' : '🕹️ Game Dev'}</small>
+    </button>
+  `).join('');
+}
+
+async function entrarNaTurma(codigoAcesso){
+  meuAluno = null; // entrar numa turma pela lista aberta não vincula nome automaticamente
+  await carregarAlbum(codigoAcesso);
+}
+
+function voltarParaTurmas(){
+  meuAluno = null;
+  tagAtiva = null;
+  carregarListaTurmas();
 }
 
 async function carregarAlbum(turmaCodigo){
@@ -229,6 +277,7 @@ async function carregarAlbum(turmaCodigo){
 
   const { data: turma } = await sb.from('turmas').select('*').eq('codigo_acesso', turmaCodigo).maybeSingle();
   if(!turma) return;
+  turmaAtual = turma;
   const { data: alunos } = await sb.from('alunos').select('*').eq('turma_id', turma.id).order('nome');
   turmaAlunos = alunos || [];
 
@@ -240,21 +289,30 @@ async function carregarAlbum(turmaCodigo){
     todasFigurinhasTurma = [];
   }
 
-  const euMesmo = turmaAlunos.find(a => a.codigo === meuAluno.codigo);
+  const euMesmo = meuAluno ? turmaAlunos.find(a => a.codigo === meuAluno.codigo) : null;
   donoAtualId = euMesmo ? euMesmo.id : (turmaAlunos[0] && turmaAlunos[0].id);
+
+  const btnOpcional = document.getElementById('btn-vincular-opcional');
+  if(btnOpcional) btnOpcional.style.display = meuAluno ? 'none' : 'inline-block';
 
   montarTabs();
   montarTagFilterBar();
-  mostrarAlbumDe(donoAtualId);
+  renderAlbum();
 }
 
 function montarTabs(){
   const tabs = document.getElementById('album-tabs');
   tabs.innerHTML = turmaAlunos.map(a => `
-    <button class="album-tab-btn ${a.id===donoAtualId?'active':''}" onclick="mostrarAlbumDe('${a.id}')">
-      ${a.codigo === meuAluno.codigo ? '⭐ ' : ''}${a.nome}
+    <button class="album-tab-btn ${a.id===donoAtualId && !tagAtiva ?'active':''}" onclick="selecionarAluno('${a.id}')">
+      ${meuAluno && a.codigo === meuAluno.codigo ? '⭐ ' : ''}${a.nome}
     </button>
   `).join('');
+}
+
+function selecionarAluno(alunoId){
+  tagAtiva = null;
+  montarTagFilterBar();
+  mostrarAlbumDe(alunoId);
 }
 
 function montarTagFilterBar(){
@@ -270,7 +328,16 @@ function montarTagFilterBar(){
 function filtrarTag(tag){
   tagAtiva = tag;
   montarTagFilterBar();
-  mostrarAlbumDe(donoAtualId);
+  montarTabs();
+  renderAlbum();
+}
+
+function renderAlbum(){
+  if(tagAtiva){
+    renderGaleriaTurmaPorTag();
+  } else {
+    mostrarAlbumDe(donoAtualId);
+  }
 }
 
 function mostrarAlbumDe(alunoId){
@@ -278,12 +345,12 @@ function mostrarAlbumDe(alunoId){
   montarTabs();
 
   const aluno = turmaAlunos.find(a => a.id === alunoId);
-  let figurinhas = todasFigurinhasTurma.filter(f => f.aluno_id === alunoId);
-  if(tagAtiva) figurinhas = figurinhas.filter(f => (f.tags||[]).includes(tagAtiva));
+  const figurinhas = todasFigurinhasTurma.filter(f => f.aluno_id === alunoId);
 
   document.getElementById('album-dono-nome').textContent = aluno ? `📖 Álbum de ${aluno.nome}` : '📖 Álbum';
   const qtd = figurinhas.length;
   document.getElementById('album-contagem').textContent = qtd === 0 ? 'Nenhuma figurinha ainda' : `${qtd} figurinha${qtd>1?'s':''} coletada${qtd>1?'s':''}`;
+  document.getElementById('album-progress-outer').style.display = 'block';
 
   const meta = 12; // barra de progresso visual, meta "de referência" pra encher a página
   const pct = Math.min(100, Math.round((qtd/meta)*100));
@@ -291,12 +358,11 @@ function mostrarAlbumDe(alunoId){
 
   const grid = document.getElementById('sticker-grid');
   if(!qtd){
-    grid.innerHTML = `<p class="empty-album-msg">📭 ${tagAtiva ? 'Nenhuma figurinha com essa tag.' : 'Ainda não tem nenhuma figurinha aqui.<br>Continue fazendo arte digital!'}</p>`;
+    grid.innerHTML = `<p class="empty-album-msg">📭 Ainda não tem nenhuma figurinha aqui.<br>Continue fazendo arte digital!</p>`;
     return;
   }
 
-  // com filtro de tag ativo, mostra só o que existe (sem preencher slots vazios)
-  const totalSlots = tagAtiva ? qtd : Math.max(meta, qtd);
+  const totalSlots = Math.max(meta, qtd);
   let html = '';
   for(let i=0; i<totalSlots; i++){
     const fig = figurinhas[i];
@@ -314,6 +380,33 @@ function mostrarAlbumDe(alunoId){
   grid.innerHTML = html;
 }
 
+// filtro de tag vale pra turma inteira: mostra as figurinhas de TODOS os alunos que têm aquela tag
+function renderGaleriaTurmaPorTag(){
+  const figurinhas = todasFigurinhasTurma.filter(f => (f.tags||[]).includes(tagAtiva));
+
+  document.getElementById('album-dono-nome').textContent = `🏷️ Galeria da turma — #${tagAtiva}`;
+  const qtd = figurinhas.length;
+  document.getElementById('album-contagem').textContent = qtd === 0 ? 'Nenhuma figurinha com essa tag' : `${qtd} figurinha${qtd>1?'s':''} na turma toda`;
+  document.getElementById('album-progress-outer').style.display = 'none';
+
+  const grid = document.getElementById('sticker-grid');
+  if(!qtd){
+    grid.innerHTML = `<p class="empty-album-msg">📭 Nenhuma figurinha com essa tag ainda.</p>`;
+    return;
+  }
+
+  grid.innerHTML = figurinhas.map(fig => {
+    const dono = turmaAlunos.find(a => a.id === fig.aluno_id);
+    return `
+      <div class="sticker-slot filled" onclick="abrirLightbox('${fig.titulo.replace(/'/g,"\\'")}', '${urlPublica(fig.storage_path)}')">
+        <div class="sticker-shine"></div>
+        ${dono ? `<div class="sticker-aluno">${dono.nome}</div>` : ''}
+        <img src="${urlPublica(fig.storage_path)}" alt="${fig.titulo}">
+        <div class="sticker-title">${fig.titulo}</div>
+      </div>`;
+  }).join('');
+}
+
 function abrirLightbox(titulo, url){
   document.getElementById('lightbox-title').textContent = titulo;
   document.getElementById('lightbox-img').src = url;
@@ -322,46 +415,32 @@ function abrirLightbox(titulo, url){
 function fecharLightbox(){ document.getElementById('lightbox').classList.remove('show'); }
 document.getElementById('lightbox').addEventListener('click', e => { if(e.target.id==='lightbox') fecharLightbox(); });
 
-/* ---- vincular (mesmo padrão de sempre) ---- */
-let turmaBusca = null;
-function abrirModalVincular(){ document.getElementById('link-modal').classList.add('show'); }
-function fecharModalVincular(){ document.getElementById('link-modal').classList.remove('show'); }
-async function buscarTurma(){
-  const code = document.getElementById('link-turma-code').value.trim().toLowerCase();
-  const errEl = document.getElementById('link-turma-error');
-  if(!code){ errEl.textContent = '👉 Digite o código da turma.'; return; }
-  if(!sb){ errEl.textContent = '❌ Não consegui conectar.'; return; }
-  errEl.textContent = '⏳ Buscando...';
-  const { data: turma, error } = await sb.from('turmas').select('*').eq('codigo_acesso', code).maybeSingle();
-  if(error || !turma){ errEl.textContent = '❌ Turma não encontrada.'; return; }
-  errEl.textContent = '';
-  const { data: alunos } = await sb.from('alunos').select('*').eq('turma_id', turma.id).order('nome');
-  turmaBusca = { turma, alunos: alunos || [] };
-  document.getElementById('link-turma-name').textContent = turma.nome;
-  document.getElementById('link-aluno-list').innerHTML = (alunos && alunos.length)
-    ? alunos.map((a,i) => `<button class="btn purple" style="width:100%;justify-content:center;" data-i="${i}">${a.nome}</button>`).join('')
+/* ---- vincular meu nome (opcional, dentro da turma já aberta) ---- */
+function abrirModalVincular(){
+  document.getElementById('link-aluno-list').innerHTML = (turmaAlunos.length)
+    ? turmaAlunos.map((a,i) => `<button class="btn purple" style="width:100%;justify-content:center;margin-bottom:6px;" data-i="${i}">${a.nome}</button>`).join('')
     : '<p style="font-size:12px;">Nenhum aluno cadastrado.</p>';
   document.querySelectorAll('#link-aluno-list .btn').forEach(btn => {
     btn.onclick = () => escolherAluno(parseInt(btn.dataset.i, 10));
   });
-  document.getElementById('link-step-turma').style.display = 'none';
-  document.getElementById('link-step-aluno').style.display = 'block';
+  document.getElementById('link-modal').classList.add('show');
 }
-function voltarStepTurma(){
-  document.getElementById('link-step-turma').style.display = 'block';
-  document.getElementById('link-step-aluno').style.display = 'none';
-}
+function fecharModalVincular(){ document.getElementById('link-modal').classList.remove('show'); }
 async function escolherAluno(i){
-  if(!turmaBusca) return;
-  const aluno = turmaBusca.alunos[i];
-  if(!aluno) return;
+  const aluno = turmaAlunos[i];
+  if(!aluno || !turmaAtual) return;
   sessionStorage.setItem(IDENTITY_KEY, JSON.stringify({
-    codigo: aluno.codigo, nome: aluno.nome, turmaCodigo: turmaBusca.turma.codigo_acesso,
-    tipoCurso: turmaBusca.turma.tipo_curso, linkedAt: Date.now()
+    codigo: aluno.codigo, nome: aluno.nome, turmaCodigo: turmaAtual.codigo_acesso,
+    tipoCurso: turmaAtual.tipo_curso, linkedAt: Date.now()
   }));
   meuAluno = { codigo: aluno.codigo, nome: aluno.nome };
   fecharModalVincular();
-  await carregarAlbum(turmaBusca.turma.codigo_acesso);
+  donoAtualId = aluno.id;
+  tagAtiva = null;
+  document.getElementById('btn-vincular-opcional').style.display = 'none';
+  montarTabs();
+  montarTagFilterBar();
+  renderAlbum();
 }
 
 init();
