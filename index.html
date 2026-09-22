@@ -1220,6 +1220,29 @@ async function renderArquivosAluno() {
   `).join('');
 }
 
+async function baixarArquivo(url, nomeArquivo, btnEl) {
+  const textoOriginal = btnEl ? btnEl.textContent : '';
+  try {
+    if (btnEl) { btnEl.textContent = '⏳'; btnEl.disabled = true; }
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('download falhou');
+    const blob = await resp.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = nomeArquivo;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 4000);
+  } catch (e) {
+    // fallback: abre em nova aba se o download direto não funcionar (ex: bloqueio de CORS)
+    window.open(url, '_blank');
+  } finally {
+    if (btnEl) { btnEl.textContent = textoOriginal || '⬇'; btnEl.disabled = false; }
+  }
+}
+
 function setStatus(el, texto, tipo) {
   // tipo: 'ok' (verde, negrito), 'erro' (vermelho, negrito), 'info' (amarelo, neutro)
   el.textContent = texto;
@@ -1365,6 +1388,8 @@ async function carregarTurmaAtiva() {
             ${ehUltimaVersao ? `<span class="text-[8px] text-yellow-400 font-bold shrink-0">⭐</span>` : ''}
             <a href="${urlPublicoArquivo(f.storage_path)}" target="_blank" class="text-[9px] ${ehUltimaVersao ? 'text-yellow-300 font-bold' : 'text-blue-400'} hover:underline truncate flex-1">${f.nome_arquivo}</a>
             <span class="text-[8px] text-gray-500 font-mono shrink-0">${formatarDataHora(f.criado_em)}</span>
+            <button type="button" title="Baixar arquivo" onclick="baixarArquivo('${urlPublicoArquivo(f.storage_path)}', '${f.nome_arquivo.replace(/'/g,"\\'")}', this)"
+              class="shrink-0 text-[9px] font-bold px-2 py-1 rounded ${ehUltimaVersao ? 'bg-yellow-400 text-black hover:bg-yellow-300' : 'bg-[#241c3d] text-blue-300 border border-[#322c47] hover:bg-[#322c47]'}">⬇</button>
           </div>
         `;
         }).join('')}</div>`
