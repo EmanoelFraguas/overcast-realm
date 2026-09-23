@@ -1391,13 +1391,19 @@ async function carregarTurmaAtiva() {
     const listaArquivos = arquivosDoAluno.length
       ? `<div class="space-y-1 mt-1">${arquivosDoAluno.map(f => {
           const ehUltimaVersao = ultimoUpado && f.id === ultimoUpado.id;
+          const ehImagem = /\.(png|gif|jpe?g|webp)$/i.test(f.nome_arquivo);
+          const urlArquivo = urlPublicoArquivo(f.storage_path);
           return `
-          <div class="flex items-center justify-between gap-2 ${ehUltimaVersao ? 'bg-yellow-900/30 border border-yellow-500' : 'bg-[#150f24] border border-[#241c3d]'} rounded px-2 py-1">
+          <div class="relative group flex items-center justify-between gap-2 ${ehUltimaVersao ? 'bg-yellow-900/30 border border-yellow-500' : 'bg-[#150f24] border border-[#241c3d]'} rounded px-2 py-1">
             ${ehUltimaVersao ? `<span class="text-[8px] text-yellow-400 font-bold shrink-0">⭐</span>` : ''}
-            <a href="${urlPublicoArquivo(f.storage_path)}" target="_blank" class="text-[9px] ${ehUltimaVersao ? 'text-yellow-300 font-bold' : 'text-blue-400'} hover:underline truncate flex-1">${f.nome_arquivo}</a>
+            <a href="${urlArquivo}" target="_blank" class="text-[9px] ${ehUltimaVersao ? 'text-yellow-300 font-bold' : 'text-blue-400'} hover:underline truncate flex-1">${f.nome_arquivo}</a>
             <span class="text-[8px] text-gray-500 font-mono shrink-0">${formatarDataHora(f.criado_em)}</span>
-            <button type="button" title="Baixar arquivo" onclick="baixarArquivo('${urlPublicoArquivo(f.storage_path)}', '${f.nome_arquivo.replace(/'/g,"\\'")}', this)"
+            <button type="button" title="Baixar arquivo" onclick="baixarArquivo('${urlArquivo}', '${f.nome_arquivo.replace(/'/g,"\\'")}', this)"
               class="shrink-0 text-[9px] font-bold px-2 py-1 rounded ${ehUltimaVersao ? 'bg-yellow-400 text-black hover:bg-yellow-300' : 'bg-[#241c3d] text-blue-300 border border-[#322c47] hover:bg-[#322c47]'}">⬇</button>
+            ${ehImagem ? `
+            <div class="hidden group-hover:flex absolute z-50 bottom-full right-0 mb-2 p-1.5 bg-[#0e0a1a] border-2 border-yellow-400 rounded-lg shadow-2xl pointer-events-none items-center justify-center">
+              <img src="${urlArquivo}" alt="" class="w-28 h-28 object-contain" style="image-rendering:pixelated;">
+            </div>` : ''}
           </div>
         `;
         }).join('')}</div>`
