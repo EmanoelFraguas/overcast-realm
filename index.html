@@ -1231,6 +1231,28 @@ async function renderArquivosAluno() {
   `).join('');
 }
 
+function mostrarPreviewImagem(evt, url) {
+  const box = document.getElementById('preview-imagem-flutuante');
+  const img = document.getElementById('preview-imagem-flutuante-img');
+  if (!box || !img) return;
+  img.src = url;
+  box.style.display = 'block';
+  const tamanho = 320;
+  const margem = 14;
+  let x = evt.clientX + 20;
+  let y = evt.clientY + 20;
+  if (x + tamanho + margem > window.innerWidth) x = evt.clientX - tamanho - 20;
+  if (y + tamanho + margem > window.innerHeight) y = evt.clientY - tamanho - 20;
+  if (x < margem) x = margem;
+  if (y < margem) y = margem;
+  box.style.left = x + 'px';
+  box.style.top = y + 'px';
+}
+function esconderPreviewImagem() {
+  const box = document.getElementById('preview-imagem-flutuante');
+  if (box) box.style.display = 'none';
+}
+
 function toggleArquivosExtras(alunoId) {
   const container = document.getElementById('arquivos-extras-' + alunoId);
   const btn = document.getElementById('btn-arquivos-extras-' + alunoId);
@@ -1411,28 +1433,6 @@ async function carregarTurmaAtiva() {
           class="shrink-0 text-[9px] font-bold px-2 py-1 rounded ${ehUltimaVersao ? 'bg-yellow-400 text-black hover:bg-yellow-300' : 'bg-[#241c3d] text-blue-300 border border-[#322c47] hover:bg-[#322c47]'}">⬇</button>
       </div>
     `;
-  }
-
-  function mostrarPreviewImagem(evt, url) {
-    const box = document.getElementById('preview-imagem-flutuante');
-    const img = document.getElementById('preview-imagem-flutuante-img');
-    if (!box || !img) return;
-    img.src = url;
-    box.style.display = 'block';
-    const tamanho = 320;
-    const margem = 14;
-    let x = evt.clientX + 20;
-    let y = evt.clientY + 20;
-    if (x + tamanho + margem > window.innerWidth) x = evt.clientX - tamanho - 20;
-    if (y + tamanho + margem > window.innerHeight) y = evt.clientY - tamanho - 20;
-    if (x < margem) x = margem;
-    if (y < margem) y = margem;
-    box.style.left = x + 'px';
-    box.style.top = y + 'px';
-  }
-  function esconderPreviewImagem() {
-    const box = document.getElementById('preview-imagem-flutuante');
-    if (box) box.style.display = 'none';
   }
 
   grid.innerHTML = (alunos || []).map(aluno => {
