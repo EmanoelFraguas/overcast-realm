@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Meu Desenho (Piskel) — Overcast Realm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Baloo+2:wght@500;600;700;800;900&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  :root{
+    --bg-base:#14101f; --bg-card:#1e1a2e; --accent-purple:#a78bfa; --accent-storm:#7c3aed;
+    --accent-warm:#fb923c; --text-primary:#f5f3ff; --text-muted:#9c93b8; --border-brutal:#322c47;
+  }
+  *{box-sizing:border-box;}
+  body{
+    background-color:var(--bg-base); color:var(--text-primary); font-family:'Baloo 2', sans-serif;
+    margin:0; min-height:100vh; padding:16px;
+    background-image:radial-gradient(circle at 15% 0%, rgba(124,58,237,.18), transparent 45%),
+      radial-gradient(circle at 100% 20%, rgba(56,189,248,.12), transparent 40%);
+    background-attachment:fixed;
+  }
+  .font-pixel{ font-family:'Press Start 2P', monospace; line-height:1.6; }
+  .wrap{ max-width:720px; margin:0 auto; }
+  .card{ background:var(--bg-card); border:1px solid var(--border-brutal); border-radius:20px; padding:22px; margin-bottom:16px; box-shadow:0 10px 30px rgba(0,0,0,.35); }
+  .btn-primary{
+    background:linear-gradient(135deg, var(--accent-storm), #6d28d9); color:#fff; border:none; border-radius:999px;
+    font-family:'Baloo 2',sans-serif; font-weight:800; font-size:16px; padding:16px 26px; cursor:pointer;
+    display:inline-flex; align-items:center; gap:8px; box-shadow:0 6px 16px rgba(124,58,237,.35); text-decoration:none;
+  }
+  .btn-primary:hover{ filter:brightness(1.1); }
+  .step-num{
+    width:34px; height:34px; border-radius:50%; background:var(--accent-storm); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-family:'Press Start 2P',monospace; font-size:13px; flex-shrink:0;
+  }
+  .drop-zone{
+    border:4px dashed var(--accent-purple); border-radius:20px; padding:36px 16px; text-align:center; cursor:pointer;
+    background:rgba(167,139,250,.06); transition:background .15s ease, border-color .15s ease;
+  }
+  .drop-zone:hover{ background:rgba(167,139,250,.14); border-color:var(--accent-warm); }
+  .status-msg{ font-weight:800; font-size:14px; margin-top:10px; min-height:20px; }
+  .arquivo-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; background:#150f24; border:1px solid var(--border-brutal); border-radius:10px; padding:8px 12px; margin-top:6px; }
+  #login-box input{ width:100%; padding:14px; border-radius:12px; border:2px solid var(--border-brutal); background:#150f24; color:#fff; font-family:'Baloo 2',sans-serif; font-size:16px; margin-bottom:10px; }
+  .aluno-pick-btn{
+    width:100%; text-align:left; padding:14px 16px; border-radius:12px; border:2px solid var(--border-brutal);
+    background:#150f24; color:#fff; font-family:'Baloo 2',sans-serif; font-weight:700; font-size:15px;
+    cursor:pointer; margin-bottom:8px; display:block;
+  }
+  .aluno-pick-btn:hover{ border-color:var(--accent-purple); background:rgba(167,139,250,.1); }
+  .btn-voltar-turma{
+    background:transparent; border:2px dashed var(--border-brutal); color:var(--text-muted); border-radius:999px;
+    font-family:'Baloo 2',sans-serif; font-weight:700; font-size:12px; padding:8px 14px; cursor:pointer; width:100%; margin-top:6px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+    <a href="./index.html" class="btn-primary" style="font-size:12px; padding:10px 16px; background:rgba(255,255,255,.06); box-shadow:none;">← Voltar</a>
+  </div>
+
+  <div class="card" style="text-align:center;">
+    <h1 class="font-pixel" style="font-size:16px; color:var(--accent-glow, #c4b5fd); margin:0 0 6px;">🎨 MEU DESENHO</h1>
+    <p style="color:var(--text-muted); font-weight:700; margin:0;">Desenhe no Piskel e mande pra sua pasta no Overcast</p>
+  </div>
+
+  <!-- Login: código da turma -> lista de nomes pra clicar (igual às outras páginas do site) -->
+  <div class="card" id="login-box" style="display:none;">
+    <div id="login-step-turma">
+      <p style="font-weight:800; margin:0 0 10px;">Digite o código da turma:</p>
+      <input type="text" id="login-turma-input" placeholder="Código da turma" onkeydown="if(event.key==='Enter') buscarTurmaLogin()">
+      <button class="btn-primary" style="width:100%; justify-content:center;" onclick="buscarTurmaLogin()">🔎 Buscar turma</button>
+    </div>
+    <div id="login-step-aluno" style="display:none;">
+      <p style="font-weight:800; color:var(--accent-purple); margin:0 0 4px;">Turma: <span id="login-turma-nome"></span></p>
+      <p style="color:var(--text-muted); font-weight:700; font-size:13px; margin:0 0 10px;">Toque no seu nome:</p>
+      <div id="login-aluno-lista"></div>
+      <button class="btn-voltar-turma" onclick="voltarStepTurmaLogin()">← Trocar turma</button>
+    </div>
+    <p id="login-erro" style="color:#fb7185; font-weight:800; font-size:13px; margin-top:8px;"></p>
+  </div>
+
+  <div id="conteudo" style="display:none;">
+    <p style="font-weight:800; font-size:15px; margin:0 0 12px;">Oi, <span id="nome-aluno">—</span>! Segue os passos:</p>
+
+    <div class="card">
+      <div style="display:flex; gap:14px; align-items:flex-start; margin-bottom:16px;">
+        <div class="step-num">1</div>
+        <div>
+          <p style="font-weight:800; margin:0 0 6px;">Abra o Piskel e desenhe</p>
+          <a href="https://www.piskelapp.com/p/create/beta" target="_blank" class="btn-primary">🖌️ Abrir o Piskel</a>
+        </div>
+      </div>
+      <div style="display:flex; gap:14px; align-items:flex-start; margin-bottom:16px;">
+        <div class="step-num">2</div>
+        <div>
+          <p style="font-weight:800; margin:0 0 4px;">No Piskel, exporte seu desenho</p>
+          <p style="color:var(--text-muted); font-size:13px; margin:0;">Clique em <b>Export</b> (ou "Exportar") → escolha <b>PNG</b> → <b>Download</b>. O desenho vai pra pasta de downloads do computador.</p>
+        </div>
+      </div>
+      <div style="display:flex; gap:14px; align-items:flex-start;">
+        <div class="step-num">3</div>
+        <div style="flex:1;">
+          <p style="font-weight:800; margin:0 0 8px;">Volte aqui e envie seu desenho</p>
+          <div class="drop-zone" onclick="document.getElementById('file-input').click()">
+            <div style="font-size:38px;">📥</div>
+            <p style="font-weight:800; margin:8px 0 0;">Toque aqui para escolher seu desenho</p>
+            <p style="color:var(--text-muted); font-size:12px; margin:4px 0 0;">(o arquivo PNG que você baixou do Piskel)</p>
+          </div>
+          <input type="file" id="file-input" accept=".png,.gif,image/png,image/gif" style="display:none;" onchange="enviarDesenho()">
+          <p class="status-msg" id="status-msg"></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="font-pixel" style="font-size:11px; color:var(--text-muted); margin:0 0 10px;">MEUS DESENHOS ENVIADOS</p>
+      <div id="lista-desenhos"><p style="color:var(--text-muted); font-size:13px;">Nenhum desenho enviado ainda.</p></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const SUPABASE_URL = "https://kezlmecrxhjahhoekybs.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlemxtZWNyeGhqYWhob2VreWJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5MDkwNjAsImV4cCI6MjEwMjQ4NTA2MH0.-TcsKrFxRMeiqKrzXk57E8-60eobk3fJ0Crn7ci0MW8";
+const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+const SESSAO_VALIDADE_MS = 60 * 60 * 1000; // mesma janela de 1h usada no index.html
+
+let alunoAtivo = null;
+
+function lerAlunoPersistido() {
+  try {
+    const raw = sessionStorage.getItem('active_student_code');
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (!data.ts || Date.now() - data.ts > SESSAO_VALIDADE_MS) {
+      sessionStorage.removeItem('active_student_code');
+      return null;
+    }
+    return data.code;
+  } catch (e) { return null; }
+}
+function salvarAlunoPersistido(code) {
+  sessionStorage.setItem('active_student_code', JSON.stringify({ code, ts: Date.now() }));
+}
+
+async function init() {
+  if (!sb) { document.getElementById('login-erro').textContent = '❌ Não consegui conectar.'; document.getElementById('login-box').style.display = 'block'; return; }
+  const codigoSalvo = lerAlunoPersistido();
+  if (codigoSalvo) {
+    const { data: aluno } = await sb.from('alunos').select('*').eq('codigo', codigoSalvo.toLowerCase()).maybeSingle();
+    if (aluno) { entrarComoAluno(aluno); return; }
+  }
+  document.getElementById('login-box').style.display = 'block';
+}
+
+let turmaLoginAlunos = [];
+
+async function buscarTurmaLogin() {
+  const codigo = document.getElementById('login-turma-input').value.trim().toLowerCase();
+  const erroEl = document.getElementById('login-erro');
+  if (!codigo) { erroEl.textContent = '👉 Digite o código da turma.'; return; }
+  erroEl.textContent = '⏳ Buscando...';
+  const { data: turma, error } = await sb.from('turmas').select('*').eq('codigo_acesso', codigo).maybeSingle();
+  if (error || !turma) { erroEl.textContent = '❌ Turma não encontrada.'; return; }
+  erroEl.textContent = '';
+  const { data: alunos } = await sb.from('alunos').select('*').eq('turma_id', turma.id).order('nome');
+  turmaLoginAlunos = alunos || [];
+  document.getElementById('login-turma-nome').textContent = turma.nome;
+  document.getElementById('login-aluno-lista').innerHTML = turmaLoginAlunos.length
+    ? turmaLoginAlunos.map((a, i) => `<button type="button" class="aluno-pick-btn" data-i="${i}">${a.nome}</button>`).join('')
+    : '<p style="color:var(--text-muted); font-size:13px;">Nenhum aluno cadastrado nessa turma.</p>';
+  document.querySelectorAll('#login-aluno-lista .aluno-pick-btn').forEach(btn => {
+    btn.onclick = () => escolherAlunoLogin(parseInt(btn.dataset.i, 10));
+  });
+  document.getElementById('login-step-turma').style.display = 'none';
+  document.getElementById('login-step-aluno').style.display = 'block';
+}
+
+function voltarStepTurmaLogin() {
+  document.getElementById('login-step-turma').style.display = 'block';
+  document.getElementById('login-step-aluno').style.display = 'none';
+  document.getElementById('login-erro').textContent = '';
+}
+
+function escolherAlunoLogin(i) {
+  const aluno = turmaLoginAlunos[i];
+  if (!aluno) return;
+  salvarAlunoPersistido(aluno.codigo);
+  entrarComoAluno(aluno);
+}
+
+function entrarComoAluno(aluno) {
+  alunoAtivo = aluno;
+  document.getElementById('login-box').style.display = 'none';
+  document.getElementById('conteudo').style.display = 'block';
+  document.getElementById('nome-aluno').textContent = aluno.nome;
+  carregarDesenhos();
+}
+
+function urlPublicoArquivo(path) {
+  return sb.storage.from('submissoes').getPublicUrl(path).data.publicUrl;
+}
+
+async function proximoNomeVersionado(codigoAluno, nomeOriginal) {
+  const pontoIdx = nomeOriginal.lastIndexOf('.');
+  const nome = pontoIdx > -1 ? nomeOriginal.slice(0, pontoIdx) : nomeOriginal;
+  const ext = pontoIdx > -1 ? nomeOriginal.slice(pontoIdx) : '';
+  const escapar = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const padrao = new RegExp('^' + escapar(nome) + '_v(\\d+)' + escapar(ext) + '$', 'i');
+  let maiorVersao = 0;
+  try {
+    const { data: arquivos } = await sb.storage.from('submissoes').list(`envios/${codigoAluno}`);
+    (arquivos || []).forEach(f => {
+      const m = f.name.match(padrao);
+      if (m) maiorVersao = Math.max(maiorVersao, parseInt(m[1], 10));
+    });
+  } catch (e) { /* pasta pode não existir ainda */ }
+  return `${nome}_v${maiorVersao + 1}${ext}`;
+}
+
+function setStatus(texto, tipo) {
+  const el = document.getElementById('status-msg');
+  el.textContent = texto;
+  el.style.color = tipo === 'ok' ? '#4ade80' : tipo === 'erro' ? '#fb7185' : '#fbbf24';
+}
+
+async function enviarDesenho() {
+  const input = document.getElementById('file-input');
+  const file = input.files[0];
+  if (!file || !alunoAtivo) { setStatus('👉 Escolha um arquivo primeiro.', 'erro'); return; }
+  const nomeMinusculo = file.name.toLowerCase();
+  if (!nomeMinusculo.endsWith('.png') && !nomeMinusculo.endsWith('.gif')) {
+    setStatus('❌ Envie um arquivo PNG ou GIF exportado do Piskel.', 'erro');
+    return;
+  }
+
+  setStatus('⏳ Enviando seu desenho...', 'info');
+  const nomeVersionado = await proximoNomeVersionado(alunoAtivo.codigo, file.name);
+  const path = `envios/${alunoAtivo.codigo}/${nomeVersionado}`;
+
+  const { error: upErr } = await sb.storage.from('submissoes').upload(path, file, { upsert: true });
+  if (upErr) { setStatus('❌ Erro ao enviar: ' + upErr.message, 'erro'); return; }
+
+  const { error: rpcErr } = await sb.rpc('registrar_envio', {
+    p_codigo: alunoAtivo.codigo, p_nome_arquivo: nomeVersionado, p_storage_path: path,
+    p_tipo: 'envio', p_tamanho_bytes: file.size
+  });
+  if (rpcErr) { setStatus('❌ Erro ao registrar: ' + rpcErr.message, 'erro'); return; }
+
+  setStatus('✅ Desenho enviado! Você já pode fazer outro.', 'ok');
+  input.value = '';
+  carregarDesenhos();
+}
+
+async function carregarDesenhos() {
+  const lista = document.getElementById('lista-desenhos');
+  if (!sb || !alunoAtivo) return;
+  const { data: todosArquivos } = await sb.from('arquivos')
+    .select('*').eq('aluno_id', alunoAtivo.id).order('criado_em', { ascending: false });
+  // filtra só as imagens (os desenhos), já que o tipo no banco fica como "envio" igual aos outros arquivos
+  const arquivos = (todosArquivos || []).filter(f => /\.(png|gif)$/i.test(f.nome_arquivo));
+  if (!arquivos || !arquivos.length) {
+    lista.innerHTML = '<p style="color:var(--text-muted); font-size:13px;">Nenhum desenho enviado ainda.</p>';
+    return;
+  }
+  lista.innerHTML = arquivos.map(f => `
+    <div class="arquivo-row">
+      <a href="${urlPublicoArquivo(f.storage_path)}" target="_blank" style="color:#38bdf8; font-size:13px; text-decoration:underline; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${f.nome_arquivo}</a>
+      <img src="${urlPublicoArquivo(f.storage_path)}" alt="" style="width:36px; height:36px; object-fit:contain; image-rendering:pixelated; border-radius:6px; border:1px solid var(--border-brutal); background:#0e0a1a;">
+    </div>
+  `).join('');
+}
+
+init();
+</script>
+</body>
+</html>
