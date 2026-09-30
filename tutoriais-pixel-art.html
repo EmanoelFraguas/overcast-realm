@@ -76,6 +76,17 @@
     color:#fff; background:var(--bg-card); border:2px solid var(--border); border-radius:999px;
     padding:10px 16px; cursor:pointer;
   }
+  .lightbox-nav{
+    position:absolute; top:50%; transform:translateY(-50%); font-family:'Press Start 2P',monospace;
+    font-size:20px; color:#fff; background:var(--bg-card); border:2px solid var(--border);
+    border-radius:50%; width:52px; height:52px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+  .lightbox-nav:hover{ border-color:var(--cyan); }
+  .lightbox-nav:disabled{ opacity:.25; cursor:default; }
+  .lightbox-nav:disabled:hover{ border-color:var(--border); }
+  #lightbox-prev{ left:12px; }
+  #lightbox-next{ right:12px; }
+  .lightbox-contador{ color:var(--ink-soft); font-weight:700; font-size:12px; text-align:center; }
 </style>
 </head>
 <body>
@@ -98,9 +109,12 @@
 
 <div class="lightbox" id="lightbox">
   <button class="lightbox-close" onclick="fecharLightbox()">✕ Fechar</button>
+  <button class="lightbox-nav" id="lightbox-prev" onclick="tutorialAnterior()" title="Anterior">‹</button>
+  <button class="lightbox-nav" id="lightbox-next" onclick="proximoTutorial()" title="Próximo">›</button>
   <h3 id="lightbox-title"></h3>
   <img id="lightbox-img" src="" alt="">
   <div class="tut-tags" id="lightbox-tags"></div>
+  <p class="lightbox-contador" id="lightbox-contador"></p>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -149,7 +163,7 @@ function renderGaleria(){
   }
 
   gallery.innerHTML = lista.map((t,i) => `
-    <div class="tut-card" onclick="abrirLightbox(${tutoriais.indexOf(t)})">
+    <div class="tut-card" onclick="abrirLightbox(${i})">
       <img class="tut-thumb" src="${urlPublica(t.storage_path)}" loading="lazy" alt="${t.titulo}">
       <div class="tut-info">
         <p class="tut-title">${t.titulo}</p>
@@ -159,19 +173,54 @@ function renderGaleria(){
   `).join('');
 }
 
-function abrirLightbox(idx){
-  const t = tutoriais[idx];
+// lista de tutoriais que está aberta no lightbox no momento (respeita o filtro de tag ativo)
+// e a posição atual dentro dela, pra dar pra usar as setas sem fechar/abrir de novo
+let listaAtualLightbox = [];
+let indiceAtualLightbox = -1;
+
+function abrirLightbox(idxNaLista){
+  listaAtualLightbox = tagAtiva ? tutoriais.filter(t => (t.tags||[]).includes(tagAtiva)) : tutoriais;
+  indiceAtualLightbox = idxNaLista;
+  mostrarTutorialAtual();
+  document.getElementById('lightbox').classList.add('show');
+}
+
+function mostrarTutorialAtual(){
+  const t = listaAtualLightbox[indiceAtualLightbox];
   if(!t) return;
   document.getElementById('lightbox-title').textContent = t.titulo;
   document.getElementById('lightbox-img').src = urlPublica(t.storage_path);
   document.getElementById('lightbox-tags').innerHTML = (t.tags||[]).map(tag => `<span class="tut-tag">#${tag}</span>`).join('');
-  document.getElementById('lightbox').classList.add('show');
+  document.getElementById('lightbox-contador').textContent = (indiceAtualLightbox+1) + ' / ' + listaAtualLightbox.length;
+  document.getElementById('lightbox-prev').disabled = indiceAtualLightbox <= 0;
+  document.getElementById('lightbox-next').disabled = indiceAtualLightbox >= listaAtualLightbox.length - 1;
 }
+
+function tutorialAnterior(){
+  if(indiceAtualLightbox > 0){
+    indiceAtualLightbox--;
+    mostrarTutorialAtual();
+  }
+}
+function proximoTutorial(){
+  if(indiceAtualLightbox < listaAtualLightbox.length - 1){
+    indiceAtualLightbox++;
+    mostrarTutorialAtual();
+  }
+}
+
 function fecharLightbox(){
   document.getElementById('lightbox').classList.remove('show');
 }
 document.getElementById('lightbox').addEventListener('click', e => {
   if(e.target.id === 'lightbox') fecharLightbox();
+});
+// setas do teclado também funcionam enquanto o lightbox está aberto
+document.addEventListener('keydown', e => {
+  if(!document.getElementById('lightbox').classList.contains('show')) return;
+  if(e.key === 'ArrowRight') proximoTutorial();
+  if(e.key === 'ArrowLeft') tutorialAnterior();
+  if(e.key === 'Escape') fecharLightbox();
 });
 
 carregar();
