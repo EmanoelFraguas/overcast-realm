@@ -681,7 +681,7 @@
         <h3 class="font-pixel text-[11px] text-white mb-2" data-i18n="meusArquivos">[+] Meus Arquivos (.c3p / builds)</h3>
         <p class="text-xs text-gray-400 mb-4 leading-relaxed" data-i18n="descUploadDev">Upload direto para o seu diretório na nuvem — sem depender de uma conta compartilhada. Envie quantas vezes quiser; a versão mais recente fica sempre disponível.</p>
         <div class="flex flex-wrap items-center gap-3 mb-4">
-          <input type="file" id="dev-file-input" accept=".c3p,.txt,.png,.gif,.mp3,.ogg,.wav,.mblock" class="text-xs text-gray-400" />
+          <input type="file" id="dev-file-input" class="text-xs text-gray-400" />
           <button class="btn-primary" onclick="uploadArquivoAluno('envio')" data-i18n="btnEnviarArquivo">Enviar arquivo</button>
           <span id="dev-upload-status" class="text-[10px] font-mono text-gray-500"></span>
         </div>
@@ -720,7 +720,7 @@
         <h3 class="font-pixel text-[11px] text-white mb-2" data-i18n="enviarProjetoFinal">[+] Enviar Projeto Final</h3>
         <p class="text-xs text-gray-400 mb-4 leading-relaxed" data-i18n="descEnviarProjetoFinal">Selecione seu nome na lista da turma e envie o projeto final da aula, associado diretamente à sua identidade.</p>
         <div class="space-y-3">
-          <input type="file" id="turma-final-file" accept=".c3p,.txt,.png,.gif,.mp3,.ogg,.wav,.mblock" class="text-xs text-gray-400" />
+          <input type="file" id="turma-final-file" class="text-xs text-gray-400" />
           <p class="text-[10px] text-gray-500 font-mono" id="turma-final-aluno-label" data-i18n="selecioneSeuNome">👉 Selecione seu nome...</p>
           <div id="turma-final-aluno-list" class="aluno-pick-list"></div>
           <button class="btn-primary" onclick="uploadProjetoFinal()" data-i18n="btnEnviarProjetoFinal">Enviar projeto final</button>
@@ -927,8 +927,11 @@ const sb = (SUPABASE_URL.startsWith("http"))
 
 // Extensões aceitas nos uploads (arquivos de desenvolvimento — amplia quando entrar arte digital)
 const EXTENSOES_PERMITIDAS = ['.c3p', '.txt', '.png', '.gif', '.mp3', '.ogg', '.wav', '.mblock'];
+// Arquivos de texto sem extensão aceitos pelo nome exato (ex.: o arquivo "hosts" do Windows)
+const NOMES_SEM_EXTENSAO_PERMITIDOS = ['hosts'];
 function extensaoPermitida(nomeArquivo) {
   const nome = nomeArquivo.toLowerCase();
+  if (NOMES_SEM_EXTENSAO_PERMITIDOS.includes(nome)) return true;
   return EXTENSOES_PERMITIDAS.some(ext => nome.endsWith(ext));
 }
 
