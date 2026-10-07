@@ -503,6 +503,26 @@
         </div>
       </div>
 
+      <div id="fig-envios-card" class="card p-5 mb-6" style="display:none;">
+        <h2 class="font-pixel text-[11px] text-gray-900 mb-1">📥 DESENHOS ENVIADOS PELOS ALUNOS</h2>
+        <p class="text-[10px] font-mono text-gray-500 mb-3">Imagens (PNG/GIF) que os alunos mandaram do Piskel. Dê um título e clique em "→ ÁLBUM" pra colocar direto no álbum do aluno — sem baixar nem enviar de novo.</p>
+        <div class="flex flex-wrap items-end gap-3 mb-4">
+          <div class="flex-1 min-w-[200px]">
+            <label class="text-[10px] font-mono text-gray-500 block mb-1">TAGS PARA OS ENVIOS (separadas por vírgula)</label>
+            <input type="text" id="fig-env-tags" placeholder="ex: robô, ficção" class="input-field w-full" list="fig-tags-existentes" />
+          </div>
+          <div>
+            <label class="text-[10px] font-mono text-gray-500 block mb-1">MOSTRAR</label>
+            <select id="fig-env-filtro" class="select-field" onchange="renderEnviosTurma()">
+              <option value="piskel">Só do Piskel (piskel_...)</option>
+              <option value="todas">Todas as imagens</option>
+            </select>
+          </div>
+        </div>
+        <span id="fig-env-status" class="block text-[10px] font-mono mb-3"></span>
+        <div id="fig-env-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"></div>
+      </div>
+
       <div id="fig-painel-aluno" class="card p-5" style="display:none;">
         <h2 class="font-pixel text-[11px] text-gray-900 mb-4" id="fig-aluno-titulo">—</h2>
 
@@ -1145,10 +1165,15 @@ function onMudarTurmaFigurinhas() {
   document.getElementById('fig-painel-aluno').style.display = 'none';
   figurinhasAlunoAtualId = null;
 
-  if (!turmaId) { selAluno.innerHTML = '<option value="">— escolha a turma primeiro —</option>'; return; }
+  if (!turmaId) {
+    selAluno.innerHTML = '<option value="">— escolha a turma primeiro —</option>';
+    document.getElementById('fig-envios-card').style.display = 'none';
+    return;
+  }
   const turma = turmasCache.find(t => t.id === turmaId);
   selAluno.innerHTML = '<option value="">Selecione um aluno...</option>' +
     (turma ? turma.alunos.map(a => `<option value="${a.id}">${a.nome}</option>`).join('') : '');
+  renderEnviosTurma();
 }
 
 function onMudarAlunoFigurinhas() {
@@ -1222,6 +1247,87 @@ async function uploadFigurinhaTab() {
   await carregarTurmas();
   renderFigurinhasTab();
   atualizarTagsDatalist();
+}
+
+/* ---- Envios dos alunos (Piskel etc.) -> álbum, sem baixar/enviar de novo ---- */
+const enviadosParaAlbum = new Set(); // ids de arquivos já mandados pro álbum nesta sessão
+
+function renderEnviosTurma() {
+  const card = document.getElementById('fig-envios-card');
+  const turmaId = document.getElementById('fig-turma-select').value;
+  const turma = turmasCache.find(t => t.id === turmaId);
+  if (!turma) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+
+  const soPiskel = document.getElementById('fig-env-filtro').value === 'piskel';
+  const lista = [];
+  turma.alunos.forEach(a => (a.arquivos || []).forEach(f => {
+    if (!/\.(png|gif|jpe?g|webp)$/i.test(f.nome_arquivo)) return;
+    if (soPiskel && !/^piskel_/i.test(f.nome_arquivo)) return;
+    lista.push({ aluno: a, arq: f });
+  }));
+  lista.sort((x, y) => new Date(y.arq.criado_em) - new Date(x.arq.criado_em));
+
+  const grid = document.getElementById('fig-env-grid');
+  if (!lista.length) {
+    grid.innerHTML = '<p class="text-[11px] text-gray-500 font-mono col-span-full">Nenhum desenho enviado ainda' + (soPiskel ? ' do Piskel (tente "Todas as imagens")' : '') + '.</p>';
+    return;
+  }
+  grid.innerHTML = lista.map(({ aluno, arq }) => {
+    const jaFoi = enviadosParaAlbum.has(arq.id);
+    const url = urlPublicoArquivo(arq.storage_path);
+    return `
+      <div class="border border-[#d8d5e6] rounded-lg p-2 text-center">
+        <a href="${url}" target="_blank" title="Abrir em tamanho real">
+          <img src="${url}" loading="lazy" style="width:96px;height:96px;object-fit:contain;image-rendering:pixelated;margin:0 auto 6px;border-radius:6px;background:#f4f2fa;" />
+        </a>
+        <p class="text-[10px] text-gray-800 font-bold truncate">${aluno.nome}</p>
+        <p class="text-[9px] text-gray-500 font-mono truncate">${new Date(arq.criado_em).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })}</p>
+        <input type="text" id="fig-env-titulo-${arq.id}" placeholder="Título" class="input-field w-full mt-1" style="font-size:10px;padding:3px 6px;" />
+        <button id="fig-env-btn-${arq.id}" class="btn-action btn-add mt-1" style="font-size:8px;padding:3px 8px;${jaFoi ? 'opacity:.5;' : ''}" onclick="mandarEnvioParaAlbum('${arq.id}', '${aluno.id}')">${jaFoi ? '✅ NO ÁLBUM (de novo?)' : '→ ÁLBUM'}</button>
+      </div>
+    `;
+  }).join('');
+}
+
+async function mandarEnvioParaAlbum(arquivoId, alunoId) {
+  const turma = turmasCache.find(t => t.id === document.getElementById('fig-turma-select').value);
+  const aluno = turma && turma.alunos.find(a => a.id === alunoId);
+  const arq = aluno && (aluno.arquivos || []).find(f => f.id === arquivoId);
+  if (!arq) return;
+
+  const statusEl = document.getElementById('fig-env-status');
+  const btn = document.getElementById('fig-env-btn-' + arquivoId);
+  const tituloInput = document.getElementById('fig-env-titulo-' + arquivoId);
+  const titulo = (tituloInput && tituloInput.value.trim()) || 'Sem título';
+  const tags = document.getElementById('fig-env-tags').value.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
+
+  if (btn) { btn.disabled = true; btn.textContent = '⏳...'; }
+  statusEl.textContent = '⏳ Enviando pro álbum de ' + aluno.nome + '...'; statusEl.className = 'block text-[10px] font-mono mb-3 text-yellow-600';
+
+  // copia o arquivo dentro do próprio Storage (sem baixar) pra figurinha não sumir
+  // se o aluno apagar o envio original; se a cópia falhar, usa o arquivo original mesmo
+  const ext = arq.nome_arquivo.slice(arq.nome_arquivo.lastIndexOf('.'));
+  const novoPath = `figurinhas/${alunoId}/${Date.now()}${ext}`;
+  let pathFinal = novoPath;
+  const { error: copyErr } = await sb.storage.from('submissoes').copy(arq.storage_path, novoPath);
+  if (copyErr) pathFinal = arq.storage_path;
+
+  const { data, error: rpcErr } = await sb.rpc('admin_adicionar_figurinha', {
+    chave_admin: sbAdminKey, p_aluno_id: alunoId, p_titulo: titulo, p_storage_path: pathFinal, p_tags: tags
+  });
+  if (rpcErr || !data || !data.ok) {
+    statusEl.textContent = '❌ Erro ao salvar: ' + (rpcErr ? rpcErr.message : data.erro); statusEl.className = 'block text-[10px] font-mono mb-3 text-red-600';
+    if (btn) { btn.disabled = false; btn.textContent = '→ ÁLBUM'; }
+    return;
+  }
+
+  enviadosParaAlbum.add(arquivoId);
+  statusEl.textContent = '✅ Adicionado ao álbum de ' + aluno.nome + '!'; statusEl.className = 'block text-[10px] font-mono mb-3 text-green-600 font-bold';
+  await carregarTurmas();
+  renderEnviosTurma();
+  atualizarTagsDatalist();
+  if (figurinhasAlunoAtualId) renderFigurinhasTab();
 }
 
 async function removerFigurinhaTab(id) {
