@@ -26,10 +26,116 @@
     }
   }
 
-  // Gera um GIF animado com o mesmo método que o próprio Piskel usa no botão "Export > GIF"
+  // ---- Codificador de GIF com cores EXATAS ----
+  // O codificador do Piskel aproxima as cores (NeuQuant) e usa o amarelo puro como "cor transparente";
+  // em alguns desenhos isso deixa pontinhos amarelos no fundo. Este aqui usa exatamente as cores do
+  // desenho (até 255) e transparência de verdade, então não aparece ruído.
+  // Codificador de GIF com cores EXATAS (sem aproximação) e transparência de 1 bit.
+  // frames: array de Uint8ClampedArray RGBA (w*h*4). Retorna Blob, ou null se passar de 255 cores.
+  function gifExato(frames, w, h, delayMs) {
+    var LIM = 128;                       // alpha < 128 vira transparente
+    var paleta = new Map();              // "r,g,b" -> índice (1..255); índice 0 = transparente
+    var cores = [];                      // [r,g,b] na ordem dos índices 1..
+    var quadros = frames.map(function (d) {
+      var idx = new Uint8Array(w * h);
+      for (var p = 0, i = 0; p < w * h; p++, i += 4) {
+        if (d[i + 3] < LIM) { idx[p] = 0; continue; }
+        var chave = (d[i] << 16) | (d[i + 1] << 8) | d[i + 2];
+        var n = paleta.get(chave);
+        if (n === undefined) {
+          if (cores.length >= 255) { n = -1; } else { n = cores.length + 1; paleta.set(chave, n); cores.push([d[i], d[i + 1], d[i + 2]]); }
+        }
+        if (n === -1) return null;
+        idx[p] = n;
+      }
+      return idx;
+    });
+    if (quadros.some(function (q) { return q === null; })) return null;
+
+    var bits = 1;                        // tamanho da tabela = 2^bits (>= cores+1)
+    while ((1 << bits) < cores.length + 1) bits++;
+    var tam = 1 << bits;
+    var minCode = Math.max(2, bits);
+
+    var out = [];
+    function b(v) { out.push(v & 255); }
+    function s(v) { b(v); b(v >> 8); }
+    function txt(t) { for (var i = 0; i < t.length; i++) b(t.charCodeAt(i)); }
+
+    txt('GIF89a'); s(w); s(h);
+    b(0x80 | 0x70 | (bits - 1)); b(0); b(0);          // tabela global + profundidade de cor
+    b(0); b(0); b(0);                                   // índice 0 (transparente) = preto
+    for (var c = 0; c < cores.length; c++) { b(cores[c][0]); b(cores[c][1]); b(cores[c][2]); }
+    for (var f = cores.length + 1; f < tam; f++) { b(0); b(0); b(0); }
+    if (quadros.length > 1) { b(0x21); b(0xFF); b(11); txt('NETSCAPE2.0'); b(3); b(1); s(0); b(0); }   // repete pra sempre
+
+    var atraso = Math.max(2, Math.round(delayMs / 10));
+    quadros.forEach(function (idx) {
+      b(0x21); b(0xF9); b(4); b((2 << 2) | 1); s(atraso); b(0); b(0);   // transparência no índice 0, descarta o quadro anterior
+      b(0x2C); s(0); s(0); s(w); s(h); b(0);
+      b(minCode);
+      var dados = lzw(minCode, idx);
+      for (var o = 0; o < dados.length; o += 255) {
+        var pedaco = dados.slice(o, o + 255);
+        b(pedaco.length); for (var k = 0; k < pedaco.length; k++) b(pedaco[k]);
+      }
+      b(0);
+    });
+    b(0x3B);
+    return new Blob([new Uint8Array(out)], { type: 'image/gif' });
+  }
+
+  function lzw(minCode, idx) {
+    var clear = 1 << minCode, eoi = clear + 1;
+    var tamCod = minCode + 1, prox = eoi + 1, dic = new Map();
+    var saida = [], atual = 0, nbits = 0;
+    function emite(c) {
+      atual |= c << nbits; nbits += tamCod;
+      while (nbits >= 8) { saida.push(atual & 255); atual >>= 8; nbits -= 8; }
+    }
+    emite(clear);
+    var prefixo = idx[0];
+    for (var i = 1; i < idx.length; i++) {
+      var k = idx[i], chave = (prefixo << 8) | k, achou = dic.get(chave);
+      if (achou !== undefined) { prefixo = achou; continue; }
+      emite(prefixo);
+      if (prox < 4096) {
+        dic.set(chave, prox);
+        if (prox === (1 << tamCod)) tamCod++;
+        prox++;
+      } else {
+        emite(clear); dic = new Map(); tamCod = minCode + 1; prox = eoi + 1;
+      }
+      prefixo = k;
+    }
+    emite(prefixo); emite(eoi);
+    if (nbits > 0) saida.push(atual & 255);
+    return saida;
+  }
+
+  // Gera o GIF animado: primeiro tenta o jeito exato (acima); só se o desenho tiver mais de 255
+  // cores usa o codificador do próprio Piskel (que aproxima as cores).
   function gerarGifAnimado() {
     return new Promise(function (resolve, reject) {
       try {
+        var width = pc.getWidth();
+        var height = pc.getHeight();
+        var fps = pc.getFPS();
+
+        // pega cada quadro como pixels (RGBA)
+        var quadrosRGBA = [];
+        for (var q = 0; q < frameCount; q++) {
+          var render = pc.renderFrameAt(q, true);
+          var cv = pskl.utils.CanvasUtils.createCanvas(width, height);
+          var cx = cv.getContext('2d');
+          cx.drawImage(render, 0, 0, width, height);
+          quadrosRGBA.push(cx.getImageData(0, 0, width, height).data);
+        }
+
+        var exato = gifExato(quadrosRGBA, width, height, 1000 / fps);
+        if (exato) { resolve(exato); return; }
+
+        // plano B: desenho com mais de 255 cores -> codificador do Piskel
         if (!window.GIF) {
           reject(new Error('Biblioteca de GIF do Piskel não encontrada nesta página.'));
           return;
@@ -49,13 +155,9 @@
           transparent = null;
         }
 
-        var width = pc.getWidth();
-        var height = pc.getHeight();
-        var fps = pc.getFPS();
-
         var gif = new window.GIF({
-          workers: 2,
-          quality: 10,
+          workers: 5,
+          quality: 1,   // igual ao do Piskel (quanto menor, mais fiel)
           width: width,
           height: height,
           preserveColors: preserveColors,
@@ -68,10 +170,10 @@
         context.fillStyle = transparentColor;
 
         for (var i = 0; i < frameCount; i++) {
-          var render = pc.renderFrameAt(i, true);
+          var render2 = pc.renderFrameAt(i, true);
           context.clearRect(0, 0, width, height);
           context.fillRect(0, 0, width, height);
-          context.drawImage(render, 0, 0, width, height);
+          context.drawImage(render2, 0, 0, width, height);
           var canvas = pskl.utils.ImageResizer.scale(background, 1);
           gif.addFrame(canvas.getContext('2d'), { delay: 1000 / fps });
         }
