@@ -529,6 +529,14 @@
           </div>
         </div>
         <span id="fig-env-status" class="block text-[10px] font-mono mb-3"></span>
+        <div class="flex flex-wrap items-center gap-2 mb-3 p-2 bg-[#f4f2fa] rounded-lg border border-[#d8d5e6]">
+          <button class="btn-action" style="background:#6b7280;font-size:9px;padding:4px 10px;" onclick="selecionarTodosEnvios(true)">☑️ SELECIONAR TODOS</button>
+          <button class="btn-action" style="background:#6b7280;font-size:9px;padding:4px 10px;" onclick="selecionarTodosEnvios(false)">⬜ LIMPAR</button>
+          <span id="fig-env-contador" class="text-[10px] font-mono text-gray-600">0 selecionados</span>
+          <span class="flex-1"></span>
+          <button class="btn-action" style="background:#6b7280;font-size:9px;padding:4px 10px;" onclick="marcarEnviosEmLote('revisado')">👁️ DEIXAR SELECIONADOS</button>
+          <button class="btn-action btn-del" style="font-size:9px;padding:4px 10px;" onclick="excluirEnviosEmLote()">🗑️ EXCLUIR SELECIONADOS</button>
+        </div>
         <div id="fig-env-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"></div>
       </div>
 
@@ -1259,7 +1267,65 @@ async function uploadFigurinhaTab() {
 }
 
 /* ---- Envios dos alunos (Piskel etc.): deixar como está / mandar pro álbum / excluir ---- */
+const envSelecionados = new Set(); // ids de envios marcados pra ação em lote
+
 function statusDoEnvio(arq) { return arq.status_revisao || 'pendente'; }
+
+function atualizarContadorEnvios() {
+  const n = idsEnviosSelecionadosVisiveis().length;
+  document.getElementById('fig-env-contador').textContent = n + ' selecionado' + (n !== 1 ? 's' : '');
+}
+function alternarSelecaoEnvio(id, marcado) {
+  if (marcado) envSelecionados.add(id); else envSelecionados.delete(id);
+  atualizarContadorEnvios();
+}
+function selecionarTodosEnvios(marcar) {
+  document.querySelectorAll('#fig-env-grid .fig-env-check').forEach(cb => {
+    cb.checked = marcar;
+    if (marcar) envSelecionados.add(cb.dataset.id); else envSelecionados.delete(cb.dataset.id);
+  });
+  atualizarContadorEnvios();
+}
+// só considera selecionados os que estão visíveis na tela agora (filtros podem esconder alguns)
+function idsEnviosSelecionadosVisiveis() {
+  return [...document.querySelectorAll('#fig-env-grid .fig-env-check')]
+    .filter(cb => cb.checked).map(cb => cb.dataset.id);
+}
+
+async function marcarEnviosEmLote(status) {
+  const ids = idsEnviosSelecionadosVisiveis();
+  if (!ids.length) { statusEnvioMsg('👉 Selecione pelo menos um desenho.', 'erro'); return; }
+  statusEnvioMsg('⏳ Marcando ' + ids.length + '...', 'info');
+  const erros = (await Promise.all(ids.map(id => marcarStatusArquivo(id, status)))).filter(Boolean);
+  ids.forEach(id => envSelecionados.delete(id));
+  if (erros.length) statusEnvioMsg('❌ ' + erros.length + ' falharam (rodou a migração 12?): ' + erros[0], 'erro');
+  else statusEnvioMsg('👁️ ' + ids.length + ' deixado' + (ids.length !== 1 ? 's' : '') + ' como estão (saíram dos pendentes).', 'ok');
+  await carregarTurmas();
+  renderEnviosTurma();
+}
+
+async function excluirEnviosEmLote() {
+  const ids = idsEnviosSelecionadosVisiveis();
+  if (!ids.length) { statusEnvioMsg('👉 Selecione pelo menos um desenho.', 'erro'); return; }
+
+  const turma = turmasCache.find(t => t.id === document.getElementById('fig-turma-select').value);
+  const itens = [];
+  turma.alunos.forEach(a => (a.arquivos || []).forEach(f => { if (ids.includes(f.id)) itens.push({ aluno: a, arq: f }); }));
+  const quebram = itens.filter(({ aluno, arq }) => (aluno.figurinhas || []).some(f => f.storage_path === arq.storage_path)).length;
+  const aviso = quebram ? `ATENÇÃO: ${quebram} deles são usados direto por figurinhas do álbum — excluir vai quebrar essas figurinhas.\n\n` : '';
+  if (!confirm(`${aviso}Excluir ${itens.length} desenho${itens.length !== 1 ? 's' : ''}? Essa ação não pode ser desfeita.`)) return;
+
+  statusEnvioMsg('⏳ Excluindo ' + itens.length + '...', 'info');
+  const { error: storageErr } = await sb.storage.from('submissoes').remove(itens.map(i => i.arq.storage_path));
+  if (storageErr) console.warn('Aviso ao remover do storage:', storageErr.message);
+  const resultados = await Promise.all(itens.map(i => sb.rpc('admin_remover_arquivo', { chave: sbAdminKey, p_arquivo_id: i.arq.id })));
+  const falhas = resultados.filter(r => r.error);
+  ids.forEach(id => envSelecionados.delete(id));
+  if (falhas.length) statusEnvioMsg('❌ ' + falhas.length + ' não foram excluídos: ' + falhas[0].error.message, 'erro');
+  else statusEnvioMsg('🗑️ ' + itens.length + ' desenho' + (itens.length !== 1 ? 's' : '') + ' excluído' + (itens.length !== 1 ? 's' : '') + '.', 'ok');
+  await carregarTurmas();
+  renderEnviosTurma();
+}
 
 function renderEnviosTurma() {
   const card = document.getElementById('fig-envios-card');
@@ -1282,6 +1348,7 @@ function renderEnviosTurma() {
   const grid = document.getElementById('fig-env-grid');
   if (!lista.length) {
     grid.innerHTML = '<p class="text-[11px] text-gray-500 font-mono col-span-full">Nada por aqui com esses filtros.</p>';
+    atualizarContadorEnvios();
     return;
   }
   const rotulo = { pendente: '', revisado: '👁️ deixado', no_album: '✅ no álbum' };
@@ -1289,7 +1356,8 @@ function renderEnviosTurma() {
     const st = statusDoEnvio(arq);
     const url = urlPublicoArquivo(arq.storage_path);
     return `
-      <div class="border border-[#d8d5e6] rounded-lg p-2 text-center">
+      <div class="relative border border-[#d8d5e6] rounded-lg p-2 text-center">
+        <input type="checkbox" class="fig-env-check" data-id="${arq.id}" ${envSelecionados.has(arq.id) ? 'checked' : ''} onchange="alternarSelecaoEnvio('${arq.id}', this.checked)" style="position:absolute;top:6px;left:6px;width:18px;height:18px;cursor:pointer;" title="Selecionar" />
         <a href="${url}" target="_blank" title="Abrir em tamanho real">
           <img src="${url}" loading="lazy" style="width:96px;height:96px;object-fit:contain;image-rendering:pixelated;margin:0 auto 6px;border-radius:6px;background:#f4f2fa;" />
         </a>
@@ -1306,6 +1374,7 @@ function renderEnviosTurma() {
       </div>
     `;
   }).join('');
+  atualizarContadorEnvios();
 }
 
 function acharEnvio(arquivoId, alunoId) {
