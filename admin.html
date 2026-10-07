@@ -505,17 +505,26 @@
 
       <div id="fig-envios-card" class="card p-5 mb-6" style="display:none;">
         <h2 class="font-pixel text-[11px] text-gray-900 mb-1">📥 DESENHOS ENVIADOS PELOS ALUNOS</h2>
-        <p class="text-[10px] font-mono text-gray-500 mb-3">Imagens (PNG/GIF) que os alunos mandaram do Piskel. Dê um título e clique em "→ ÁLBUM" pra colocar direto no álbum do aluno — sem baixar nem enviar de novo.</p>
+        <p class="text-[10px] font-mono text-gray-500 mb-3">Imagens (PNG/GIF) que os alunos mandaram do Piskel. Pra cada um: <b>→ ÁLBUM</b> (vira figurinha direto, sem baixar nem enviar de novo), <b>👁️ DEIXAR</b> (só marca como visto e tira da lista de pendentes) ou <b>🗑️ EXCLUIR</b> (envio errado/indevido).</p>
         <div class="flex flex-wrap items-end gap-3 mb-4">
           <div class="flex-1 min-w-[200px]">
             <label class="text-[10px] font-mono text-gray-500 block mb-1">TAGS PARA OS ENVIOS (separadas por vírgula)</label>
             <input type="text" id="fig-env-tags" placeholder="ex: robô, ficção" class="input-field w-full" list="fig-tags-existentes" />
           </div>
           <div>
-            <label class="text-[10px] font-mono text-gray-500 block mb-1">MOSTRAR</label>
+            <label class="text-[10px] font-mono text-gray-500 block mb-1">TIPO</label>
             <select id="fig-env-filtro" class="select-field" onchange="renderEnviosTurma()">
               <option value="piskel">Só do Piskel (piskel_...)</option>
               <option value="todas">Todas as imagens</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[10px] font-mono text-gray-500 block mb-1">SITUAÇÃO</label>
+            <select id="fig-env-status-filtro" class="select-field" onchange="renderEnviosTurma()">
+              <option value="pendente">Pendentes (ainda não revisei)</option>
+              <option value="revisado">Deixados como estão</option>
+              <option value="no_album">Já no álbum</option>
+              <option value="todos">Todos</option>
             </select>
           </div>
         </div>
@@ -1249,8 +1258,8 @@ async function uploadFigurinhaTab() {
   atualizarTagsDatalist();
 }
 
-/* ---- Envios dos alunos (Piskel etc.) -> álbum, sem baixar/enviar de novo ---- */
-const enviadosParaAlbum = new Set(); // ids de arquivos já mandados pro álbum nesta sessão
+/* ---- Envios dos alunos (Piskel etc.): deixar como está / mandar pro álbum / excluir ---- */
+function statusDoEnvio(arq) { return arq.status_revisao || 'pendente'; }
 
 function renderEnviosTurma() {
   const card = document.getElementById('fig-envios-card');
@@ -1260,21 +1269,24 @@ function renderEnviosTurma() {
   card.style.display = 'block';
 
   const soPiskel = document.getElementById('fig-env-filtro').value === 'piskel';
+  const filtroStatus = document.getElementById('fig-env-status-filtro').value;
   const lista = [];
   turma.alunos.forEach(a => (a.arquivos || []).forEach(f => {
     if (!/\.(png|gif|jpe?g|webp)$/i.test(f.nome_arquivo)) return;
     if (soPiskel && !/^piskel_/i.test(f.nome_arquivo)) return;
+    if (filtroStatus !== 'todos' && statusDoEnvio(f) !== filtroStatus) return;
     lista.push({ aluno: a, arq: f });
   }));
   lista.sort((x, y) => new Date(y.arq.criado_em) - new Date(x.arq.criado_em));
 
   const grid = document.getElementById('fig-env-grid');
   if (!lista.length) {
-    grid.innerHTML = '<p class="text-[11px] text-gray-500 font-mono col-span-full">Nenhum desenho enviado ainda' + (soPiskel ? ' do Piskel (tente "Todas as imagens")' : '') + '.</p>';
+    grid.innerHTML = '<p class="text-[11px] text-gray-500 font-mono col-span-full">Nada por aqui com esses filtros.</p>';
     return;
   }
+  const rotulo = { pendente: '', revisado: '👁️ deixado', no_album: '✅ no álbum' };
   grid.innerHTML = lista.map(({ aluno, arq }) => {
-    const jaFoi = enviadosParaAlbum.has(arq.id);
+    const st = statusDoEnvio(arq);
     const url = urlPublicoArquivo(arq.storage_path);
     return `
       <div class="border border-[#d8d5e6] rounded-lg p-2 text-center">
@@ -1282,31 +1294,59 @@ function renderEnviosTurma() {
           <img src="${url}" loading="lazy" style="width:96px;height:96px;object-fit:contain;image-rendering:pixelated;margin:0 auto 6px;border-radius:6px;background:#f4f2fa;" />
         </a>
         <p class="text-[10px] text-gray-800 font-bold truncate">${aluno.nome}</p>
-        <p class="text-[9px] text-gray-500 font-mono truncate">${new Date(arq.criado_em).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })}</p>
-        <input type="text" id="fig-env-titulo-${arq.id}" placeholder="Título" class="input-field w-full mt-1" style="font-size:10px;padding:3px 6px;" />
-        <button id="fig-env-btn-${arq.id}" class="btn-action btn-add mt-1" style="font-size:8px;padding:3px 8px;${jaFoi ? 'opacity:.5;' : ''}" onclick="mandarEnvioParaAlbum('${arq.id}', '${aluno.id}')">${jaFoi ? '✅ NO ÁLBUM (de novo?)' : '→ ÁLBUM'}</button>
+        <p class="text-[9px] text-gray-500 font-mono truncate">${new Date(arq.criado_em).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })} ${rotulo[st]}</p>
+        <input type="text" id="fig-env-titulo-${arq.id}" placeholder="Título (pro álbum)" class="input-field w-full mt-1" style="font-size:10px;padding:3px 6px;" />
+        <div class="flex flex-wrap gap-1 justify-center mt-1">
+          <button class="btn-action btn-add" style="font-size:8px;padding:3px 6px;" onclick="mandarEnvioParaAlbum('${arq.id}', '${aluno.id}')">${st === 'no_album' ? '→ ÁLBUM (de novo)' : '→ ÁLBUM'}</button>
+          ${st === 'pendente'
+            ? `<button class="btn-action" style="background:#6b7280;font-size:8px;padding:3px 6px;" onclick="marcarEnvio('${arq.id}', 'revisado')">👁️ DEIXAR</button>`
+            : `<button class="btn-action" style="background:#6b7280;font-size:8px;padding:3px 6px;" onclick="marcarEnvio('${arq.id}', 'pendente')">↩ PENDENTE</button>`}
+          <button class="btn-action btn-del" style="font-size:8px;padding:3px 6px;" onclick="excluirEnvio('${arq.id}', '${aluno.id}')">🗑️ EXCLUIR</button>
+        </div>
       </div>
     `;
   }).join('');
 }
 
-async function mandarEnvioParaAlbum(arquivoId, alunoId) {
+function acharEnvio(arquivoId, alunoId) {
   const turma = turmasCache.find(t => t.id === document.getElementById('fig-turma-select').value);
   const aluno = turma && turma.alunos.find(a => a.id === alunoId);
   const arq = aluno && (aluno.arquivos || []).find(f => f.id === arquivoId);
+  return { aluno, arq };
+}
+
+function statusEnvioMsg(texto, tipo) {
+  const el = document.getElementById('fig-env-status');
+  el.textContent = texto;
+  el.className = 'block text-[10px] font-mono mb-3 ' + (tipo === 'ok' ? 'text-green-600 font-bold' : tipo === 'erro' ? 'text-red-600' : 'text-yellow-600');
+}
+
+async function marcarStatusArquivo(arquivoId, status) {
+  const { data, error } = await sb.rpc('admin_marcar_arquivo', { chave_admin: sbAdminKey, p_arquivo_id: arquivoId, p_status: status });
+  if (error || !data || !data.ok) {
+    return (error ? error.message : (data && data.erro)) || 'erro desconhecido';
+  }
+  return null;
+}
+
+async function marcarEnvio(arquivoId, status) {
+  const erro = await marcarStatusArquivo(arquivoId, status);
+  if (erro) { statusEnvioMsg('❌ Não consegui marcar (rodou a migração 12 no Supabase?): ' + erro, 'erro'); return; }
+  statusEnvioMsg(status === 'revisado' ? '👁️ Deixado como está (saiu da lista de pendentes).' : '↩ Voltou pra pendentes.', 'ok');
+  await carregarTurmas();
+  renderEnviosTurma();
+}
+
+async function mandarEnvioParaAlbum(arquivoId, alunoId) {
+  const { aluno, arq } = acharEnvio(arquivoId, alunoId);
   if (!arq) return;
 
-  const statusEl = document.getElementById('fig-env-status');
-  const btn = document.getElementById('fig-env-btn-' + arquivoId);
-  const tituloInput = document.getElementById('fig-env-titulo-' + arquivoId);
-  const titulo = (tituloInput && tituloInput.value.trim()) || 'Sem título';
+  const titulo = (document.getElementById('fig-env-titulo-' + arquivoId).value || '').trim() || 'Sem título';
   const tags = document.getElementById('fig-env-tags').value.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
-
-  if (btn) { btn.disabled = true; btn.textContent = '⏳...'; }
-  statusEl.textContent = '⏳ Enviando pro álbum de ' + aluno.nome + '...'; statusEl.className = 'block text-[10px] font-mono mb-3 text-yellow-600';
+  statusEnvioMsg('⏳ Enviando pro álbum de ' + aluno.nome + '...', 'info');
 
   // copia o arquivo dentro do próprio Storage (sem baixar) pra figurinha não sumir
-  // se o aluno apagar o envio original; se a cópia falhar, usa o arquivo original mesmo
+  // se o envio original for excluído; se a cópia falhar, usa o arquivo original mesmo
   const ext = arq.nome_arquivo.slice(arq.nome_arquivo.lastIndexOf('.'));
   const novoPath = `figurinhas/${alunoId}/${Date.now()}${ext}`;
   let pathFinal = novoPath;
@@ -1316,18 +1356,34 @@ async function mandarEnvioParaAlbum(arquivoId, alunoId) {
   const { data, error: rpcErr } = await sb.rpc('admin_adicionar_figurinha', {
     chave_admin: sbAdminKey, p_aluno_id: alunoId, p_titulo: titulo, p_storage_path: pathFinal, p_tags: tags
   });
-  if (rpcErr || !data || !data.ok) {
-    statusEl.textContent = '❌ Erro ao salvar: ' + (rpcErr ? rpcErr.message : data.erro); statusEl.className = 'block text-[10px] font-mono mb-3 text-red-600';
-    if (btn) { btn.disabled = false; btn.textContent = '→ ÁLBUM'; }
-    return;
-  }
+  if (rpcErr || !data || !data.ok) { statusEnvioMsg('❌ Erro ao salvar: ' + (rpcErr ? rpcErr.message : data.erro), 'erro'); return; }
 
-  enviadosParaAlbum.add(arquivoId);
-  statusEl.textContent = '✅ Adicionado ao álbum de ' + aluno.nome + '!'; statusEl.className = 'block text-[10px] font-mono mb-3 text-green-600 font-bold';
+  const erroMarca = await marcarStatusArquivo(arquivoId, 'no_album');
+  statusEnvioMsg('✅ Adicionado ao álbum de ' + aluno.nome + '!' + (erroMarca ? ' (não consegui marcar como "no álbum" — rode a migração 12)' : ''), 'ok');
   await carregarTurmas();
   renderEnviosTurma();
   atualizarTagsDatalist();
   if (figurinhasAlunoAtualId) renderFigurinhasTab();
+}
+
+async function excluirEnvio(arquivoId, alunoId) {
+  const { aluno, arq } = acharEnvio(arquivoId, alunoId);
+  if (!arq) return;
+  // se a figurinha do álbum usa ESTE mesmo arquivo (cópia falhou na hora de mandar), excluir quebraria a figurinha
+  const usadoPeloAlbum = (aluno.figurinhas || []).some(f => f.storage_path === arq.storage_path);
+  const aviso = usadoPeloAlbum
+    ? `ATENÇÃO: uma figurinha do álbum de ${aluno.nome} usa exatamente este arquivo — excluir vai quebrar a figurinha.\n\n`
+    : '';
+  if (!confirm(`${aviso}Excluir o desenho "${arq.nome_arquivo}" de ${aluno.nome}? Essa ação não pode ser desfeita.`)) return;
+
+  const { error: storageErr } = await sb.storage.from('submissoes').remove([arq.storage_path]);
+  if (storageErr) console.warn('Aviso ao remover do storage:', storageErr.message);
+  const { error } = await sb.rpc('admin_remover_arquivo', { chave: sbAdminKey, p_arquivo_id: arquivoId });
+  if (error) { statusEnvioMsg('❌ Erro ao excluir: ' + error.message, 'erro'); return; }
+
+  statusEnvioMsg('🗑️ Desenho excluído.', 'ok');
+  await carregarTurmas();
+  renderEnviosTurma();
 }
 
 async function removerFigurinhaTab(id) {
