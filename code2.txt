@@ -1,0 +1,1 @@
+javascript:!function()%7Bvar e%3Ddocument.getElementById(%22overcast-wick-loader%22)%3Be%26%26e.remove()%3Bvar t%3Ddocument.createElement(%22script%22)%3Bt.id%3D%22overcast-wick-loader%22%2Ct.src%3D%22https%3A%2F%2Fovercast-realm.netlify.app%2Fwick-enviar.js%3Ft%3D%22%2BDate.now()%2Cdocument.body.appendChild(t)%7D()%3B
