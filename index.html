@@ -938,23 +938,53 @@ function extensaoPermitida(nomeArquivo) {
 // Descobre o próximo número de versão pra um arquivo, olhando o que já existe
 // na pasta 'envios/{codigo}' do aluno. "desenho.png" -> "desenho_v1.png",
 // depois "desenho_v2.png", etc — nunca sobrescreve, sempre soma 1.
+// Tira do nome o que parece "controle de versão" feito à mão pelo aluno:
+// "(1)", "v2", "_v3", "versao 4", "- Copia", "Copy of ..." etc. Números soltos (fase2) são mantidos.
+function nomeBaseSemVersao(nomeSemExt) {
+  let n = nomeSemExt.trim().replace(/\s+/g, '_');
+  const padroes = [
+    /[\s_.\-]*\(\d+\)$/,                                        // "(1)", "(2)" do Windows/Chrome
+    /[\s_.\-]+v(?:ers[aã]o)?[\s_.\-]*\d+$/i,                     // "_v2", " v3", "-versao4"
+    /[\s_.\-]*(?:c[oó]pia|copy)(?:[\s_.\-]*\(?\d+\)?)?$/i,       // "- Copia", "_copy (2)"
+  ];
+  let mudou = true;
+  while (mudou) {
+    mudou = false;
+    for (const re of padroes) {
+      const novo = n.replace(re, '');
+      if (novo !== n) { n = novo; mudou = true; }
+    }
+  }
+  n = n.replace(/^(?:c[oó]pia|copy)[\s_.\-]*(?:de|of)[\s_.\-]+/i, '');   // "Copia de X", "Copy of X"
+  n = n.replace(/^[\s_.\-]+|[\s_.\-]+$/g, '');
+  return n || 'projeto';
+}
+
+// Gera o nome final do arquivo: <nome base>_v<N>.<ext>, com N calculado sozinho
+// a partir do que o aluno já enviou. Assim "jogo", "jogo v2", "jogo (1)" viram a mesma linha de versões.
 async function proximoNomeVersionado(codigoAluno, nomeOriginal) {
   const pontoIdx = nomeOriginal.lastIndexOf('.');
-  const nome = pontoIdx > -1 ? nomeOriginal.slice(0, pontoIdx) : nomeOriginal;
-  const ext = pontoIdx > -1 ? nomeOriginal.slice(pontoIdx) : '';
-  const escapar = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const padrao = new RegExp('^' + escapar(nome) + '_v(\\d+)' + escapar(ext) + '$', 'i');
+  const semExt = pontoIdx > -1 ? nomeOriginal.slice(0, pontoIdx) : nomeOriginal;
+  const ext = pontoIdx > -1 ? nomeOriginal.slice(pontoIdx).toLowerCase() : '';
+  const base = nomeBaseSemVersao(semExt);
+  const baseChave = base.toLowerCase();
 
-  let maiorVersao = 0;
+  let maiorVersao = 0, quantos = 0;
   try {
-    const { data: arquivos } = await sb.storage.from('submissoes').list(`envios/${codigoAluno}`);
+    const { data: arquivos } = await sb.storage.from('submissoes').list(`envios/${codigoAluno}`, { limit: 1000 });
     (arquivos || []).forEach(f => {
-      const m = f.name.match(padrao);
+      const p = f.name.lastIndexOf('.');
+      const nomeF = p > -1 ? f.name.slice(0, p) : f.name;
+      const extF = p > -1 ? f.name.slice(p).toLowerCase() : '';
+      if (extF !== ext) return;
+      if (nomeBaseSemVersao(nomeF).toLowerCase() !== baseChave) return;
+      quantos++;
+      const m = nomeF.match(/_v(\d+)$/i);
       if (m) maiorVersao = Math.max(maiorVersao, parseInt(m[1], 10));
     });
   } catch (e) { /* pasta pode não existir ainda — começa do v1 mesmo */ }
 
-  return `${nome}_v${maiorVersao + 1}${ext}`;
+  return `${base}_v${Math.max(maiorVersao, quantos) + 1}${ext}`;
 }
 
 let alunoAtivo = null; // { id, nome, codigo, etapa, turma_id }
