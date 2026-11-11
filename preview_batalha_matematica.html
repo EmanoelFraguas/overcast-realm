@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Batalha Matemática</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#120d22; --panel:#1f1638; --panel2:#2b2050; --line:#4b3a86;
+  --txt:#f1ecff; --muted:#a99bd6; --ok:#5fd38a; --bad:#ff6b7a; --gold:#ffd166; --accent:#8b6cff;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Press Start 2P',monospace;overflow:hidden;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+body{display:flex;align-items:center;justify-content:center}
+#app{position:relative;width:min(100vw,calc(100dvh*9/16));height:min(100dvh,calc(100vw*16/9));background:var(--panel);display:flex;flex-direction:column;container-type:size;overflow:hidden;border-left:2px solid var(--line);border-right:2px solid var(--line)}
+.hud{display:flex;justify-content:space-between;align-items:center;padding:3cqw 4cqw;font-size:3.2cqw;background:var(--bg);gap:2cqw}
+.hearts{color:var(--bad);letter-spacing:.5cqw}
+.coins{color:var(--gold)}
+canvas{width:100%;display:block;image-rendering:pixelated;image-rendering:crisp-edges;background:#000}
+.bars{padding:2cqw 4cqw 0}
+.lbl{font-size:2.4cqw;color:var(--muted);margin-bottom:1.2cqw;display:flex;justify-content:space-between}
+.bar{height:3cqw;background:#0b0816;border:.6cqw solid var(--line);margin-bottom:2cqw;overflow:hidden}
+.bar>i{display:block;height:100%;width:100%;background:var(--ok);transition:width .1s linear}
+#ehp>i{background:var(--bad);transition:width .25s}
+.q{flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 4cqw 4cqw;gap:4cqw}
+#pergunta{text-align:center;font-size:8cqw;padding:3cqw 0;background:var(--bg);border:.8cqw solid var(--line)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:3cqw}
+.grid button{font:inherit;font-size:7cqw;padding:5cqw 0;color:var(--txt);background:var(--panel2);border:.8cqw solid var(--line);box-shadow:0 1.2cqw 0 #0b0816;cursor:pointer}
+.grid button:active{transform:translateY(.8cqw);box-shadow:0 .4cqw 0 #0b0816}
+.grid button.certo{background:var(--ok);color:#0b0816}
+.grid button.errado{background:#3a1f2c;color:var(--bad);opacity:.5}
+#fb{position:absolute;left:0;right:0;top:30%;text-align:center;font-size:6cqw;pointer-events:none;opacity:0;transition:opacity .2s;text-shadow:.6cqw .6cqw 0 #000}
+.tela{position:absolute;inset:0;background:rgba(18,13,34,.96);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5cqw;padding:8cqw;text-align:center;z-index:5}
+.tela h1{font-size:6.5cqw;line-height:1.5;color:var(--gold)}
+.tela p{font-size:3cqw;line-height:1.8;color:var(--muted)}
+.tela button{font:inherit;font-size:4.2cqw;width:100%;padding:4.5cqw;background:var(--panel2);color:var(--txt);border:.8cqw solid var(--line);box-shadow:0 1.2cqw 0 #0b0816;cursor:pointer}
+.tela button:hover{border-color:var(--accent)}
+.hide{display:none!important}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="hud"><span class="hearts" id="hearts"></span><span id="lvl"></span><span class="coins" id="coins"></span></div>
+  <canvas id="cv" width="180" height="130"></canvas>
+  <div class="bars">
+    <div class="lbl"><span id="ename">INIMIGO</span><span>ATAQUE</span></div>
+    <div class="bar" id="ehp"><i></i></div>
+    <div class="bar" id="tbar"><i></i></div>
+  </div>
+  <div class="q">
+    <div id="pergunta">? + ? = ?</div>
+    <div class="grid" id="grid"></div>
+  </div>
+  <div id="fb"></div>
+
+  <div class="tela" id="menu">
+    <h1>BATALHA<br>MATEMÁTICA</h1>
+    <p>Acerte a conta para atacar.<br>Se o tempo acabar ou você errar, o inimigo ataca!</p>
+    <button data-n="1">FÁCIL · até 10</button>
+    <button data-n="2">MÉDIO · até 20</button>
+    <button data-n="3">DIFÍCIL · até 50</button>
+  </div>
+  <div class="tela hide" id="fim">
+    <h1 id="fimT">FIM DE JOGO</h1>
+    <p id="fimS"></p>
+    <button id="again">JOGAR DE NOVO</button>
+  </div>
+</div>
+
+<script>
+// ================= MOTOR DE PERGUNTAS (igual ao do Construct) =================
+const LIMITE = n => n <= 1 ? 10 : n === 2 ? 20 : n === 3 ? 50 : 100;
+const rint = (a, b) => Math.floor(Math.random() * (b - a)) + a;   // = int(random(a,b))
+const choose = (...v) => v[Math.floor(Math.random() * v.length)];
+
+function gerarPergunta(nivel){
+  const limite = LIMITE(nivel);
+  const op = choose('+','-');
+  let a,b,res,troca;
+  if(op === '+'){ res = rint(2, limite+1); a = rint(1, res); b = res - a; troca = Math.abs(a-b); }
+  else          { a = rint(2, limite+1); b = rint(1, a); res = a - b; troca = a + b; }
+  const alts = [res];
+  for(let i=0;i<40;i++){
+    if(alts.length < 4){
+      const cand = choose(res-1,res+1,res-2,res+2,res-10,res+10,troca);
+      if(cand >= 0 && alts.indexOf(cand) === -1) alts.push(cand);
+    }
+  }
+  for(let i=0;i<4;i++) if(alts.length < 4 && alts.indexOf(res+11+i) === -1) alts.push(res+11+i);
+  for(let i=alts.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [alts[i],alts[j]]=[alts[j],alts[i]]; }
+  return { texto: `${a} ${op} ${b} = ?`, res, alts };
+}
+
+// ================= SPRITES PLACEHOLDER (no Construct entram os do Minifantasy) =================
+const PAL = {k:'#14101f',s:'#f2c79b',w:'#ffffff',e:'#14101f',b:'#4f7cff',B:'#2f4fb8',h:'#c9ced8',H:'#8a90a0',r:'#b8323c',g:'#5fd38a',G:'#2e8a52',o:'#7fae4e',O:'#4d7030',y:'#ffd166',p:'#9b5de5',P:'#5a2d91',t:'#e0e0e0'};
+const HERO = [
+"....hhhh....",
+"...hHHHHh...",
+"...hsssshk..",
+"...hswswh...",
+"....ssss....",
+"..BbbbbbbB..",
+".sBbbybbbBs.",
+".s.bbbbbb.s.",
+"...BbbbbB...",
+"...bb..bb...",
+"...BB..BB...",
+"..kkk..kkk.."];
+const SLIME = [
+"............",
+"............",
+"............",
+"....gggg....",
+"...gggggg...",
+"..ggwggwgg..",
+"..ggegggeg..",
+".gggggggggg.",
+".gGggggggGg.",
+"gGGGGGGGGGGg",
+"GGGGGGGGGGGG",
+"............"];
+const GOBLIN = [
+"............",
+"..o.oooo.o..",
+"..oooooooo..",
+"...owoowo...",
+"...oeooeo...",
+"....oyyo....",
+"..rrrrrrrr..",
+".orrrrrrrro.",
+"..rrrrrrrr..",
+"...OO..OO...",
+"...OO..OO...",
+"..kkk..kkk.."];
+const ORC = [
+"...OOOOOO...",
+"..OOOOOOOO..",
+"..OwOOOOwO..",
+"..OeOOOOeO..",
+"..OOtOOtOO..",
+".kkkkkkkkkk.",
+"OkPPPPPPPPkO",
+"OkPPPPPPPPkO",
+"..PPPPPPPP..",
+"..OOO..OOO..",
+"..OOO..OOO..",
+".kkkk..kkkk."];
+const INIMIGOS = [
+  {nome:'SLIME',  spr:SLIME,  vida:3, escala:1},
+  {nome:'GOBLIN', spr:GOBLIN, vida:3, escala:1},
+  {nome:'ORC',    spr:ORC,    vida:5, escala:1.35},
+];
+
+// ================= ESTADO =================
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const $ = id => document.getElementById(id);
+let nivel=1, tempoBase=8, vidaMax=5, vida=5, moedas=0, acertos=0, erros=0, abates=0, rating={P:0,G:0,B:0};
+let atual=null, inimigo=null, idxInimigo=0, podeResponder=false, jogando=false;
+let tAtaque=0, tAtaqueMax=8;
+const anim = {heroX:0, heroFlash:0, enX:0, enFlash:0, enAlpha:1, enY:0, entrando:0, coin:null, t:0};
+
+function startGame(n){
+  nivel=n; tempoBase = n===1?8 : n===2?6 : 4;
+  vida=vidaMax; moedas=0; acertos=0; erros=0; abates=0; rating={P:0,G:0,B:0}; idxInimigo=0;
+  $('menu').classList.add('hide'); $('fim').classList.add('hide');
+  jogando=true; novoInimigo();
+}
+function novoInimigo(){
+  const base = INIMIGOS[idxInimigo % INIMIGOS.length];
+  inimigo = {...base, hp:base.vida};
+  idxInimigo++;
+  anim.entrando=1; anim.enAlpha=1; anim.enX=0;
+  $('ename').textContent = inimigo.nome;
+  hud();
+  setTimeout(()=>{ anim.entrando=0; novaPergunta(); }, 600);
+}
+function novaPergunta(){
+  atual = gerarPergunta(nivel);
+  $('pergunta').textContent = atual.texto;
+  const g = $('grid'); g.innerHTML='';
+  atual.alts.forEach(v=>{
+    const b=document.createElement('button'); b.textContent=v; b.dataset.v=v;
+    b.addEventListener('pointerdown', ()=>responder(b));
+    g.appendChild(b);
+  });
+  tAtaqueMax = tempoBase; tAtaque = tempoBase; podeResponder = true;
+}
+function responder(btn){
+  if(!podeResponder || !jogando || btn.classList.contains('errado')) return;
+  const v = +btn.dataset.v;
+  if(v === atual.res){
+    podeResponder=false; btn.classList.add('certo'); acertos++;
+    const f = tAtaque / tAtaqueMax;
+    const r = f > .66 ? ['PERFEITO!','P','#5fd38a'] : f > .33 ? ['ÓTIMO!','G','#ffd166'] : ['BOM!','B','#f1ecff'];
+    rating[r[1]]++; feedback(r[0], r[2]);
+    heroiAtaca();
+  } else {
+    btn.classList.add('errado'); erros++;
+    feedback('ERROU!', '#ff6b7a');
+    inimigoAtaca();
+  }
+}
+function heroiAtaca(){
+  anim.heroX = 1;
+  setTimeout(()=>{
+    inimigo.hp--; anim.enFlash = 1; hud();
+    if(inimigo.hp <= 0){ morreInimigo(); } else setTimeout(novaPergunta, 350);
+  }, 180);
+}
+function inimigoAtaca(){
+  anim.enX = 1;
+  setTimeout(()=>{
+    vida--; anim.heroFlash = 1; hud();
+    if(vida <= 0) fimDeJogo();
+  }, 180);
+  tAtaque = tAtaqueMax;
+}
+function morreInimigo(){
+  abates++; moedas += inimigo.vida; podeResponder=false;
+  anim.coin = {t:0};
+  const fade = setInterval(()=>{ anim.enAlpha -= .1; if(anim.enAlpha<=0){ clearInterval(fade); } }, 40);
+  setTimeout(()=>{ hud(); if(jogando) novoInimigo(); }, 900);
+}
+function fimDeJogo(){
+  jogando=false; podeResponder=false;
+  const total = acertos+erros, pct = total ? Math.round(acertos/total*100) : 0;
+  $('fimS').innerHTML = `Inimigos derrotados: ${abates}<br>Acertos: ${acertos} · Erros: ${erros}<br>Precisão: ${pct}%<br><br>Perfeito ${rating.P} · Ótimo ${rating.G} · Bom ${rating.B}`;
+  setTimeout(()=>$('fim').classList.remove('hide'), 700);
+}
+let fbTimer;
+function feedback(t,c){ const e=$('fb'); e.textContent=t; e.style.color=c; e.style.opacity=1; clearTimeout(fbTimer); fbTimer=setTimeout(()=>e.style.opacity=0, 650); }
+function hud(){
+  $('hearts').textContent = '♥'.repeat(Math.max(0,vida)) + '♡'.repeat(Math.max(0,vidaMax-vida));
+  $('coins').textContent = '● ' + moedas;
+  $('lvl').textContent = 'NV ' + nivel;
+  $('ehp').firstElementChild.style.width = inimigo ? (inimigo.hp/inimigo.vida*100)+'%' : '100%';
+}
+
+// ================= DESENHO =================
+function drawSprite(spr, x, y, s, flip, flash, alpha){
+  ctx.globalAlpha = alpha;
+  for(let r=0;r<spr.length;r++) for(let c=0;c<spr[r].length;c++){
+    const ch = spr[r][flip ? spr[r].length-1-c : c]; if(ch==='.') continue;
+    ctx.fillStyle = flash ? '#ffffff' : PAL[ch];
+    ctx.fillRect(Math.round(x + c*s), Math.round(y + r*s), Math.ceil(s), Math.ceil(s));
+  }
+  ctx.globalAlpha = 1;
+}
+function drawScene(dt){
+  anim.t += dt;
+  // céu e montanhas
+  ctx.fillStyle='#2a1f52'; ctx.fillRect(0,0,180,130);
+  ctx.fillStyle='#3a2c6e'; ctx.fillRect(0,40,180,90);
+  ctx.fillStyle='#4b3a86';
+  for(let i=0;i<180;i+=30){ ctx.beginPath(); ctx.moveTo(i-10,90); ctx.lineTo(i+15,52+(i%60?8:0)); ctx.lineTo(i+40,90); ctx.fill(); }
+  ctx.fillStyle='#ffd166'; ctx.fillRect(140,14,8,8);
+  // chão
+  ctx.fillStyle='#3e6b3a'; ctx.fillRect(0,90,180,40);
+  ctx.fillStyle='#2f5530'; for(let x=0;x<180;x+=8) ctx.fillRect(x+((x/8)%2?3:0),94+((x/8)%3)*8,2,2);
+  ctx.fillStyle='#5b8f4e'; ctx.fillRect(0,90,180,2);
+
+  const bob = Math.round(Math.sin(anim.t*4));
+  // herói
+  const hx = 34 + Math.sin(Math.min(anim.heroX,1)*Math.PI)*28;
+  drawSprite(HERO, hx, 90-36+bob, 3, false, anim.heroFlash>0 && Math.floor(anim.t*20)%2===0, 1);
+  // espada
+  ctx.fillStyle='#c9ced8'; ctx.fillRect(Math.round(hx+33), 90-24+bob- (anim.heroX>0?6:0), 3, 12);
+  ctx.fillStyle='#ffd166'; ctx.fillRect(Math.round(hx+31), 90-13+bob-(anim.heroX>0?6:0), 7, 2);
+  // inimigo
+  if(inimigo){
+    const s = 3*inimigo.escala, w=12*s;
+    const ent = anim.entrando ? 60 : 0;
+    const ex = 180-34-w + ent - Math.sin(Math.min(anim.enX,1)*Math.PI)*28;
+    drawSprite(inimigo.spr, ex, 90-12*s+(inimigo.spr===SLIME?0:bob), s, true, anim.enFlash>0 && Math.floor(anim.t*20)%2===0, Math.max(0,anim.enAlpha));
+  }
+  // moeda
+  if(anim.coin){ anim.coin.t+=dt; const k=anim.coin.t; ctx.fillStyle='#ffd166'; ctx.fillRect(120, Math.round(70-k*60), 5, 5); if(k>.9) anim.coin=null; }
+
+  anim.heroX = anim.heroX>0 ? (anim.heroX+dt*4>1.0001? 0 : anim.heroX+dt*4) : 0;
+  anim.enX   = anim.enX>0   ? (anim.enX+dt*4>1.0001? 0 : anim.enX+dt*4) : 0;
+  anim.heroFlash = Math.max(0, anim.heroFlash-dt*2.5);
+  anim.enFlash   = Math.max(0, anim.enFlash-dt*2.5);
+}
+
+let last = performance.now();
+function loop(now){
+  const dt = Math.min(.05, (now-last)/1000); last = now;
+  if(jogando && podeResponder){
+    tAtaque -= dt;
+    if(tAtaque <= 0){ feedback('TEMPO!', '#ff6b7a'); inimigoAtaca(); }
+  }
+  $('tbar').firstElementChild.style.width = (Math.max(0,tAtaque)/tAtaqueMax*100)+'%';
+  drawScene(dt);
+  requestAnimationFrame(loop);
+}
+document.querySelectorAll('#menu button').forEach(b=>b.addEventListener('click',()=>startGame(+b.dataset.n)));
+$('again').addEventListener('click',()=>{ $('fim').classList.add('hide'); $('menu').classList.remove('hide'); });
+hud(); requestAnimationFrame(loop);
+</script>
+</body>
+</html>
