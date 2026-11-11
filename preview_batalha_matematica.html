@@ -2,80 +2,127 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Batalha Matemática</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#120d22; --panel:#1f1638; --panel2:#2b2050; --line:#4b3a86;
   --txt:#f1ecff; --muted:#a99bd6; --ok:#5fd38a; --bad:#ff6b7a; --gold:#ffd166; --accent:#8b6cff;
+  --fs-hud:clamp(9px,2.4vmin,16px);
+  --fs-q:clamp(20px,6.2vmin,52px);
+  --fs-btn:clamp(18px,5.6vmin,46px);
+  --gap:clamp(8px,2.2vmin,18px);
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Press Start 2P',monospace;overflow:hidden;touch-action:manipulation;-webkit-user-select:none;user-select:none}
-body{display:flex;align-items:center;justify-content:center}
-#app{position:relative;width:min(100vw,calc(100dvh*9/16));height:min(100dvh,calc(100vw*16/9));background:var(--panel);display:flex;flex-direction:column;container-type:size;overflow:hidden;border-left:2px solid var(--line);border-right:2px solid var(--line)}
-.hud{display:flex;justify-content:space-between;align-items:center;padding:3cqw 4cqw;font-size:3.2cqw;background:var(--bg);gap:2cqw}
-.hearts{color:var(--bad);letter-spacing:.5cqw}
-.coins{color:var(--gold)}
-canvas{width:100%;display:block;image-rendering:pixelated;image-rendering:crisp-edges;background:#000}
-.bars{padding:2cqw 4cqw 0}
-.lbl{font-size:2.4cqw;color:var(--muted);margin-bottom:1.2cqw;display:flex;justify-content:space-between}
-.bar{height:3cqw;background:#0b0816;border:.6cqw solid var(--line);margin-bottom:2cqw;overflow:hidden}
-.bar>i{display:block;height:100%;width:100%;background:var(--ok);transition:width .1s linear}
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Press Start 2P',ui-monospace,monospace;overflow:hidden;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+#app{position:relative;width:100%;max-width:1400px;height:100dvh;margin:0 auto;background:var(--panel);display:flex;flex-direction:column;overflow:hidden}
+.left{display:flex;flex-direction:column;flex:1 1 55%;min-height:0}
+.right{display:flex;flex-direction:column;justify-content:center;gap:var(--gap);padding:var(--gap);flex:0 0 auto}
+/* paisagem: cena à esquerda, perguntas à direita */
+@media (orientation:landscape){
+  #app{flex-direction:row}
+  .left{flex:1 1 60%}
+  .right{flex:0 0 40%;max-width:560px;border-left:3px solid var(--line);background:var(--bg)}
+}
+.hud{display:flex;justify-content:space-between;align-items:center;padding:calc(var(--gap)*.8) var(--gap);font-size:var(--fs-hud);background:var(--bg);gap:var(--gap)}
+.hearts{color:var(--bad);letter-spacing:2px;white-space:nowrap}
+.coins{color:var(--gold);white-space:nowrap}
+/* trilha de progresso */
+.prog{padding:calc(var(--gap)*.7) var(--gap);background:var(--bg);border-top:2px solid var(--panel2)}
+.prog .lbl{margin-bottom:calc(var(--gap)*.7)}
+.track{position:relative;display:flex;justify-content:space-between;align-items:center;height:clamp(16px,3.6vmin,26px)}
+.track::before{content:"";position:absolute;left:6px;right:6px;top:50%;height:3px;background:var(--panel2);transform:translateY(-50%)}
+.track .fill{position:absolute;left:6px;top:50%;height:3px;background:var(--gold);transform:translateY(-50%);transition:width .3s}
+.node{position:relative;z-index:1;width:clamp(10px,2.4vmin,16px);aspect-ratio:1;background:var(--panel2);border:2px solid var(--line)}
+.node.boss{width:clamp(14px,3.4vmin,24px);background:#3a1f2c;border-color:var(--bad)}
+.node.ok{background:var(--gold);border-color:var(--gold)}
+.node.atual{outline:2px solid var(--txt);outline-offset:2px;animation:pulse .8s infinite alternate}
+@keyframes pulse{to{outline-color:transparent}}
+.scene{position:relative;flex:1 1 auto;min-height:120px}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block;image-rendering:pixelated;image-rendering:crisp-edges}
+.bars{padding:calc(var(--gap)*.8) var(--gap) 0;background:var(--panel)}
+.lbl{font-size:calc(var(--fs-hud)*.85);color:var(--muted);display:flex;justify-content:space-between;gap:8px;margin-bottom:6px}
+.bar{height:clamp(8px,1.6vmin,14px);background:#0b0816;border:2px solid var(--line);margin-bottom:calc(var(--gap)*.8);overflow:hidden}
+.bar>i{display:block;height:100%;width:100%;background:var(--ok)}
 #ehp>i{background:var(--bad);transition:width .25s}
-.q{flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 4cqw 4cqw;gap:4cqw}
-#pergunta{text-align:center;font-size:8cqw;padding:3cqw 0;background:var(--bg);border:.8cqw solid var(--line)}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:3cqw}
-.grid button{font:inherit;font-size:7cqw;padding:5cqw 0;color:var(--txt);background:var(--panel2);border:.8cqw solid var(--line);box-shadow:0 1.2cqw 0 #0b0816;cursor:pointer}
-.grid button:active{transform:translateY(.8cqw);box-shadow:0 .4cqw 0 #0b0816}
+#pergunta{text-align:center;font-size:var(--fs-q);padding:calc(var(--gap)*1.2) 0;background:var(--bg);border:3px solid var(--line);min-height:1em}
+@media (orientation:landscape){ #pergunta{background:var(--panel)} }
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap);transition:opacity .2s}
+.grid.off{opacity:.25;pointer-events:none}
+.grid button{font:inherit;font-size:var(--fs-btn);padding:clamp(14px,4vmin,34px) 0;color:var(--txt);background:var(--panel2);border:3px solid var(--line);box-shadow:0 5px 0 #0b0816;cursor:pointer}
+@media (hover:hover){.grid button:hover{border-color:var(--accent)}}
+.grid button:active{transform:translateY(3px);box-shadow:0 2px 0 #0b0816}
 .grid button.certo{background:var(--ok);color:#0b0816}
 .grid button.errado{background:#3a1f2c;color:var(--bad);opacity:.5}
-#fb{position:absolute;left:0;right:0;top:30%;text-align:center;font-size:6cqw;pointer-events:none;opacity:0;transition:opacity .2s;text-shadow:.6cqw .6cqw 0 #000}
-.tela{position:absolute;inset:0;background:rgba(18,13,34,.96);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5cqw;padding:8cqw;text-align:center;z-index:5}
-.tela h1{font-size:6.5cqw;line-height:1.5;color:var(--gold)}
-.tela p{font-size:3cqw;line-height:1.8;color:var(--muted)}
-.tela button{font:inherit;font-size:4.2cqw;width:100%;padding:4.5cqw;background:var(--panel2);color:var(--txt);border:.8cqw solid var(--line);box-shadow:0 1.2cqw 0 #0b0816;cursor:pointer}
-.tela button:hover{border-color:var(--accent)}
+#fb{position:absolute;left:0;right:0;top:28%;text-align:center;font-size:clamp(16px,5vmin,40px);pointer-events:none;opacity:0;transition:opacity .2s;text-shadow:3px 3px 0 #000;z-index:3}
+@media (orientation:landscape){ #fb{right:40%} }
+/* telas */
+.tela{position:absolute;inset:0;background:rgba(18,13,34,.97);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--gap);padding:calc(var(--gap)*2);text-align:center;z-index:5;overflow:auto}
+.tela .box{width:100%;max-width:520px;display:flex;flex-direction:column;gap:var(--gap)}
+.tela h1{font-size:clamp(18px,5.4vmin,40px);line-height:1.5;color:var(--gold)}
+.tela p{font-size:clamp(10px,2.4vmin,16px);line-height:1.9;color:var(--muted)}
+.tela button{font:inherit;font-size:clamp(12px,3vmin,20px);width:100%;padding:clamp(12px,3vmin,22px);background:var(--panel2);color:var(--txt);border:3px solid var(--line);box-shadow:0 5px 0 #0b0816;cursor:pointer}
+@media (hover:hover){.tela button:hover:not(:disabled){border-color:var(--accent)}}
+.tela button:disabled{opacity:.4;cursor:default}
+.fase{display:flex;justify-content:space-between;align-items:center;text-align:left;gap:10px}
+.fase small{display:block;color:var(--muted);font-size:.7em;margin-top:6px}
+.stars{color:var(--gold);letter-spacing:3px;white-space:nowrap}
+.big-stars{font-size:clamp(28px,8vmin,64px);color:var(--gold);letter-spacing:8px}
 .hide{display:none!important}
 </style>
 </head>
 <body>
 <div id="app">
-  <div class="hud"><span class="hearts" id="hearts"></span><span id="lvl"></span><span class="coins" id="coins"></span></div>
-  <canvas id="cv" width="180" height="130"></canvas>
-  <div class="bars">
-    <div class="lbl"><span id="ename">INIMIGO</span><span>ATAQUE</span></div>
-    <div class="bar" id="ehp"><i></i></div>
-    <div class="bar" id="tbar"><i></i></div>
+  <div class="left">
+    <div class="hud"><span class="hearts" id="hearts"></span><span id="faseNome"></span><span class="coins" id="coins"></span></div>
+    <div class="prog">
+      <div class="lbl"><span id="progTxt">INIMIGO 1/5</span><span id="faixa">ATÉ 10</span></div>
+      <div class="track" id="track"><div class="fill" id="fill"></div></div>
+    </div>
+    <div class="scene" id="scene"><canvas id="cv" width="180" height="130"></canvas></div>
+    <div class="bars">
+      <div class="lbl"><span id="ename">—</span><span>TEMPO</span></div>
+      <div class="bar" id="ehp"><i></i></div>
+      <div class="bar" id="tbar"><i></i></div>
+    </div>
   </div>
-  <div class="q">
-    <div id="pergunta">? + ? = ?</div>
-    <div class="grid" id="grid"></div>
+  <div class="right">
+    <div id="pergunta">&nbsp;</div>
+    <div class="grid off" id="grid"></div>
   </div>
   <div id="fb"></div>
 
-  <div class="tela" id="menu">
+  <div class="tela" id="menu"><div class="box">
     <h1>BATALHA<br>MATEMÁTICA</h1>
     <p>Acerte a conta para atacar.<br>Se o tempo acabar ou você errar, o inimigo ataca!</p>
-    <button data-n="1">FÁCIL · até 10</button>
-    <button data-n="2">MÉDIO · até 20</button>
-    <button data-n="3">DIFÍCIL · até 50</button>
-  </div>
-  <div class="tela hide" id="fim">
-    <h1 id="fimT">FIM DE JOGO</h1>
+    <p>Escolha o ritmo:</p>
+    <button data-t="10">TRANQUILO · 10s</button>
+    <button data-t="7">NORMAL · 7s</button>
+    <button data-t="5">DESAFIO · 5s</button>
+  </div></div>
+
+  <div class="tela hide" id="mapa"><div class="box">
+    <h1>MAPA</h1>
+    <p id="mapaInfo"></p>
+    <div id="fasesList" style="display:flex;flex-direction:column;gap:var(--gap)"></div>
+    <button id="voltarMenu">TROCAR RITMO</button>
+  </div></div>
+
+  <div class="tela hide" id="fim"><div class="box">
+    <h1 id="fimT"></h1>
+    <div class="big-stars" id="fimStars"></div>
     <p id="fimS"></p>
-    <button id="again">JOGAR DE NOVO</button>
-  </div>
+    <button id="btnA"></button>
+    <button id="btnB">MAPA</button>
+  </div></div>
 </div>
 
 <script>
-// ================= MOTOR DE PERGUNTAS (igual ao do Construct) =================
-const LIMITE = n => n <= 1 ? 10 : n === 2 ? 20 : n === 3 ? 50 : 100;
+// ================= MOTOR DE PERGUNTAS (igual ao JSON do Construct) =================
 const rint = (a, b) => Math.floor(Math.random() * (b - a)) + a;   // = int(random(a,b))
 const choose = (...v) => v[Math.floor(Math.random() * v.length)];
-
-function gerarPergunta(nivel){
-  const limite = LIMITE(nivel);
+function gerarPergunta(limite){
   const op = choose('+','-');
   let a,b,res,troca;
   if(op === '+'){ res = rint(2, limite+1); a = rint(1, res); b = res - a; troca = Math.abs(a-b); }
@@ -92,211 +139,288 @@ function gerarPergunta(nivel){
   return { texto: `${a} ${op} ${b} = ?`, res, alts };
 }
 
-// ================= SPRITES PLACEHOLDER (no Construct entram os do Minifantasy) =================
-const PAL = {k:'#14101f',s:'#f2c79b',w:'#ffffff',e:'#14101f',b:'#4f7cff',B:'#2f4fb8',h:'#c9ced8',H:'#8a90a0',r:'#b8323c',g:'#5fd38a',G:'#2e8a52',o:'#7fae4e',O:'#4d7030',y:'#ffd166',p:'#9b5de5',P:'#5a2d91',t:'#e0e0e0'};
-const HERO = [
-"....hhhh....",
-"...hHHHHh...",
-"...hsssshk..",
-"...hswswh...",
-"....ssss....",
-"..BbbbbbbB..",
-".sBbbybbbBs.",
-".s.bbbbbb.s.",
-"...BbbbbB...",
-"...bb..bb...",
-"...BB..BB...",
-"..kkk..kkk.."];
-const SLIME = [
-"............",
-"............",
-"............",
-"....gggg....",
-"...gggggg...",
-"..ggwggwgg..",
-"..ggegggeg..",
-".gggggggggg.",
-".gGggggggGg.",
-"gGGGGGGGGGGg",
-"GGGGGGGGGGGG",
-"............"];
-const GOBLIN = [
-"............",
-"..o.oooo.o..",
-"..oooooooo..",
-"...owoowo...",
-"...oeooeo...",
-"....oyyo....",
-"..rrrrrrrr..",
-".orrrrrrrro.",
-"..rrrrrrrr..",
-"...OO..OO...",
-"...OO..OO...",
-"..kkk..kkk.."];
-const ORC = [
-"...OOOOOO...",
-"..OOOOOOOO..",
-"..OwOOOOwO..",
-"..OeOOOOeO..",
-"..OOtOOtOO..",
-".kkkkkkkkkk.",
-"OkPPPPPPPPkO",
-"OkPPPPPPPPkO",
-"..PPPPPPPP..",
-"..OOO..OOO..",
-"..OOO..OOO..",
-".kkkk..kkkk."];
-const INIMIGOS = [
-  {nome:'SLIME',  spr:SLIME,  vida:3, escala:1},
-  {nome:'GOBLIN', spr:GOBLIN, vida:3, escala:1},
-  {nome:'ORC',    spr:ORC,    vida:5, escala:1.35},
+// ================= FASES (cada uma vira um bioma do Minifantasy) =================
+const FASES = [
+  {nome:'PLANÍCIES', limite:10,  sky:'#2a1f52', sky2:'#3a2c6e', mont:'#4b3a86', chao:'#3e6b3a', chao2:'#2f5530', borda:'#5b8f4e', deco:'arvore',  astro:'#ffd166', slime:['#5fd38a','#2e8a52']},
+  {nome:'DESERTO',   limite:20,  sky:'#3b2440', sky2:'#5a3350', mont:'#7a4a55', chao:'#c9a25a', chao2:'#a7843f', borda:'#e0bf78', deco:'cacto',   astro:'#ffb347', slime:['#ff9f43','#c06a1c']},
+  {nome:'GELO',      limite:50,  sky:'#16233f', sky2:'#22355e', mont:'#3d5a8a', chao:'#cfe3f0', chao2:'#a9c6dc', borda:'#ffffff', deco:'cristal', astro:'#e8f4ff', slime:['#7ad7ff','#3a8fc0']},
+  {nome:'CAVERNA',   limite:100, sky:'#0d0a18', sky2:'#1a1430', mont:'#2a2145', chao:'#4a3b5c', chao2:'#382c48', borda:'#6a5682', deco:'pedra',   astro:null,      slime:['#c77dff','#7b3fb0']},
 ];
 
-// ================= ESTADO =================
-const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
-const $ = id => document.getElementById(id);
-let nivel=1, tempoBase=8, vidaMax=5, vida=5, moedas=0, acertos=0, erros=0, abates=0, rating={P:0,G:0,B:0};
-let atual=null, inimigo=null, idxInimigo=0, podeResponder=false, jogando=false;
-let tAtaque=0, tAtaqueMax=8;
-const anim = {heroX:0, heroFlash:0, enX:0, enFlash:0, enAlpha:1, enY:0, entrando:0, coin:null, t:0};
+// ================= SPRITES PROVISÓRIOS (no Construct: Minifantasy) =================
+const PAL = {k:'#14101f',s:'#f2c79b',w:'#ffffff',e:'#14101f',b:'#4f7cff',B:'#2f4fb8',h:'#c9ced8',H:'#8a90a0',r:'#b8323c',g:'#5fd38a',G:'#2e8a52',o:'#7fae4e',O:'#4d7030',y:'#ffd166',P:'#5a2d91',p:'#9b5de5',t:'#e0e0e0'};
+const HERO_TOP = ["....hhhh....","...hHHHHh...","...hsssshk..","...hswswh...","....ssss....","..BbbbbbbB..",".sBbbybbbBs.",".s.bbbbbb.s.","...BbbbbB..."];
+const HERO_LEGS = [
+  ["...bb..bb...","...BB..BB...","..kkk..kkk.."],
+  ["..bb....bb..",".BB......BB.","kkk......kkk"],
+  ["....bbbb....","....BBBB....","...kkkkkk..."],
+];
+const SLIME = ["............","............","............","....gggg....","...gggggg...","..ggwggwgg..","..ggegggeg..",".gggggggggg.",".gGggggggGg.","gGGGGGGGGGGg","GGGGGGGGGGGG","............"];
+const GOBLIN = ["............","..o.oooo.o..","..oooooooo..","...owoowo...","...oeooeo...","....oyyo....","..rrrrrrrr..",".orrrrrrrro.","..rrrrrrrr..","...OO..OO...","...OO..OO...","..kkk..kkk.."];
+const ORC = ["...OOOOOO...","..OOOOOOOO..","..OwOOOOwO..","..OeOOOOeO..","..OOtOOtOO..",".kkkkkkkkkk.","OkPPPPPPPPkO","OkPPPPPPPPkO","..PPPPPPPP..","..OOO..OOO..","..OOO..OOO..",".kkkk..kkkk."];
+const ONDA = [ // 4 inimigos + chefe por fase
+  {nome:'SLIME',  spr:SLIME,  vida:2, escala:1},
+  {nome:'GOBLIN', spr:GOBLIN, vida:3, escala:1},
+  {nome:'SLIME',  spr:SLIME,  vida:2, escala:1},
+  {nome:'GOBLIN', spr:GOBLIN, vida:3, escala:1},
+  {nome:'CHEFE ORC', spr:ORC, vida:5, escala:1.4, boss:true},
+];
 
-function startGame(n){
-  nivel=n; tempoBase = n===1?8 : n===2?6 : 4;
-  vida=vidaMax; moedas=0; acertos=0; erros=0; abates=0; rating={P:0,G:0,B:0}; idxInimigo=0;
-  $('menu').classList.add('hide'); $('fim').classList.add('hide');
-  jogando=true; novoInimigo();
+// ================= SAVE =================
+const SAVE_KEY='batalhaMat_v1';
+let save = {desbloq:1, estrelas:[0,0,0,0], moedas:0};
+try{ const s=JSON.parse(localStorage.getItem(SAVE_KEY)); if(s) save={...save,...s}; }catch(e){}
+function gravar(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(save)); }catch(e){} }
+
+// ================= ESTADO =================
+const cv=document.getElementById('cv'), ctx=cv.getContext('2d'), $=id=>document.getElementById(id);
+const H=130, CHAO=94;
+let W=180;
+let ritmo=7, fase=0, vidaMax=5, vida=5, acertos=0, erros=0, rating={P:0,G:0,B:0}, moedasFase=0;
+let estado='menu'; // menu | andando | batalha | pausa
+let onda=0, inimigo=null, atual=null, podeResponder=false;
+let tAtaque=0, tAtaqueMax=7;
+let scroll=0, walkT=0, walkDur=1.5, walkDist=0;
+const VEL=70; // px/s
+const anim={heroX:0, heroFlash:0, enX:0, enFlash:0, enAlpha:1, t:0, coins:[]};
+
+// canvas responsivo: altura fixa em pixels de jogo, largura acompanha a tela
+function ajustarCanvas(){
+  const r=$('scene').getBoundingClientRect();
+  if(!r.height) return;
+  W=Math.max(150, Math.min(380, Math.round(H*r.width/r.height)));
+  cv.width=W; cv.height=H; ctx.imageSmoothingEnabled=false;
 }
-function novoInimigo(){
-  const base = INIMIGOS[idxInimigo % INIMIGOS.length];
-  inimigo = {...base, hp:base.vida};
-  idxInimigo++;
-  anim.entrando=1; anim.enAlpha=1; anim.enX=0;
-  $('ename').textContent = inimigo.nome;
-  hud();
-  setTimeout(()=>{ anim.entrando=0; novaPergunta(); }, 600);
+new ResizeObserver(ajustarCanvas).observe($('scene'));
+
+function heroX(){ return Math.round(W*0.16); }
+function enemyStandX(e){ return Math.round(W*0.86 - 12*3*e.escala); }
+
+// ---------- fluxo ----------
+function abrirMapa(){
+  estado='menu'; podeResponder=false;
+  ['menu','fim'].forEach(id=>$(id).classList.add('hide')); $('mapa').classList.remove('hide');
+  $('mapaInfo').innerHTML = `Ritmo: ${ritmo}s por pergunta<br>Moedas: ${save.moedas}`;
+  const L=$('fasesList'); L.innerHTML='';
+  FASES.forEach((f,i)=>{
+    const b=document.createElement('button'); const lock = i+1 > save.desbloq;
+    b.className='fase'; b.disabled=lock;
+    const st = save.estrelas[i]||0;
+    b.innerHTML = `<span>${i+1}. ${lock?'??????':f.nome}<small>contas até ${f.limite}</small></span><span class="stars">${lock?'🔒':'★'.repeat(st)+'☆'.repeat(3-st)}</span>`;
+    b.onclick=()=>iniciarFase(i);
+    L.appendChild(b);
+  });
+}
+function iniciarFase(i){
+  fase=i; vida=vidaMax; acertos=0; erros=0; rating={P:0,G:0,B:0}; moedasFase=0; onda=0; scroll=0;
+  $('mapa').classList.add('hide'); $('fim').classList.add('hide');
+  montarTrilha(); proximoInimigo(true);
+}
+function montarTrilha(){
+  const t=$('track'); t.querySelectorAll('.node').forEach(n=>n.remove());
+  ONDA.forEach((e,i)=>{ const n=document.createElement('div'); n.className='node'+(e.boss?' boss':''); t.appendChild(n); });
+  atualizarTrilha(0);
+}
+function atualizarTrilha(frac){ // frac = progresso extra durante a caminhada (0..1)
+  const nodes=[...$('track').querySelectorAll('.node')];
+  nodes.forEach((n,i)=>{ n.classList.toggle('ok', i<onda); n.classList.toggle('atual', i===onda && estado!=='andando'); });
+  const pos = Math.min(ONDA.length-1, Math.max(0, onda - 1 + frac));
+  $('fill').style.width = `calc((100% - 12px) * ${pos/(ONDA.length-1)})`;
+  $('progTxt').textContent = ONDA[onda] ? (ONDA[onda].boss ? 'CHEFE!' : `INIMIGO ${onda+1}/${ONDA.length}`) : 'FASE COMPLETA';
+}
+function proximoInimigo(primeiro){
+  const base=ONDA[onda];
+  inimigo={...base, hp:base.vida};
+  anim.enAlpha=1; anim.enFlash=0;
+  estado='andando'; walkT=0;
+  walkDist = primeiro ? W*0.55 : W*0.9;
+  walkDur = walkDist/VEL;
+  podeResponder=false; $('grid').classList.add('off'); $('pergunta').textContent= primeiro ? 'PRONTO?' : 'AVANÇANDO...';
+  $('ename').textContent=inimigo.nome;
+  hud(); atualizarTrilha(0);
+}
+function chegou(){
+  estado='batalha'; atualizarTrilha(1); novaPergunta();
 }
 function novaPergunta(){
-  atual = gerarPergunta(nivel);
-  $('pergunta').textContent = atual.texto;
-  const g = $('grid'); g.innerHTML='';
+  atual=gerarPergunta(FASES[fase].limite);
+  $('pergunta').textContent=atual.texto;
+  const g=$('grid'); g.innerHTML=''; g.classList.remove('off');
   atual.alts.forEach(v=>{
     const b=document.createElement('button'); b.textContent=v; b.dataset.v=v;
-    b.addEventListener('pointerdown', ()=>responder(b));
+    b.addEventListener('pointerdown',e=>{e.preventDefault();responder(b);});
     g.appendChild(b);
   });
-  tAtaqueMax = tempoBase; tAtaque = tempoBase; podeResponder = true;
+  tAtaqueMax = inimigo.boss ? Math.max(4, ritmo-1) : ritmo; tAtaque=tAtaqueMax; podeResponder=true;
 }
 function responder(btn){
-  if(!podeResponder || !jogando || btn.classList.contains('errado')) return;
-  const v = +btn.dataset.v;
-  if(v === atual.res){
+  if(!podeResponder || estado!=='batalha' || btn.classList.contains('errado')) return;
+  if(+btn.dataset.v===atual.res){
     podeResponder=false; btn.classList.add('certo'); acertos++;
-    const f = tAtaque / tAtaqueMax;
-    const r = f > .66 ? ['PERFEITO!','P','#5fd38a'] : f > .33 ? ['ÓTIMO!','G','#ffd166'] : ['BOM!','B','#f1ecff'];
-    rating[r[1]]++; feedback(r[0], r[2]);
-    heroiAtaca();
+    const f=tAtaque/tAtaqueMax;
+    const r=f>.66?['PERFEITO!','P','#5fd38a']:f>.33?['ÓTIMO!','G','#ffd166']:['BOM!','B','#f1ecff'];
+    rating[r[1]]++; feedback(r[0],r[2]); heroiAtaca();
   } else {
-    btn.classList.add('errado'); erros++;
-    feedback('ERROU!', '#ff6b7a');
-    inimigoAtaca();
+    btn.classList.add('errado'); erros++; feedback('ERROU!','#ff6b7a'); inimigoAtaca();
   }
 }
 function heroiAtaca(){
-  anim.heroX = 1;
+  anim.heroX=0.001;
   setTimeout(()=>{
-    inimigo.hp--; anim.enFlash = 1; hud();
-    if(inimigo.hp <= 0){ morreInimigo(); } else setTimeout(novaPergunta, 350);
-  }, 180);
+    inimigo.hp--; anim.enFlash=1; hud();
+    if(inimigo.hp<=0) morreInimigo(); else setTimeout(()=>{ if(estado==='batalha') novaPergunta(); },350);
+  },180);
 }
 function inimigoAtaca(){
-  anim.enX = 1;
-  setTimeout(()=>{
-    vida--; anim.heroFlash = 1; hud();
-    if(vida <= 0) fimDeJogo();
-  }, 180);
-  tAtaque = tAtaqueMax;
+  anim.enX=0.001; tAtaque=tAtaqueMax;
+  setTimeout(()=>{ vida--; anim.heroFlash=1; hud(); if(vida<=0) derrota(); },180);
 }
 function morreInimigo(){
-  abates++; moedas += inimigo.vida; podeResponder=false;
-  anim.coin = {t:0};
-  const fade = setInterval(()=>{ anim.enAlpha -= .1; if(anim.enAlpha<=0){ clearInterval(fade); } }, 40);
-  setTimeout(()=>{ hud(); if(jogando) novoInimigo(); }, 900);
+  estado='pausa'; podeResponder=false; $('grid').classList.add('off');
+  $('pergunta').textContent = inimigo.boss ? 'CHEFE DERROTADO!' : 'DERROTADO!';
+  const ganho = inimigo.boss ? 5 : inimigo.vida; moedasFase+=ganho; save.moedas+=ganho; gravar();
+  for(let i=0;i<Math.min(ganho,5);i++) anim.coins.push({x:enemyStandX(inimigo)+18, y:CHAO-20, vx:(Math.random()-.5)*40, vy:-60-Math.random()*30, t:0});
+  const fade=setInterval(()=>{ anim.enAlpha-=.1; if(anim.enAlpha<=0) clearInterval(fade); },40);
+  onda++; hud();
+  setTimeout(()=>{
+    if(onda>=ONDA.length) faseCompleta(); else proximoInimigo(false);
+  },900);
 }
-function fimDeJogo(){
-  jogando=false; podeResponder=false;
-  const total = acertos+erros, pct = total ? Math.round(acertos/total*100) : 0;
-  $('fimS').innerHTML = `Inimigos derrotados: ${abates}<br>Acertos: ${acertos} · Erros: ${erros}<br>Precisão: ${pct}%<br><br>Perfeito ${rating.P} · Ótimo ${rating.G} · Bom ${rating.B}`;
-  setTimeout(()=>$('fim').classList.remove('hide'), 700);
+function estrelasDaFase(){
+  const total=acertos+erros, pct = total? acertos/total : 0;
+  return pct>=.9 && vida>=3 ? 3 : pct>=.7 ? 2 : 1;
+}
+function faseCompleta(){
+  estado='menu'; atualizarTrilha(1);
+  const st=estrelasDaFase(); save.estrelas[fase]=Math.max(save.estrelas[fase]||0,st);
+  if(fase+2>save.desbloq) save.desbloq=Math.min(FASES.length,fase+2); gravar();
+  const total=acertos+erros, pct=total?Math.round(acertos/total*100):0;
+  mostrarFim(`${FASES[fase].nome}<br>COMPLETA!`, '★'.repeat(st)+'☆'.repeat(3-st),
+    `Acertos: ${acertos} · Erros: ${erros}<br>Precisão: ${pct}% · Vida: ${vida}/${vidaMax}<br>Perfeito ${rating.P} · Ótimo ${rating.G} · Bom ${rating.B}<br>Moedas: +${moedasFase}`,
+    fase+1<FASES.length ? 'PRÓXIMA FASE' : 'JOGAR DE NOVO', ()=>iniciarFase(fase+1<FASES.length?fase+1:fase));
+}
+function derrota(){
+  estado='menu'; podeResponder=false; $('grid').classList.add('off');
+  const total=acertos+erros, pct=total?Math.round(acertos/total*100):0;
+  setTimeout(()=>mostrarFim('VOCÊ CAIU!', '', `Chegou até o inimigo ${onda+1} de ${ONDA.length}<br>Acertos: ${acertos} · Erros: ${erros} · Precisão: ${pct}%`,
+    'TENTAR DE NOVO', ()=>iniciarFase(fase)),600);
+}
+function mostrarFim(t,stars,s,aTxt,aFn){
+  $('fimT').innerHTML=t; $('fimStars').textContent=stars; $('fimStars').classList.toggle('hide',!stars);
+  $('fimS').innerHTML=s; $('btnA').textContent=aTxt; $('btnA').onclick=aFn;
+  $('fim').classList.remove('hide');
 }
 let fbTimer;
-function feedback(t,c){ const e=$('fb'); e.textContent=t; e.style.color=c; e.style.opacity=1; clearTimeout(fbTimer); fbTimer=setTimeout(()=>e.style.opacity=0, 650); }
+function feedback(t,c){ const e=$('fb'); e.textContent=t; e.style.color=c; e.style.opacity=1; clearTimeout(fbTimer); fbTimer=setTimeout(()=>e.style.opacity=0,650); }
 function hud(){
-  $('hearts').textContent = '♥'.repeat(Math.max(0,vida)) + '♡'.repeat(Math.max(0,vidaMax-vida));
-  $('coins').textContent = '● ' + moedas;
-  $('lvl').textContent = 'NV ' + nivel;
+  $('hearts').textContent='♥'.repeat(Math.max(0,vida))+'♡'.repeat(Math.max(0,vidaMax-vida));
+  $('coins').textContent='● '+save.moedas;
+  $('faseNome').textContent=`FASE ${fase+1} · ${FASES[fase].nome}`;
+  $('faixa').textContent=`CONTAS ATÉ ${FASES[fase].limite}`;
   $('ehp').firstElementChild.style.width = inimigo ? (inimigo.hp/inimigo.vida*100)+'%' : '100%';
 }
 
 // ================= DESENHO =================
-function drawSprite(spr, x, y, s, flip, flash, alpha){
-  ctx.globalAlpha = alpha;
+function drawSprite(spr,x,y,s,flip,flash,alpha,pal){
+  ctx.globalAlpha=alpha;
   for(let r=0;r<spr.length;r++) for(let c=0;c<spr[r].length;c++){
-    const ch = spr[r][flip ? spr[r].length-1-c : c]; if(ch==='.') continue;
-    ctx.fillStyle = flash ? '#ffffff' : PAL[ch];
-    ctx.fillRect(Math.round(x + c*s), Math.round(y + r*s), Math.ceil(s), Math.ceil(s));
+    const ch=spr[r][flip?spr[r].length-1-c:c]; if(ch==='.') continue;
+    ctx.fillStyle = flash ? '#fff' : (pal&&pal[ch]) || PAL[ch];
+    ctx.fillRect(Math.round(x+c*s),Math.round(y+r*s),Math.ceil(s),Math.ceil(s));
   }
-  ctx.globalAlpha = 1;
+  ctx.globalAlpha=1;
+}
+const hash=k=>{ let x=Math.sin(k*127.1+311.7)*43758.5453; return x-Math.floor(x); };
+function drawDeco(tipo,x,F){
+  x=Math.round(x);
+  if(tipo==='arvore'){ ctx.fillStyle='#5a3a24'; ctx.fillRect(x+4,CHAO-10,3,10); ctx.fillStyle='#2f6b3a'; ctx.fillRect(x,CHAO-20,11,11); ctx.fillStyle='#3f8a4a'; ctx.fillRect(x+2,CHAO-22,7,5); }
+  else if(tipo==='cacto'){ ctx.fillStyle='#3f7a3a'; ctx.fillRect(x+3,CHAO-16,4,16); ctx.fillRect(x,CHAO-11,3,2); ctx.fillRect(x,CHAO-14,2,4); ctx.fillRect(x+7,CHAO-9,3,2); ctx.fillRect(x+8,CHAO-12,2,4); }
+  else if(tipo==='cristal'){ ctx.fillStyle='#9fd8ff'; ctx.fillRect(x+3,CHAO-14,4,14); ctx.fillStyle='#e8f8ff'; ctx.fillRect(x+4,CHAO-13,1,9); ctx.fillStyle='#6bb7e6'; ctx.fillRect(x,CHAO-8,3,8); ctx.fillRect(x+8,CHAO-6,3,6); }
+  else { ctx.fillStyle='#5d4c73'; ctx.fillRect(x,CHAO-6,10,6); ctx.fillStyle='#776491'; ctx.fillRect(x+2,CHAO-8,6,3); }
 }
 function drawScene(dt){
-  anim.t += dt;
-  // céu e montanhas
-  ctx.fillStyle='#2a1f52'; ctx.fillRect(0,0,180,130);
-  ctx.fillStyle='#3a2c6e'; ctx.fillRect(0,40,180,90);
-  ctx.fillStyle='#4b3a86';
-  for(let i=0;i<180;i+=30){ ctx.beginPath(); ctx.moveTo(i-10,90); ctx.lineTo(i+15,52+(i%60?8:0)); ctx.lineTo(i+40,90); ctx.fill(); }
-  ctx.fillStyle='#ffd166'; ctx.fillRect(140,14,8,8);
-  // chão
-  ctx.fillStyle='#3e6b3a'; ctx.fillRect(0,90,180,40);
-  ctx.fillStyle='#2f5530'; for(let x=0;x<180;x+=8) ctx.fillRect(x+((x/8)%2?3:0),94+((x/8)%3)*8,2,2);
-  ctx.fillStyle='#5b8f4e'; ctx.fillRect(0,90,180,2);
-
-  const bob = Math.round(Math.sin(anim.t*4));
-  // herói
-  const hx = 34 + Math.sin(Math.min(anim.heroX,1)*Math.PI)*28;
-  drawSprite(HERO, hx, 90-36+bob, 3, false, anim.heroFlash>0 && Math.floor(anim.t*20)%2===0, 1);
-  // espada
-  ctx.fillStyle='#c9ced8'; ctx.fillRect(Math.round(hx+33), 90-24+bob- (anim.heroX>0?6:0), 3, 12);
-  ctx.fillStyle='#ffd166'; ctx.fillRect(Math.round(hx+31), 90-13+bob-(anim.heroX>0?6:0), 7, 2);
-  // inimigo
-  if(inimigo){
-    const s = 3*inimigo.escala, w=12*s;
-    const ent = anim.entrando ? 60 : 0;
-    const ex = 180-34-w + ent - Math.sin(Math.min(anim.enX,1)*Math.PI)*28;
-    drawSprite(inimigo.spr, ex, 90-12*s+(inimigo.spr===SLIME?0:bob), s, true, anim.enFlash>0 && Math.floor(anim.t*20)%2===0, Math.max(0,anim.enAlpha));
+  anim.t+=dt;
+  const F=FASES[fase];
+  ctx.fillStyle=F.sky; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle=F.sky2; ctx.fillRect(0,36,W,H);
+  if(F.astro){ ctx.fillStyle=F.astro; ctx.fillRect(W-40,12,8,8); }
+  // montanhas (parallax lento) ou estalactites na caverna
+  ctx.fillStyle=F.mont;
+  const off=(scroll*0.3)%60;
+  for(let i=-60;i<W+60;i+=60){
+    const k=Math.floor((i+scroll*0.3)/60);
+    const x=i-off+((scroll*0.3)%60===0?0:0);
+    if(F.deco==='pedra'){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x+12+hash(k)*20,20+hash(k+5)*22); ctx.lineTo(x+40,0); ctx.fill(); }
+    ctx.beginPath(); ctx.moveTo(x-10,CHAO); ctx.lineTo(x+20,CHAO-30-hash(k)*16); ctx.lineTo(x+50,CHAO); ctx.fill();
   }
-  // moeda
-  if(anim.coin){ anim.coin.t+=dt; const k=anim.coin.t; ctx.fillStyle='#ffd166'; ctx.fillRect(120, Math.round(70-k*60), 5, 5); if(k>.9) anim.coin=null; }
+  // decoração (parallax 1:1 com o chão)
+  const step=46;
+  for(let k=Math.floor(scroll/step)-1;k<=Math.floor((scroll+W)/step)+1;k++){
+    if(hash(k)>.55) drawDeco(F.deco, k*step - scroll + hash(k+9)*20, F);
+  }
+  // chão
+  ctx.fillStyle=F.chao; ctx.fillRect(0,CHAO,W,H-CHAO);
+  ctx.fillStyle=F.chao2;
+  for(let k=Math.floor(scroll/8);k<=Math.floor((scroll+W)/8)+1;k++){ const x=k*8-scroll; ctx.fillRect(Math.round(x+hash(k)*4),CHAO+4+Math.floor(hash(k+3)*4)*8,2,2); }
+  ctx.fillStyle=F.borda; ctx.fillRect(0,CHAO,W,2);
 
-  anim.heroX = anim.heroX>0 ? (anim.heroX+dt*4>1.0001? 0 : anim.heroX+dt*4) : 0;
-  anim.enX   = anim.enX>0   ? (anim.enX+dt*4>1.0001? 0 : anim.enX+dt*4) : 0;
-  anim.heroFlash = Math.max(0, anim.heroFlash-dt*2.5);
-  anim.enFlash   = Math.max(0, anim.enFlash-dt*2.5);
+  // herói
+  const andando = estado==='andando';
+  const bob = andando ? (Math.floor(anim.t*8)%2) : Math.round(Math.sin(anim.t*4)*0.6);
+  const legs = andando ? HERO_LEGS[1+Math.floor(anim.t*8)%2] : HERO_LEGS[0];
+  const hx = heroX() + Math.sin(Math.min(anim.heroX,1)*Math.PI)*30;
+  const hy = CHAO-36-bob;
+  const flashH = anim.heroFlash>0 && Math.floor(anim.t*20)%2===0;
+  drawSprite(HERO_TOP.concat(legs),hx,hy,3,false,flashH,1);
+  const atk = anim.heroX>0 ? 6 : 0;
+  ctx.fillStyle='#c9ced8'; ctx.fillRect(Math.round(hx+33),hy+12-atk,3,12);
+  ctx.fillStyle='#ffd166'; ctx.fillRect(Math.round(hx+31),hy+23-atk,7,2);
+
+  // inimigo
+  if(inimigo && anim.enAlpha>0){
+    const s=3*inimigo.escala, w=12*s;
+    let ex=enemyStandX(inimigo);
+    if(andando) ex += (walkDur-walkT)*VEL;
+    ex -= Math.sin(Math.min(anim.enX,1)*Math.PI)*30;
+    const ebob = inimigo.spr===SLIME ? 0 : Math.round(Math.sin(anim.t*3+1)*0.6);
+    const pal = inimigo.spr===SLIME ? {g:F.slime[0],G:F.slime[1]} : null;
+    drawSprite(inimigo.spr,ex,CHAO-12*s+ebob,s,true,anim.enFlash>0&&Math.floor(anim.t*20)%2===0,Math.max(0,anim.enAlpha),pal);
+    if(inimigo.boss){ ctx.fillStyle='#ffd166'; ctx.fillRect(Math.round(ex+w/2-6),CHAO-12*s-6,12,3); ctx.fillRect(Math.round(ex+w/2-6),CHAO-12*s-9,2,3); ctx.fillRect(Math.round(ex+w/2-1),CHAO-12*s-10,2,4); ctx.fillRect(Math.round(ex+w/2+4),CHAO-12*s-9,2,3); }
+  }
+  // moedas
+  anim.coins=anim.coins.filter(c=>{ c.t+=dt; c.vy+=180*dt; c.x+=c.vx*dt; c.y+=c.vy*dt; if(c.y>CHAO-5){c.y=CHAO-5;c.vy*=-.4;c.vx*=.6;}
+    const tx=heroX()+18, ty=CHAO-30; if(c.t>.6){ c.x+= (tx-c.x)*Math.min(1,dt*8); c.y+=(ty-c.y)*Math.min(1,dt*8); }
+    ctx.fillStyle='#ffd166'; ctx.fillRect(Math.round(c.x),Math.round(c.y),4,4); ctx.fillStyle='#c99a2e'; ctx.fillRect(Math.round(c.x)+1,Math.round(c.y)+1,2,2);
+    return c.t<1.1; });
+
+  anim.heroX = anim.heroX>0 ? (anim.heroX+dt*4>=1 ? 0 : anim.heroX+dt*4) : 0;
+  anim.enX   = anim.enX>0   ? (anim.enX+dt*4>=1 ? 0 : anim.enX+dt*4) : 0;
+  anim.heroFlash=Math.max(0,anim.heroFlash-dt*2.5);
+  anim.enFlash=Math.max(0,anim.enFlash-dt*2.5);
 }
 
-let last = performance.now();
+let last=performance.now();
 function loop(now){
-  const dt = Math.min(.05, (now-last)/1000); last = now;
-  if(jogando && podeResponder){
-    tAtaque -= dt;
-    if(tAtaque <= 0){ feedback('TEMPO!', '#ff6b7a'); inimigoAtaca(); }
+  const dt=Math.min(.05,(now-last)/1000); last=now;
+  if(estado==='andando'){
+    walkT+=dt; scroll+=VEL*dt;
+    atualizarTrilha(Math.min(1,walkT/walkDur));
+    if(walkT>=walkDur){ walkT=walkDur; chegou(); }
   }
-  $('tbar').firstElementChild.style.width = (Math.max(0,tAtaque)/tAtaqueMax*100)+'%';
+  if(estado==='batalha' && podeResponder){
+    tAtaque-=dt;
+    if(tAtaque<=0){ feedback('TEMPO!','#ff6b7a'); inimigoAtaca(); }
+  }
+  const tb=$('tbar').firstElementChild;
+  tb.style.width=(estado==='batalha'?Math.max(0,tAtaque)/tAtaqueMax*100:100)+'%';
+  tb.style.background = tAtaque/tAtaqueMax<.33 && estado==='batalha' ? 'var(--bad)' : tAtaque/tAtaqueMax<.66 && estado==='batalha' ? 'var(--gold)' : 'var(--ok)';
   drawScene(dt);
   requestAnimationFrame(loop);
 }
-document.querySelectorAll('#menu button').forEach(b=>b.addEventListener('click',()=>startGame(+b.dataset.n)));
-$('again').addEventListener('click',()=>{ $('fim').classList.add('hide'); $('menu').classList.remove('hide'); });
-hud(); requestAnimationFrame(loop);
+document.querySelectorAll('#menu button').forEach(b=>b.addEventListener('click',()=>{ ritmo=+b.dataset.t; abrirMapa(); }));
+$('voltarMenu').onclick=()=>{ $('mapa').classList.add('hide'); $('menu').classList.remove('hide'); };
+$('btnB').onclick=abrirMapa;
+ajustarCanvas(); montarTrilha(); hud(); requestAnimationFrame(loop);
 </script>
 </body>
 </html>
