@@ -88,13 +88,24 @@ canvas{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelate
 .jogar{font-size:clamp(22px,5vmin,34px)!important;padding:calc(var(--p)*5) 0!important}
 .idade{font-size:clamp(12px,2.4vmin,16px)!important;opacity:.85}
 .mundo{text-align:left;font-weight:700;color:#7a2e1c;font-size:clamp(14px,2.8vmin,19px);margin-top:calc(var(--p)*1.5)}
-.fases{display:grid;grid-template-columns:1fr 1fr;gap:calc(var(--p)*2.4)}
+.fases{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--p)*2)}
 .fases .mundo{grid-column:1/-1}
-.fase{flex-direction:column;align-items:flex-start!important;gap:6px!important;padding:calc(var(--p)*2.4) calc(var(--p)*3)!important;font-size:clamp(13px,2.6vmin,18px)!important;text-align:left}
+.fase{flex-direction:column;align-items:flex-start!important;justify-content:space-between!important;gap:6px!important;padding:calc(var(--p)*2) calc(var(--p)*2.4)!important;font-size:clamp(12px,2.4vmin,17px)!important;text-align:left}
+.fase .sub{font-size:.78em!important}
 .fase .stars{justify-content:flex-start}
 .fase .num{font-family:'Fredoka',system-ui,sans-serif}
 .linha{display:flex;gap:calc(var(--p)*3)}
 .linha .btn{flex:1}
+#pergunta .rot{display:block;font-size:var(--fs-s);font-family:'Pixelify Sans',monospace;font-weight:600;color:#6d4a2a;margin-bottom:4px}
+.frac{display:inline-flex;flex-direction:column;align-items:center;line-height:1;vertical-align:middle;font-family:'Fredoka',system-ui,sans-serif;font-weight:700}
+.frac>span:last-child{border-top:.12em solid currentColor;padding-top:.06em;margin-top:.06em;min-width:1.2em;text-align:center}
+#pergunta .frac{font-size:1.1em}
+.grid .btn .frac{font-size:.8em}
+.fig{display:block;margin:0 auto;height:clamp(44px,12vmin,96px);width:auto;max-width:90%}
+#pergunta .fig{height:clamp(60px,16vmin,130px)}
+.grid .btn:has(.fig){padding:clamp(8px,2vmin,16px) 0}
+.scroll .t{gap:10px;flex-wrap:wrap}
+.scroll .t span:last-child{text-align:right;margin-left:auto}
 </style>
 <body>
 <div id="app">
@@ -152,6 +163,7 @@ const choose=(...v)=>v[Math.floor(Math.random()*v.length)];
 // cfg.ops: '+' soma, '-' subtração, 'x' tabuada (cfg.tab), 'X' 2 algarismos × 1 (cfg.mul2=[aMin,aMax,bMax])
 function gerarPergunta(cfg){
   const op=choose(...cfg.ops);
+  if(op==='f') return gerarFracao(cfg);
   let a,b,res,cands,simb;
   const lim=cfg.lim||10, piso=Math.max(2,Math.floor(lim/5));
   if(op==='+'){ res=rint(piso,lim+1); a=rint(1,res); b=res-a; simb='+'; cands=[res-1,res+1,res-2,res+2,res-10,res+10,Math.abs(a-b)]; }
@@ -171,26 +183,98 @@ function gerarPergunta(cfg){
   return {texto:`${a} ${simb} ${b} = ?`,res,alts};
 }
 
+// ---------- FRAÇÕES: número → figura ou figura → número ----------
+const FORMAS=['pizza','barra','quadrado','grade'];
+function mascara(n,d,forma){ // quais partes ficam pintadas
+  const idx=[...Array(d).keys()];
+  if(forma==='grade'){ for(let i=d-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [idx[i],idx[j]]=[idx[j],idx[i]]; } }
+  return idx.slice(0,n);
+}
+function gerarFracao(cfg){
+  const d=choose(...cfg.den), n=rint(1,d), chave=(x,y)=>x+'/'+y;
+  const modo=choose('num2fig','fig2num'), formaQ=choose(...(cfg.formas||FORMAS));
+  // erros comuns: complemento, contar 1 a mais/menos, trocar o total de partes
+  const cands=[[d-n,d],[n+1,d],[n-1,d],[n,d+1],[n,d-1],[n+1,d+1],[n,d+2],[d-n,d+1]];
+  const alts=[[n,d]], usados=new Set([chave(n,d)]);
+  for(let i=0;i<40&&alts.length<4;i++){ const [x,y]=choose(...cands); if(x>=1&&x<y&&y<=12&&!usados.has(chave(x,y))){ usados.add(chave(x,y)); alts.push([x,y]); } }
+  for(let y=2;alts.length<4&&y<=12;y++) for(let x=1;x<y&&alts.length<4;x++) if(!usados.has(chave(x,y))){ usados.add(chave(x,y)); alts.push([x,y]); }
+  for(let i=alts.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [alts[i],alts[j]]=[alts[j],alts[i]]; }
+  return {tipo:'fracao',modo,n,d,forma:formaQ,mask:mascara(n,d,formaQ),res:chave(n,d),
+    alts:alts.map(([x,y])=>{ const f=cfg.mistura?choose(...(cfg.formas||FORMAS)):formaQ; return {n:x,d:y,forma:f,mask:mascara(x,y,f),v:chave(x,y)}; })};
+}
+const GRADE={2:[1,2],3:[1,3],4:[2,2],5:[1,5],6:[2,3],7:[1,7],8:[2,4],9:[3,3],10:[2,5],11:[1,11],12:[3,4]};
+function svgFracao(d,mask,forma){
+  // pintado = azul forte, vazio = branco: contraste bom tanto no pergaminho quanto nos botões de madeira
+  const on='#2f6fd0', onL='#5a95ec', off='#ffffff', ink='#2b1a10', pint=new Set(mask);
+  if(forma==='pizza'){
+    let vaz='', che='';
+    for(let i=0;i<d;i++){
+      const a0=(-90+i*360/d)*Math.PI/180, a1=(-90+(i+1)*360/d)*Math.PI/180, am=(a0+a1)/2;
+      const p=pint.has(i), off3=p&&d>1?4:0, cx=50+off3*Math.cos(am), cy=50+off3*Math.sin(am);
+      const x0=cx+42*Math.cos(a0),y0=cy+42*Math.sin(a0),x1=cx+42*Math.cos(a1),y1=cy+42*Math.sin(a1);
+      const path=d===1?`<circle cx="50" cy="50" r="42"`:`<path d="M${cx.toFixed(2)} ${cy.toFixed(2)} L${x0.toFixed(2)} ${y0.toFixed(2)} A42 42 0 ${360/d>180?1:0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)} Z"`;
+      const el=`${path} fill="${p?on:off}" stroke="${ink}" stroke-width="3.5" stroke-linejoin="round"/>`;
+      if(p) che+=el; else vaz+=el;
+    }
+    return `<svg class="fig" viewBox="-2 -2 104 104" style="shape-rendering:geometricPrecision">${vaz}${che}</svg>`;
+  }
+  const cel=(x,y,w,h,p)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${p?on:off}" stroke="${ink}" stroke-width="3"/>`+(p?`<rect x="${x+3}" y="${y+3}" width="${Math.max(0,w-6)}" height="3" fill="${onL}"/>`:'');
+  if(forma==='barra'){ // retângulo deitado dividido em partes
+    const w=100/d; let r='';
+    for(let i=0;i<d;i++) r+=cel(i*w,0,w,34,pint.has(i));
+    return `<svg class="fig" viewBox="-3 -3 106 40">${r}</svg>`;
+  }
+  if(forma==='quadrado'){ // quadrado dividido em faixas em pé
+    const w=90/d; let r='';
+    for(let i=0;i<d;i++) r+=cel(i*w,0,w,90,pint.has(i));
+    return `<svg class="fig" viewBox="-3 -3 96 96">${r}</svg>`;
+  }
+  const [rows,cols]=GRADE[d]; let r=''; // quadradinhos
+  for(let i=0;i<d;i++) r+=cel((i%cols)*24,Math.floor(i/cols)*24,24,24,pint.has(i));
+  return `<svg class="fig" viewBox="-3 -3 ${cols*24+6} ${rows*24+6}">${r}</svg>`;
+}
+const fracHTML=(n,d)=>`<span class="frac"><span>${n}</span><span>${d}</span></span>`;
+
 // ================= CAMPANHA ÚNICA: 16 fases, do fácil ao difícil =================
 // m = mundo (cenário), t = multiplicador do tempo (contas maiores ganham mais tempo)
 const FASES=[
-  {m:0,ops:['+'],lim:10,d:'Somas até 10'},
-  {m:0,ops:['-'],lim:10,d:'Subtrações até 10'},
-  {m:1,ops:['+','-'],lim:20,d:'Somas e subtrações até 20'},
-  {m:1,ops:['+','-'],lim:50,d:'Somas e subtrações até 50',t:1.2},
-  {m:2,ops:['x'],tab:[2,5,10],d:'Tabuadas do 2, 5 e 10'},
-  {m:2,ops:['x'],tab:[3,4],d:'Tabuadas do 3 e do 4'},
-  {m:3,ops:['+','-'],lim:100,d:'Somas e subtrações até 100',t:1.4},
-  {m:3,ops:['+','-','x'],lim:100,tab:[2,3,4,5],d:'Mistura: até 100 e tabuadas',t:1.3},
-  {m:4,ops:['x'],tab:[6,7],d:'Tabuadas do 6 e do 7',t:1.2},
-  {m:4,ops:['x'],tab:[8,9],d:'Tabuadas do 8 e do 9',t:1.2},
-  {m:5,ops:['+','-'],lim:500,d:'Somas e subtrações até 500',t:1.6},
-  {m:5,ops:['x'],tab:[2,3,4,5,6,7,8,9,10],d:'Todas as tabuadas',t:1.2},
+  // Campos
+  {m:0,ops:['+'],lim:5,d:'Somas até 5',t:1.2},
+  {m:0,ops:['+'],lim:10,d:'Somas até 10',t:1.2},
+  {m:0,ops:['-'],lim:10,d:'Subtrações até 10',t:1.2},
+  // Floresta
+  {m:1,ops:['+','-'],lim:10,d:'Somas e subtrações até 10',t:1.2},
+  {m:1,ops:['+'],lim:20,d:'Somas até 20',t:1.2},
+  {m:1,ops:['-'],lim:20,d:'Subtrações até 20',t:1.2},
+  // Pântano
+  {m:2,ops:['+','-'],lim:20,d:'Somas e subtrações até 20',t:1.2},
+  {m:2,ops:['+','-'],lim:30,d:'Somas e subtrações até 30',t:1.2},
+  {m:2,ops:['+','-'],lim:50,d:'Somas e subtrações até 50',t:1.3},
+  // Deserto
+  {m:3,ops:['x'],tab:[2],d:'Tabuada do 2'},
+  {m:3,ops:['x'],tab:[2,5],d:'Tabuadas do 2 e do 5'},
+  {m:3,ops:['x'],tab:[2,5,10],d:'Tabuadas do 2, 5 e 10'},
+  // Gelo
+  {m:4,ops:['x'],tab:[3],d:'Tabuada do 3'},
+  {m:4,ops:['x'],tab:[4],d:'Tabuada do 4'},
+  {m:4,ops:['+','-'],lim:100,d:'Somas e subtrações até 100',t:1.4},
+  // Caverna
+  {m:5,ops:['x'],tab:[2,3,4,5],d:'Tabuadas do 2 ao 5'},
+  {m:5,ops:['x'],tab:[6,7],d:'Tabuadas do 6 e do 7',t:1.2},
+  {m:5,ops:['x'],tab:[8,9],d:'Tabuadas do 8 e do 9',t:1.2},
+  // Torre do Mago (frações)
+  {m:8,ops:['f'],den:[2,3,4],formas:['pizza','barra'],d:'Frações: meios, terços e quartos',t:1.5},
+  {m:8,ops:['f'],den:[2,3,4,5,6],d:'Frações até sextos',t:1.5},
+  {m:8,ops:['f'],den:[2,3,4,5,6,8,10],mistura:1,d:'Frações até décimos',t:1.6},
+  // Vulcão
+  {m:6,ops:['x'],tab:[2,3,4,5,6,7,8,9,10],d:'Todas as tabuadas',t:1.2},
+  {m:6,ops:['+','-'],lim:500,d:'Somas e subtrações até 500',t:1.6},
   {m:6,ops:['+','-'],lim:1000,d:'Somas e subtrações até 1000',t:1.7},
-  {m:6,ops:['X'],mul2:[10,20,5],d:'Dezenas × 1 algarismo',t:1.7},
+  // Castelo
+  {m:7,ops:['X'],mul2:[10,20,5],d:'Dezenas × 1 algarismo',t:1.7},
   {m:7,ops:['X'],mul2:[11,50,9],d:'Multiplicação com 2 algarismos',t:2},
   {m:7,ops:['+','-','x','X'],lim:1000,tab:[3,4,6,7,8,9],mul2:[11,50,9],d:'Desafio final',t:1.9},
-];
+]
 const VELS=[{n:'Calma',s:12},{n:'Normal',s:8},{n:'Rápida',s:6}];
 
 // ================= MUNDOS (1 por fase = 1 pack do Minifantasy) =================
@@ -203,6 +287,7 @@ const MUNDOS=[
   {nome:'Caverna', ceu:['#1d1622','#251c2c','#2e2436'],longe:'#3a2e45',perto:'#463752',grama:'#4d3d58',gramaD:'#3e3048',terra:'#5e4a63',terraD:'#4a3a50',deco:'cristal',teto:1,pool:['morcego','esqueleto'],cor:['#c77dff','#7b3fb0'],chefe:'Orc da Caverna'},
   {nome:'Vulcão',  ceu:['#3a1a1a','#5a2420','#7a3020'],longe:'#4a2420',perto:'#3a1c18',grama:'#3a2a28',gramaD:'#2a1e1c',terra:'#5a3a30',terraD:'#4a2e26',deco:'lava',brasa:1,vulcao:1,pool:['slime','goblin','morcego'],cor:['#ff6a3a','#b8321a'],chefe:'Orc de Fogo'},
   {nome:'Castelo', ceu:['#3e4270','#4a4e7a','#565a86'],longe:'#3a3e5a',perto:'#45486a',grama:'#5a5a6a',gramaD:'#4a4a5a',terra:'#7a7a8a',terraD:'#5a5a6a',deco:'pilar',parede:1,pool:['esqueleto','goblin','morcego'],cor:['#c77dff','#7b3fb0'],chefe:'Rei Orc'},
+  {nome:'Torre do Mago',ceu:['#1e2a4a','#28365e','#334372'],longe:'#2e2a55',perto:'#3b3566',grama:'#4a5a6a',gramaD:'#3a4858',terra:'#6a6a80',terraD:'#55556a',deco:'runa',estrelas:1,pool:['morcego','slime','esqueleto'],cor:['#5ad0d0','#2a8a9a'],chefe:'Orc Feiticeiro'},
 ];
 
 // ================= ÍCONES EM PIXEL (SVG) =================
@@ -240,20 +325,20 @@ const NOMES={slime:'Slime',goblin:'Goblin',morcego:'Morcego',esqueleto:'Esquelet
 const DIG={'0':['111','101','101','101','111'],'1':['010','110','010','010','111'],'2':['111','001','111','100','111'],'3':['111','001','111','001','111'],'4':['101','101','111','001','001'],'5':['111','100','111','001','111'],'6':['111','100','111','101','111'],'7':['111','001','010','010','010'],'8':['111','101','111','101','111'],'9':['111','101','111','001','111'],'-':['000','000','111','000','000'],'+':['000','010','111','010','000']};
 
 // ================= SAVE =================
-const SAVE_KEY='heroiNumeros_v3';
+const SAVE_KEY='heroiNumeros_v4';
 let save={moedas:0,vel:1,desbloq:1,estrelas:[]};
 try{const s=JSON.parse(localStorage.getItem(SAVE_KEY)); if(s) save={...save,...s};}catch(e){}
 function gravar(){ try{localStorage.setItem(SAVE_KEY,JSON.stringify(save));}catch(e){} }
 
 // ================= ESTADO =================
 const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),$=id=>document.getElementById(id);
-const H=130,CHAO=104,VEL=62,INIMIGOS_POR_FASE=6;
+const H=130,CHAO=104,VEL=62,INIMIGOS_POR_FASE=7;
 let W=180,fase=0,vidaMax=5,vida=5,acertos=0,erros=0,moedasFase=0;
 let estado='titulo';
 let onda=0,ONDA=[],inimigo=null,atual=null,podeResponder=false;
 let tAtaque=0,tAtaqueMax=8,scroll=0,walkT=0,walkDur=1.5,shake=0;
 const fx={heroX:0,heroFlash:0,enX:0,enFlash:0,enAlpha:1,t:0,coins:[],nums:[],sparks:[],coracoes:[]};
-const CFG=()=>FASES[fase], M=()=>MUNDOS[CFG().m], PARTE=()=>fase%2?'II':'I';
+const CFG=()=>FASES[fase], M=()=>MUNDOS[CFG().m], POS=()=>FASES.slice(0,fase).filter(f=>f.m===CFG().m).length, PARTE=()=>['I','II','III','IV'][POS()], ULTIMA_DO_MUNDO=()=>!FASES[fase+1]||FASES[fase+1].m!==CFG().m;
 
 function ajustarCanvas(){
   const r=$('scene').getBoundingClientRect(); if(!r.height) return;
@@ -274,7 +359,7 @@ function abrirMapa(){
   $('btnVel').textContent=`Velocidade: ${VELS[save.vel].n}`;
   const L=$('fasesList'); L.innerHTML='';
   FASES.forEach((c,i)=>{
-    if(i%2===0){ const h=document.createElement('div'); h.className='mundo'; h.textContent=MUNDOS[c.m].nome; L.appendChild(h); }
+    if(i===0||FASES[i-1].m!==c.m){ const h=document.createElement('div'); h.className='mundo'; h.textContent=MUNDOS[c.m].nome; L.appendChild(h); }
     const lock=i+1>save.desbloq, st=save.estrelas[i]||0;
     const b=document.createElement('button'); b.className='btn px fase'; b.disabled=lock;
     b.innerHTML=`<span>Fase <span class="num">${i+1}</span><br><span class="sub">${lock?'bloqueada':c.d}</span></span>
@@ -289,7 +374,7 @@ function iniciarFase(i){
   // monta a fila de inimigos: 6 do mundo + chefe
   ONDA=[];
   for(let k=0;k<INIMIGOS_POR_FASE;k++){ const tipo=M().pool[k%M().pool.length]; ONDA.push({nome:NOMES[tipo],tipo,vida:k<2?2:3,escala:1}); }
-  ONDA.push(fase%2?{nome:M().chefe,tipo:'orc',vida:6,escala:1.4,boss:true}:{nome:'Guarda Orc',tipo:'orc',vida:5,escala:1.2,boss:true});
+  ONDA.push(ULTIMA_DO_MUNDO()?{nome:M().chefe,tipo:'orc',vida:6,escala:1.4,boss:true}:{nome:'Guarda Orc',tipo:'orc',vida:5,escala:1.2,boss:true});
   $('mapa').classList.add('hide'); $('fim').classList.add('hide');
   montarTrilha(); proximoInimigo(true);
 }
@@ -320,10 +405,17 @@ function proximoInimigo(primeiro){
 function chegou(){ estado='batalha'; atualizarTrilha(1); novaPergunta(); }
 function novaPergunta(){
   atual=gerarPergunta(CFG());
-  $('pergunta').textContent=atual.texto;
+  const P=$('pergunta');
+  if(atual.tipo==='fracao'){
+    P.innerHTML = atual.modo==='num2fig'
+      ? `<span class="rot">Qual figura mostra</span>${fracHTML(atual.n,atual.d)}`
+      : `<span class="rot">Que fração está pintada?</span>${svgFracao(atual.d,atual.mask,atual.forma)}`;
+  } else P.textContent=atual.texto;
   const g=$('grid'); g.innerHTML=''; g.classList.remove('off');
   atual.alts.forEach(v=>{
-    const b=document.createElement('button'); b.className='btn px'; b.textContent=v; b.dataset.v=v;
+    const b=document.createElement('button'); b.className='btn px';
+    if(atual.tipo==='fracao'){ b.dataset.v=v.v; b.innerHTML = atual.modo==='num2fig' ? svgFracao(v.d,v.mask,v.forma) : fracHTML(v.n,v.d); }
+    else { b.textContent=v; b.dataset.v=v; }
     b.addEventListener('pointerdown',e=>{e.preventDefault();responder(b);}); g.appendChild(b);
   });
   const base=VELS[save.vel].s*(CFG().t||1);
@@ -331,7 +423,7 @@ function novaPergunta(){
 }
 function responder(btn){
   if(!podeResponder||estado!=='batalha'||btn.classList.contains('errado')) return;
-  if(+btn.dataset.v===atual.res){
+  if(btn.dataset.v===String(atual.res)){
     podeResponder=false; btn.classList.add('certo'); acertos++;
     const f=tAtaque/tAtaqueMax;
     feedback(...(f>.66?['Perfeito!','#9fe07f']:f>.33?['Muito bem!','#ffd45e']:['Boa!','#fff1d6']));
@@ -431,6 +523,9 @@ function deco(tipo,x){
   else if(tipo==='cristal'){ ctx.fillStyle='#7d4bc0'; ctx.fillRect(x+3,y-14,4,14); ctx.fillStyle='#c79bff'; ctx.fillRect(x+4,y-13,1,9); ctx.fillStyle='#5a2d91'; ctx.fillRect(x,y-7,3,7); ctx.fillRect(x+8,y-5,3,5);
     ctx.fillStyle='rgba(199,155,255,.10)'; ctx.fillRect(x-8,y-24,26,26); }
   else if(tipo==='lava'){ ctx.fillStyle='#2a1a18'; ctx.fillRect(x,y-8,12,8); ctx.fillRect(x+2,y-11,8,3); ctx.fillStyle=Math.floor(fx.t*3+x)%2?'#ff7a2a':'#ffb347'; ctx.fillRect(x+3,y-6,1,4); ctx.fillRect(x+4,y-3,4,1); ctx.fillRect(x+8,y-8,1,3); }
+  else if(tipo==='runa'){ ctx.fillStyle='#4a4a62'; ctx.fillRect(x+3,y-22,8,22); ctx.fillStyle='#5e5e7a'; ctx.fillRect(x+4,y-22,2,22); ctx.fillStyle='#3a3a50'; ctx.fillRect(x+2,y-24,10,2);
+    const brilho=0.5+0.5*Math.sin(fx.t*3+x); ctx.fillStyle=`rgba(90,208,208,${0.55+0.45*brilho})`; ctx.fillRect(x+6,y-18,2,8); ctx.fillRect(x+5,y-15,4,2);
+    ctx.fillStyle=`rgba(90,208,208,${0.08+0.06*brilho})`; ctx.fillRect(x-6,y-30,26,30); }
   else { // pilar do castelo com estandarte
     ctx.fillStyle='#6a6a7a'; ctx.fillRect(x+2,y-34,9,34); ctx.fillStyle='#8a8a9a'; ctx.fillRect(x+3,y-34,2,34); ctx.fillStyle='#4a4a5a'; ctx.fillRect(x,y-36,13,3);
     ctx.fillStyle='#b8323c'; ctx.fillRect(x+3,y-31,7,12); ctx.fillRect(x+3,y-19,2,2); ctx.fillRect(x+8,y-19,2,2); ctx.fillStyle='#f2c14e'; ctx.fillRect(x+6,y-27,1,4); ctx.fillRect(x+5,y-26,3,1); }
@@ -444,6 +539,8 @@ function drawScene(dt){
   if(F.nuvem){ ctx.fillStyle=F.nevoa?'rgba(255,255,255,.55)':'#fff';
     for(let k=0;k<4;k++){ const x=((k*97+fx.t*4-scroll*0.08)%(W+60)+W+60)%(W+60)-40, y=10+hash(k)*30;
       ctx.fillRect(Math.round(x),Math.round(y),24,5); ctx.fillRect(Math.round(x)+5,Math.round(y)-3,12,3); } }
+  if(F.estrelas){ for(let k=0;k<26;k++){ const x=Math.floor(hash(k)*W), y=Math.floor(hash(k+40)*60); ctx.fillStyle=(Math.floor(fx.t*2+k)%5)?'#cfd8ff':'#ffffff'; ctx.fillRect(x,y,1,1); }
+    const mx=W-34,my=30; for(let yy=-6;yy<=6;yy++) for(let xx=-6;xx<=6;xx++){ if(xx*xx+yy*yy>36) continue; const sombra=(xx-3)*(xx-3)+(yy+2)*(yy+2)<=26; if(!sombra){ ctx.fillStyle='#f4ecc8'; ctx.fillRect(mx+xx,my+yy,1,1);} } }
   if(F.parede){ // muralha de pedra
     ctx.fillStyle=F.longe; ctx.fillRect(-4,20,W+8,H);
     ctx.fillStyle=F.perto; const o=Math.round(scroll*0.4);
